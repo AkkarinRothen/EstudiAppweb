@@ -12,235 +12,335 @@
             --secondary: #625B71;
             --outline: #79747E;
             --surface-variant: #E7E0EC;
+            --container: #FFFFFF;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #D0BCFF;
+                --on-primary: #381E72;
+                --surface: #1C1B1F;
+                --secondary: #CCC2DC;
+                --outline: #938F99;
+                --surface-variant: #49454F;
+                --container: #25232A;
+            }
         }
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--surface);
-            color: #1C1B1F;
+            color: var(--outline);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background-color 0.3s;
         }
         header {
             background-color: var(--primary);
             color: var(--on-primary);
             width: 100%;
-            padding: 40px 20px;
+            padding: 50px 20px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        header h1 { margin: 0; font-size: 32px; }
-        header p { margin: 10px 0 0 0; opacity: 0.9; }
+        header h1 { margin: 0; font-size: 36px; letter-spacing: -1px; }
+        header p { margin: 12px 0 0 0; opacity: 0.9; font-weight: 300; }
 
         .container {
             max-width: 1200px;
+            width: 90%;
+            padding: 40px 0;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .search-bar {
             width: 100%;
-            padding: 40px 20px;
+            padding: 16px 24px;
+            border-radius: 100px;
+            border: 1px solid var(--outline);
+            background: var(--container);
+            color: inherit;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            outline: none;
         }
 
         .filter-section {
             display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
+            gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
         .filter-chip {
-            padding: 8px 16px;
-            border-radius: 100px;
-            background: var(--surface-variant);
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: var(--container);
             border: 1px solid var(--outline);
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
             transition: all 0.2s;
         }
         .filter-chip.active {
             background: var(--primary);
-            color: white;
+            color: var(--on-primary);
             border-color: var(--primary);
+            transform: scale(1.05);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .card {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
+            background: var(--container);
+            border-radius: 24px;
+            padding: 28px;
             border: 1px solid var(--surface-variant);
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             color: inherit;
+            animation: fadeIn 0.5s ease backwards;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            border-color: var(--primary);
         }
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
         }
-        .card h3 { margin: 0; font-size: 16px; color: var(--primary); line-height: 1.2; }
+        .card h3 { margin: 0; font-size: 20px; color: var(--primary); line-height: 1.2; }
+        
         .level-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-left: 8px;
-            flex-shrink: 0;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
-        .level-a1, .level-a2 { background: #E8F5E9; color: #2E7D32; }
-        .level-b1, .level-b2 { background: #FFF3E0; color: #EF6C00; }
+        .level-a1 { background: #E8F5E9; color: #2E7D32; }
+        .level-a2 { background: #E3F2FD; color: #1565C0; }
+        .level-b1 { background: #FFF3E0; color: #E65100; }
+        .level-b2 { background: #FCE4EC; color: #C2185B; }
 
-        .card p { font-size: 13px; color: var(--secondary); margin: 8px 0; flex-grow: 1; }
+        .card p { font-size: 14px; color: var(--secondary); margin: 12px 0; flex-grow: 1; line-height: 1.5; }
         
         .card-footer {
             display: flex;
-            justify-content: flex-end;
-            margin-top: 12px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--surface-variant);
         }
+        .category { font-size: 11px; opacity: 0.7; font-weight: bold; }
         .btn-open {
             color: var(--primary);
-            font-weight: bold;
-            font-size: 13px;
-            text-transform: uppercase;
+            font-weight: 800;
+            font-size: 14px;
         }
 
         footer {
             margin-top: auto;
-            padding: 40px;
-            color: var(--outline);
-            font-size: 14px;
+            padding: 60px;
+            opacity: 0.6;
+            font-size: 13px;
             text-align: center;
+        }
+
+        /* Estilo para cuando no hay resultados */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>EstudiApp - Recursos Didácticos</h1>
-    <p>Portal interactivo para estudiantes y docentes</p>
+    <h1>EstudiApp - Portal Didáctico</h1>
+    <p>Aprende vocabulario de forma interactiva y profesional</p>
 </header>
 
 <div class="container">
-    <div class="filter-section">
-        <div class="filter-chip active">Todos</div>
-        <div class="filter-chip">A1</div>
-        <div class="filter-chip">A2</div>
-        <div class="filter-chip">B1</div>
-        <div class="filter-chip">B2</div>
+    <div class="controls">
+        <input type="text" id="searchInput" class="search-bar" placeholder="Buscar un pack (ej: restaurante, salud...)" oninput="filterPacks()">
+        <div class="filter-section">
+            <div class="filter-chip active" onclick="setFilter('Todos', this)">Todos</div>
+            <div class="filter-chip" onclick="setFilter('A1', this)">Nivel A1</div>
+            <div class="filter-chip" onclick="setFilter('A2', this)">Nivel A2</div>
+            <div class="filter-chip" onclick="setFilter('B1', this)">Nivel B1</div>
+            <div class="filter-chip" onclick="setFilter('B2', this)">Nivel B2</div>
+        </div>
     </div>
 
     <div class="grid" id="grid">
-        <!-- NIVEL A1 -->
-        <a href="presets/saludos.html" class="card">
+        <!-- Generación dinámica de tarjetas (mantenemos los hrefs originales) -->
+        <a href="presets/saludos.html" class="card" data-level="A1">
             <div class="card-header"><h3>Saludos y Cortesía</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Frases básicas para iniciar una conversación.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Frases básicas para iniciar una conversación y mostrar cortesía.</p>
+            <div class="card-footer"><span class="category">Supervivencia</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/compras.html" class="card">
+        <a href="presets/compras.html" class="card" data-level="A1">
             <div class="card-header"><h3>Compras (En la Tienda)</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Navegar por una tienda, preguntar precios y tallas.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Navegar por una tienda, preguntar precios y tallas de ropa.</p>
+            <div class="card-footer"><span class="category">Vida Diaria</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/supermercado.html" class="card">
+        <a href="presets/supermercado.html" class="card" data-level="A1">
             <div class="card-header"><h3>El Supermercado</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Ingredientes básicos y secciones de la tienda.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Ingredientes básicos, frutas, verduras y secciones de la tienda.</p>
+            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/rutina_manana.html" class="card">
+        <a href="presets/rutina_manana.html" class="card" data-level="A1">
             <div class="card-header"><h3>Rutina: Mañana</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Acciones comunes desde el despertar hasta salir.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Acciones comunes desde el despertar hasta salir de casa.</p>
+            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/tarde_noche.html" class="card">
+        <a href="presets/tarde_noche.html" class="card" data-level="A1">
             <div class="card-header"><h3>Rutina: Tarde y Noche</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Acciones desde el regreso a casa hasta dormir.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Acciones desde el regreso a casa hasta el descanso nocturno.</p>
+            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/restaurante.html" class="card">
+        <a href="presets/restaurante.html" class="card" data-level="A1">
             <div class="card-header"><h3>Restaurante</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Frases clave para pedir comida y pagar.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Frases clave para pedir comida, bebidas y pagar la cuenta.</p>
+            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <!-- NIVEL A2 -->
-        <a href="presets/cocinando.html" class="card">
+        <a href="presets/cocinando.html" class="card" data-level="A2">
             <div class="card-header"><h3>Cocinando</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Verbos de preparación y utensilios de cocina.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Verbos de preparación (hervir, picar) y utensilios de cocina.</p>
+            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/ocio.html" class="card">
+        <a href="presets/ocio.html" class="card" data-level="A2">
             <div class="card-header"><h3>Tiempo Libre</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Actividades de ocio, hobbies y deportes.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Actividades de ocio, hobbies, deportes y quedadas con amigos.</p>
+            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/salud.html" class="card">
+        <a href="presets/salud.html" class="card" data-level="A2">
             <div class="card-header"><h3>Salud y el Médico</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Describir síntomas y entender indicaciones.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Describir síntomas, enfermedades y entender al doctor.</p>
+            <div class="card-footer"><span class="category">Bienestar</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/direcciones.html" class="card">
+        <a href="presets/direcciones.html" class="card" data-level="A2">
             <div class="card-header"><h3>Ciudad y Direcciones</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Cómo pedir y dar indicaciones para llegar.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Cómo pedir y dar indicaciones para navegar por la ciudad.</p>
+            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/aeropuerto.html" class="card">
+        <a href="presets/aeropuerto.html" class="card" data-level="A2">
             <div class="card-header"><h3>En el Aeropuerto</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Navegar por la terminal, check-in y aduanas.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Navegar por la terminal, check-in, maletas y aduanas.</p>
+            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <!-- NIVEL B1 -->
-        <a href="presets/vida_digital.html" class="card">
+        <a href="presets/vida_digital.html" class="card" data-level="B1">
             <div class="card-header"><h3>Vida Digital</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Términos sobre internet y redes sociales.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Términos sobre internet, redes sociales y dispositivos modernos.</p>
+            <div class="card-footer"><span class="category">Tecnología</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/alojamiento.html" class="card">
+        <a href="presets/alojamiento.html" class="card" data-level="B1">
             <div class="card-header"><h3>Hotel y Alojamiento</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Hacer reservas y pedir servicios de hotel.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Hacer reservas, pedir servicios y resolver problemas de hotel.</p>
+            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <a href="presets/reuniones.html" class="card">
+        <a href="presets/reuniones.html" class="card" data-level="B1">
             <div class="card-header"><h3>Reuniones Profesionales</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Frases para opinar, interrumpir y concluir.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Frases para opinar, interrumpir y concluir en el trabajo.</p>
+            <div class="card-footer"><span class="category">Negocios</span><span class="btn-open">Practicar →</span></div>
         </a>
 
-        <!-- NIVEL B2 -->
-        <a href="presets/academico.html" class="card">
+        <a href="presets/academico.html" class="card" data-level="B2">
             <div class="card-header"><h3>Ensayos y Debates</h3><span class="level-badge level-b2">B2</span></div>
-            <p>Conectores avanzados y verbos argumentativos.</p>
-            <div class="card-footer"><span class="btn-open">Practicar →</span></div>
+            <p>Conectores avanzados y verbos para argumentación formal.</p>
+            <div class="card-footer"><span class="category">Académico</span><span class="btn-open">Practicar →</span></div>
         </a>
     </div>
 </div>
 
 <footer>
-    Generado con EstudiApp &copy; 2026
+    Generado con EstudiApp &copy; 2026 | Recursos Didácticos de Práctica Libre
 </footer>
+
+<script>
+    let currentFilter = 'Todos';
+
+    function setFilter(level, el) {
+        currentFilter = level;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        filterPacks();
+    }
+
+    function filterPacks() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.card');
+        let visibleCount = 0;
+
+        cards.forEach(card => {
+            const title = card.querySelector('h3').innerText.toLowerCase();
+            const desc = card.querySelector('p').innerText.toLowerCase();
+            const level = card.getAttribute('data-level');
+
+            const matchesSearch = title.includes(query) || desc.includes(query);
+            const matchesFilter = currentFilter === 'Todos' || level === currentFilter;
+
+            if (matchesSearch && matchesFilter) {
+                card.style.display = 'flex';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Manejo de estado vacío
+        const grid = document.getElementById('grid');
+        const noRes = document.querySelector('.no-results');
+        if (visibleCount === 0) {
+            if (!noRes) {
+                const div = document.createElement('div');
+                div.className = 'no-results';
+                div.innerText = 'No se encontraron packs que coincidan con tu búsqueda.';
+                grid.appendChild(div);
+            }
+        } else if (noRes) {
+            noRes.remove();
+        }
+    }
+</script>
 
 </body>
 </html>
