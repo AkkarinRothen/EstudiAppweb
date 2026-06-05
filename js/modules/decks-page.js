@@ -46,8 +46,10 @@ export function refresh() {
 // ─── Filter & Search ──────────────────────────────────────────────────────────
 
 function setupSearch() {
-    const input = document.getElementById('decksSearchInput');
+    const input = document.getElementById('decksSearchInput') || document.getElementById('searchInput');
     if (!input) return;
+    
+    // Add dynamic input listener
     input.addEventListener('input', () => {
         currentQuery = input.value.toLowerCase().trim();
         renderAll();
@@ -55,18 +57,29 @@ function setupSearch() {
 }
 
 function setupFilters() {
-    const chips = document.querySelectorAll('.decks-filter-chip');
+    const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
     chips.forEach(chip => {
         chip.addEventListener('click', () => {
             chips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-            currentFilter = chip.dataset.filter;
+            
+            let filter = chip.dataset.filter;
+            if (!filter) {
+                const text = chip.textContent;
+                if (text.includes('A1')) filter = 'A1';
+                else if (text.includes('A2')) filter = 'A2';
+                else if (text.includes('B1')) filter = 'B1';
+                else if (text.includes('B2')) filter = 'B2';
+                else if (text.includes('Personalizados')) filter = 'Personalizados';
+                else filter = 'Todos';
+            }
+            
+            currentFilter = filter;
             
             // If selecting Personalizados filter directly, enter that folder
             if (currentFilter === 'Personalizados') {
                 currentFolderId = 'personalizados';
             } else if (currentFolderId === 'personalizados' && currentFilter !== 'Todos') {
-                // If leaving Personalizados, go back to root
                 currentFolderId = null;
             }
             
@@ -137,13 +150,24 @@ function renderExplorer() {
             currentFolderId = folder.id;
             
             // Sync filter chips: if entering 'personalizados' folder, activate that chip
-            const chips = document.querySelectorAll('.decks-filter-chip');
+            const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
             chips.forEach(c => {
                 c.classList.remove('active');
-                if (folder.id === 'personalizados' && c.dataset.filter === 'Personalizados') {
+                
+                let isPersonalizados = false;
+                if (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados')) {
+                    isPersonalizados = true;
+                }
+                
+                let isTodos = false;
+                if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
+                    isTodos = true;
+                }
+                
+                if (folder.id === 'personalizados' && isPersonalizados) {
                     c.classList.add('active');
                     currentFilter = 'Personalizados';
-                } else if (folder.id !== 'personalizados' && c.dataset.filter === 'Todos') {
+                } else if (folder.id !== 'personalizados' && isTodos) {
                     c.classList.add('active');
                     currentFilter = 'Todos';
                 }
@@ -249,14 +273,20 @@ function renderFlattened() {
         
         document.getElementById('btnBackToExplorer').onclick = () => {
             // Reset state
-            const searchInput = document.getElementById('decksSearchInput');
+            const searchInput = document.getElementById('decksSearchInput') || document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             currentQuery = '';
             
-            const chips = document.querySelectorAll('.decks-filter-chip');
+            const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
             chips.forEach(c => {
                 c.classList.remove('active');
-                if (c.dataset.filter === 'Todos') c.classList.add('active');
+                
+                let isTodos = false;
+                if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
+                    isTodos = true;
+                }
+                
+                if (isTodos) c.classList.add('active');
             });
             currentFilter = 'Todos';
             currentFolderId = null;
@@ -344,13 +374,24 @@ function renderBreadcrumbs(container) {
                 currentFolderId = item.id;
                 
                 // Sync filter chips
-                const chips = document.querySelectorAll('.decks-filter-chip');
+                const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
                 chips.forEach(c => {
                     c.classList.remove('active');
-                    if (item.id === 'personalizados' && c.dataset.filter === 'Personalizados') {
+                    
+                    let isPersonalizados = false;
+                    if (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados')) {
+                        isPersonalizados = true;
+                    }
+                    
+                    let isTodos = false;
+                    if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
+                        isTodos = true;
+                    }
+                    
+                    if (item.id === 'personalizados' && isPersonalizados) {
                         c.classList.add('active');
                         currentFilter = 'Personalizados';
-                    } else if (item.id !== 'personalizados' && c.dataset.filter === 'Todos') {
+                    } else if (item.id !== 'personalizados' && isTodos) {
                         c.classList.add('active');
                         currentFilter = 'Todos';
                     }
@@ -449,10 +490,10 @@ function updateGlobalStats() {
     const masteryPercent = totalEncountered > 0
         ? Math.round((totalMastered / totalEncountered) * 100) : 0;
 
-    const streakEl = document.getElementById('decksStatStreak');
-    const dominioEl = document.getElementById('decksStatDominio');
-    const progressEl = document.getElementById('decksStatProgress');
-    const repasoEl = document.getElementById('decksStatRepasos');
+    const streakEl = document.getElementById('decksStatStreak') || document.getElementById('statStreak');
+    const dominioEl = document.getElementById('decksStatDominio') || document.getElementById('statDominio');
+    const progressEl = document.getElementById('decksStatProgress') || document.getElementById('statProgressFill');
+    const repasoEl = document.getElementById('decksStatRepasos') || document.getElementById('statRepasos');
     const totalDecksEl = document.getElementById('decksStatTotal');
 
     if (streakEl) streakEl.textContent = `🔥 ${stats.streak} ${stats.streak === 1 ? 'día' : 'días'}`;
@@ -570,8 +611,7 @@ function buildCustomEmptyState() {
         <div class="decks-empty-state" id="decksEmptyCustom">
             <div class="decks-empty-icon">📂</div>
             <h3>Aún no tenés mazos personalizados</h3>
-            <p>Importá un archivo CSV desde el portal principal para crear tu primer mazo personalizado.</p>
-            <a href="index.html" class="decks-empty-cta">← Ir al Portal</a>
+            <p>Importá un archivo CSV arriba para crear tu primer mazo personalizado.</p>
         </div>
     `;
 }

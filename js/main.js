@@ -5,36 +5,19 @@ import * as Speech from './modules/speech.js';
 import * as Utils from './modules/utils.js';
 import * as Parser from './modules/parser.js';
 import * as Library from './modules/library.js';
-import * as UiPortal from './modules/ui-portal.js';
 import * as UiModal from './modules/ui-modal.js';
+import * as DecksPage from './modules/decks-page.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     UiModal.init(updateStatsUI);
-    loadPacks();
+    DecksPage.init(UiModal.openPracticeModal, deleteCustomDeck);
     setupDragAndDrop();
     setupEventListeners();
     updateStatsUI();
 });
 
 function setupEventListeners() {
-    // Portal Search and Filters
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', () => UiPortal.filterPacks());
-    }
-
-    const filterChips = document.querySelectorAll('.filter-chip');
-    filterChips.forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            const level = e.target.textContent.includes('A1') ? 'A1' :
-                          e.target.textContent.includes('A2') ? 'A2' :
-                          e.target.textContent.includes('B1') ? 'B1' :
-                          e.target.textContent.includes('B2') ? 'B2' : 'Todos';
-            UiPortal.setFilter(level, e.target, UiPortal.filterPacks);
-        });
-    });
-
     // Import Actions
     const dropZone = document.getElementById('dropZone');
     const csvInput = document.getElementById('csvInput');
@@ -46,7 +29,10 @@ function setupEventListeners() {
     // Modal Controls
     const closeBtn = document.querySelector('.close-btn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => UiModal.closeModal(loadPacks));
+        closeBtn.addEventListener('click', () => UiModal.closeModal(() => {
+            DecksPage.refresh();
+            updateStatsUI();
+        }));
     }
 
     const modalEnableImages = document.getElementById('modalEnableImages');
@@ -149,18 +135,6 @@ function updateStatsUI() {
     if (reviewsEl) reviewsEl.innerText = stats.totalReviews;
 }
 
-// Load packs from JSON
-async function loadPacks() {
-    try {
-        const response = await fetch('data/packs.json');
-        packsData = await response.json();
-        UiPortal.renderPacks(packsData);
-        UiPortal.renderCustomDecks(UiModal.openPracticeModal, deleteCustomDeck);
-    } catch (error) {
-        console.error('Error loading packs:', error);
-    }
-}
-
 // Drag and Drop implementation
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
@@ -180,6 +154,7 @@ function setupDragAndDrop() {
     if (dragOverlay) {
         dragOverlay.addEventListener('dragleave', (e) => {
             if (e.relatedTarget === null || e.target === dragOverlay) {
+                dragOverlay.classList.remove('remove');
                 dragOverlay.classList.remove('active');
             }
         });
@@ -245,14 +220,14 @@ function saveActiveDeckToLibrary() {
     const msg = Library.saveActiveDeckToLibrary(deck);
     if (msg) {
         alert(msg);
-        UiPortal.renderCustomDecks(UiModal.openPracticeModal, deleteCustomDeck);
+        DecksPage.refresh();
     }
 }
 
 function deleteCustomDeck(id) {
     if (!confirm("¿Estás seguro de que quieres eliminar este mazo de tu biblioteca? Se perderán las estadísticas del mazo.")) return;
     Library.deleteCustomDeck(id, () => {
-        UiPortal.renderCustomDecks(UiModal.openPracticeModal, deleteCustomDeck);
+        DecksPage.refresh();
         updateStatsUI();
     });
 }
