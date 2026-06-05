@@ -2,6 +2,7 @@
 import * as Utils from './modules/utils.js';
 import * as GitHub from './modules/github.js';
 import * as Template from './modules/template.js';
+import * as AdminManager from './modules/admin-manager.js';
 
 // Seguridad / Login (Client-Side Hashing)
 // Hashes para Usuario: AkkarinRothen | Pass: Mily2505
@@ -34,10 +35,15 @@ function setupEventListeners() {
         ghHeader.addEventListener('click', () => toggleGithubCollapse());
     }
 
-    const ghSaveBtn = document.querySelector('#ghCollapsibleContent button');
+    const ghSaveBtn = document.getElementById('ghSaveBtn');
     if (ghSaveBtn) {
         ghSaveBtn.addEventListener('click', () => saveAuth());
     }
+
+    // Tabs switching
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
 
     // OCR
     const ocrInput = document.getElementById('ocrImageInput');
@@ -498,4 +504,59 @@ function parseOcrResults(text) {
         }
     }
     return outputLines.join('\n');
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.admin-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+
+    const tabCreate = document.getElementById('tabCreate');
+    if (tabCreate) {
+        tabCreate.style.display = tab === 'create' ? 'block' : 'none';
+    }
+
+    const mp = document.getElementById('adminManagerPanel');
+    if (mp) {
+        if (tab === 'manager') {
+            mp.classList.add('visible');
+            initManager();
+        } else {
+            mp.classList.remove('visible');
+        }
+    }
+}
+
+let managerInitialized = false;
+async function initManager() {
+    if (managerInitialized) {
+        try {
+            const allPacks = await loadAllPacksForManager();
+            AdminManager.setPacks(allPacks);
+        } catch (e) {
+            console.error('Error refreshing packs in manager:', e);
+        }
+        return;
+    }
+    managerInitialized = true;
+    try {
+        const allPacks = await loadAllPacksForManager();
+        AdminManager.init(allPacks, () => switchTab('create'));
+    } catch (e) {
+        console.error('Error initializing resource manager:', e);
+        managerInitialized = false;
+    }
+}
+
+async function loadAllPacksForManager() {
+    try {
+        const res = await fetch('data/packs.json');
+        const officialPacks = await res.json();
+        const customDecks = JSON.parse(localStorage.getItem('estudiapp_custom_decks') || '[]')
+            .map(d => ({ ...d, _custom: true }));
+        return [...officialPacks, ...customDecks];
+    } catch (e) {
+        console.error('Error loading packs for manager:', e);
+        return [];
+    }
 }

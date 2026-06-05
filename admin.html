@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - EstudiApp Portal</title>
+    <title>Admin — EstudiApp Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/theme.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
+    <link rel="stylesheet" href="assets/css/admin-manager.css">
 </head>
 <body>
 
@@ -31,6 +33,8 @@
 
 <!-- Main Admin Content (Hidden by default) -->
 <div id="mainAdminContent" style="display: none;">
+
+    <!-- GitHub Connection (collapsible) -->
     <div class="card auth-section">
         <div class="collapsible-header">
             <h2>Conexión con GitHub</h2>
@@ -50,85 +54,139 @@
                 <label>Token (PAT):</label>
                 <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
             </div>
-            <button>Guardar Credenciales (Local)</button>
+            <button id="ghSaveBtn">Guardar Credenciales (Local)</button>
         </div>
     </div>
 
-    <div class="card">
-        <h2>Crear Nuevo Pack</h2>
-        <div class="form-group">
-            <label>ID del Pack (sin espacios ni acentos):</label>
-            <input type="text" id="packId" placeholder="ej: animales_salvajes">
+    <!-- Tab System -->
+    <div class="card" style="width: 100%; box-sizing: border-box;">
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" id="tabBtnCreate" data-tab="create">✨ Crear Pack</button>
+            <button class="admin-tab-btn" id="tabBtnManager" data-tab="manager">📁 Gestionar Recursos</button>
         </div>
-        <div class="form-group">
-            <label>Título (Mostrado en la web):</label>
-            <input type="text" id="packTitle" placeholder="ej: A1: Animales Salvajes">
-        </div>
-        <div class="form-group">
-            <label>Nivel:</label>
-            <select id="packLevel">
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B1">B1</option>
-                <option value="B2">B2</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Categoría:</label>
-            <input type="text" id="packCategory" placeholder="ej: Naturaleza">
-        </div>
-        <div class="form-group">
-            <label>Descripción corta:</label>
-            <input type="text" id="packDesc" placeholder="Vocabulario sobre fauna de la selva y sabana.">
-        </div>
-        <div class="form-group">
-            <label>Fórmula del Dado:</label>
-            <input type="text" id="packFormula" value="1d8">
-        </div>
-        <!-- Herramienta de OCR y Recorte -->
-        <div class="form-group" style="background: var(--surface-variant); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-            <label style="color: var(--primary);">📷 Extraer Vocabulario desde Imagen (OCR)</label>
-            <p class="info" style="margin-bottom: 10px;">Sube una imagen de una tabla de vocabulario, arrastra para recortar las palabras y haz clic en "Procesar OCR".</p>
-            
-            <input type="file" id="ocrImageInput" accept="image/*" style="margin-bottom: 10px; font-size: 13px;">
-            
-            <div id="cropperWrapper" style="display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
-                <div style="position: relative; max-width: 100%; overflow: auto; border: 2px solid var(--outline); border-radius: 8px; background: #000;">
-                    <canvas id="ocrCanvas" style="display: block; cursor: crosshair; max-width: 100%;"></canvas>
+
+        <!-- ─── Tab: Crear Pack ──────────────────────────────────────────────── -->
+        <div id="tabCreate">
+            <h2>Crear Nuevo Pack</h2>
+            <div class="form-group">
+                <label>ID del Pack (sin espacios ni acentos):</label>
+                <input type="text" id="packId" placeholder="ej: animales_salvajes">
+            </div>
+            <div class="form-group">
+                <label>Título (Mostrado en la web):</label>
+                <input type="text" id="packTitle" placeholder="ej: A1: Animales Salvajes">
+            </div>
+            <div class="form-group">
+                <label>Nivel:</label>
+                <select id="packLevel">
+                    <option value="A1">A1</option>
+                    <option value="A2">A2</option>
+                    <option value="B1">B1</option>
+                    <option value="B2">B2</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Categoría:</label>
+                <input type="text" id="packCategory" placeholder="ej: Naturaleza">
+            </div>
+            <div class="form-group">
+                <label>Descripción corta:</label>
+                <input type="text" id="packDesc" placeholder="Vocabulario sobre fauna de la selva y sabana.">
+            </div>
+            <div class="form-group">
+                <label>Fórmula del Dado:</label>
+                <input type="text" id="packFormula" value="1d8">
+            </div>
+
+            <!-- OCR Tool -->
+            <div class="form-group" style="background: var(--surface-variant); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <label style="color: var(--primary);">📷 Extraer Vocabulario desde Imagen (OCR)</label>
+                <p class="info" style="margin-bottom: 10px;">Sube una imagen de una tabla de vocabulario, arrastra para recortar las palabras y haz clic en "Procesar OCR".</p>
+                <input type="file" id="ocrImageInput" accept="image/*" style="margin-bottom: 10px; font-size: 13px;">
+                <div id="cropperWrapper" style="display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                    <div style="position: relative; max-width: 100%; overflow: auto; border: 2px solid var(--outline); border-radius: 8px; background: #000;">
+                        <canvas id="ocrCanvas" style="display: block; cursor: crosshair; max-width: 100%;"></canvas>
+                    </div>
+                    <button type="button" id="btnRunOcr" style="background: var(--primary); margin-top: 5px;">🔍 Procesar Selección (OCR)</button>
+                    <div id="ocrProgress" class="info" style="font-weight: bold; color: var(--primary); display: none;">Progreso: 0%</div>
                 </div>
-                <button type="button" id="btnRunOcr" style="background: var(--primary); margin-top: 5px;">🔍 Procesar Selección (OCR)</button>
-                <div id="ocrProgress" class="info" style="font-weight: bold; color: var(--primary); display: none;">Progreso: 0%</div>
             </div>
+
+            <div class="form-group">
+                <label>Entradas del Vocabulario:</label>
+                <p class="info">Las celdas son editables. Puedes añadir o eliminar filas.</p>
+                <div class="vocab-table-container">
+                    <table class="vocab-table" id="vocabTable">
+                        <thead>
+                            <tr>
+                                <th>Español</th>
+                                <th>Inglés / Traducción</th>
+                                <th style="width: 50px; text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vocabTableBody">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="vocab-table-actions">
+                    <button type="button" id="addTableRowBtn" style="background: var(--secondary);">＋ Añadir Palabra</button>
+                    <button type="button" id="clearTableBtn" style="background: var(--error);">🗑️ Limpiar Todo</button>
+                </div>
+            </div>
+
+            <button id="btnPublish">Generar y Publicar en GitHub</button>
+            <div id="statusBox"></div>
         </div>
 
-        <div class="form-group">
-            <label>Entradas del Vocabulario:</label>
-            <p class="info">Las celdas son editables. Puedes añadir o eliminar filas.</p>
-            
-            <div class="vocab-table-container">
-                <table class="vocab-table" id="vocabTable">
-                    <thead>
-                        <tr>
-                            <th>Español</th>
-                            <th>Inglés / Traducción</th>
-                            <th style="width: 50px; text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="vocabTableBody">
-                        <!-- Filas dinámicas -->
-                    </tbody>
-                </table>
+        <!-- ─── Tab: Gestionar Recursos ─────────────────────────────────────── -->
+        <div id="adminManagerPanel">
+
+            <!-- Toolbar -->
+            <div class="manager-toolbar">
+                <div class="manager-toolbar-left">
+                    <button class="tb-btn primary" id="tbNewFolder" title="Nueva carpeta">
+                        📁 <span>Nueva Carpeta</span>
+                    </button>
+                    <button class="tb-btn primary" id="tbNewResource" title="Crear nuevo recurso">
+                        ✨ <span>Nuevo Recurso</span>
+                    </button>
+                    <div class="tb-separator"></div>
+                    <button class="tb-btn" id="tbMoveSel" title="Mover selección" disabled>
+                        📂 <span>Mover a…</span>
+                    </button>
+                    <button class="tb-btn danger" id="tbDeleteSel" title="Eliminar selección" disabled>
+                        🗑️ <span>Eliminar</span>
+                    </button>
+                </div>
+                <div class="manager-toolbar-right">
+                    <div class="selection-count-badge" id="selectionCountBadge">0 seleccionados</div>
+                    <button class="tb-btn" id="tbSelectAll" title="Seleccionar todo">☑ <span>Sel. Todo</span></button>
+                    <button class="tb-btn" id="tbClearSel" title="Limpiar selección" disabled>✕ <span>Limpiar</span></button>
+                    <div class="tb-separator"></div>
+                    <button class="tb-btn view-toggle-btn" id="tbViewToggle" title="Cambiar vista">☰</button>
+                    <button class="tb-btn" id="tbPublish" title="Publicar cambios en GitHub">🚀 <span>Publicar</span></button>
+                </div>
             </div>
-            
-            <div class="vocab-table-actions">
-                <button type="button" id="addTableRowBtn" style="background: var(--secondary);">＋ Añadir Palabra</button>
-                <button type="button" id="clearTableBtn" style="background: var(--error);">🗑️ Limpiar Todo</button>
+
+            <!-- Two-panel body -->
+            <div class="manager-body">
+                <!-- Left: Folder tree -->
+                <div class="manager-sidebar" id="managerSidebar">
+                    <!-- Rendered by admin-manager.js -->
+                </div>
+
+                <!-- Right: Main content -->
+                <div class="manager-main" id="managerMain">
+                    <!-- Rendered by admin-manager.js -->
+                </div>
             </div>
+
         </div>
-        
-        <button id="btnPublish">Generar y Publicar en GitHub</button>
-        <div id="statusBox"></div>
+        <!-- /Tab: Gestionar Recursos -->
+
     </div>
+    <!-- /Tab System card -->
 
     <a href="index.html" style="color:var(--primary); font-weight:bold; margin-bottom: 40px;">Volver al Portal</a>
 </div>
