@@ -123,21 +123,26 @@
 <!-- Main Admin Content (Hidden by default) -->
 <div id="mainAdminContent" style="display: none;">
     <div class="card auth-section">
-        <h2>Conexión con GitHub</h2>
-        <p class="info">Para subir packs directamente a la web, necesitas un Personal Access Token (classic) con permisos de "repo".</p>
-        <div class="form-group">
-            <label>Usuario (Owner):</label>
-            <input type="text" id="ghOwner" placeholder="Ej: AkkarinRothen">
+        <div class="collapsible-header" onclick="toggleGithubCollapse()">
+            <h2>Conexión con GitHub</h2>
+            <svg class="chevron-icon" id="ghChevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
         </div>
-        <div class="form-group">
-            <label>Repositorio:</label>
-            <input type="text" id="ghRepo" placeholder="Ej: EstudiAppweb">
+        <div class="collapsible-content expanded" id="ghCollapsibleContent">
+            <p class="info" style="margin-top: 10px;">Para subir packs directamente a la web, necesitas un Personal Access Token (classic) con permisos de "repo".</p>
+            <div class="form-group">
+                <label>Usuario (Owner):</label>
+                <input type="text" id="ghOwner" placeholder="Ej: AkkarinRothen">
+            </div>
+            <div class="form-group">
+                <label>Repositorio:</label>
+                <input type="text" id="ghRepo" placeholder="Ej: EstudiAppweb">
+            </div>
+            <div class="form-group">
+                <label>Token (PAT):</label>
+                <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <button onclick="saveAuth()">Guardar Credenciales (Local)</button>
         </div>
-        <div class="form-group">
-            <label>Token (PAT):</label>
-            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-        </div>
-        <button onclick="saveAuth()">Guardar Credenciales (Local)</button>
     </div>
 
     <div class="card">
@@ -188,9 +193,28 @@
         </div>
 
         <div class="form-group">
-            <label>Entradas (Una por línea):</label>
-            <p class="info">Formato: Español -> Inglés || Ejemplo opcional en inglés</p>
-            <textarea id="packEntries" placeholder="El león -> The lion || The lion sleeps tonight&#10;El tigre -> The tiger&#10;El elefante -> The elephant"></textarea>
+            <label>Entradas del Vocabulario:</label>
+            <p class="info">Las celdas son editables. Puedes añadir o eliminar filas.</p>
+            
+            <div class="vocab-table-container">
+                <table class="vocab-table" id="vocabTable">
+                    <thead>
+                        <tr>
+                            <th>Español</th>
+                            <th>Inglés / Traducción</th>
+                            <th style="width: 50px; text-align: center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vocabTableBody">
+                        <!-- Filas dinámicas -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="vocab-table-actions">
+                <button type="button" onclick="addTableRow()" style="background: var(--secondary);">＋ Añadir Palabra</button>
+                <button type="button" onclick="clearTable()" style="background: var(--error);">🗑️ Limpiar Todo</button>
+            </div>
         </div>
         
         <button id="btnPublish" onclick="publishPack()">Generar y Publicar en GitHub</button>

@@ -14,12 +14,66 @@ let modalQuizCorrect = 0;
 let modalCurrentEntry = null;
 let onStatsUpdateCallback = null;
 
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('practiceModal');
+        if (!modal || modal.style.display !== 'flex') return;
+
+        // If focus is on writing input, do not block keyboard shortcuts
+        if (document.activeElement && document.activeElement.id === 'modalWriteInput') return;
+
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (modalCurrentMode === 'direct' || modalCurrentMode === 'flashcard') {
+                if (modalIsRevealed) {
+                    rollModal();
+                } else {
+                    revealModal();
+                }
+            }
+        } else if (e.key === '1') {
+            const srsFeedback = document.getElementById('modalSrsFeedback');
+            if (srsFeedback && srsFeedback.style.display === 'flex') {
+                rateModalSrs(false);
+            }
+        } else if (e.key === '2') {
+            const srsFeedback = document.getElementById('modalSrsFeedback');
+            if (srsFeedback && srsFeedback.style.display === 'flex') {
+                rateModalSrs(true);
+            }
+        }
+    });
+}
+
+function updateModalSrsBadge(spanishWord) {
+    const badge = document.getElementById('modalSrsBadge');
+    if (!badge || !importedTableData) return;
+    
+    if (modalCurrentMode === 'quiz' || modalCurrentMode === 'write') {
+        badge.style.display = 'none';
+        return;
+    }
+
+    const packId = "csv_" + importedTableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
+    const srsData = Storage.getSrsData()[packId] || {};
+    const srsInfo = srsData[spanishWord];
+    const box = srsInfo ? srsInfo.box : 1;
+    
+    badge.innerText = `Caja ${box}`;
+    badge.style.display = 'block';
+    
+    // Clean old box classes
+    badge.className = 'srs-badge';
+    badge.classList.add(`srs-box-${box}`);
+}
+
 /**
  * Initializes the modal logic
  * @param {Function} onStatsUpdate 
  */
 export function init(onStatsUpdate) {
     onStatsUpdateCallback = onStatsUpdate;
+    setupKeyboardShortcuts();
 }
 
 export function openPracticeModal(data) {
@@ -32,6 +86,8 @@ export function openPracticeModal(data) {
 
 export function closeModal(onClose) {
     document.getElementById('practiceModal').style.display = 'none';
+    const badge = document.getElementById('modalSrsBadge');
+    if (badge) badge.style.display = 'none';
     importedTableData = null;
     if (onClose) onClose();
 }
@@ -42,6 +98,10 @@ export function toggleModalImages() {
 
 export function setModalMode(mode) {
     modalCurrentMode = mode;
+    
+    const badge = document.getElementById('modalSrsBadge');
+    if (badge) badge.style.display = 'none';
+
     document.querySelectorAll('.chip-modal').forEach(c => c.classList.remove('active'));
     if (mode === 'direct') document.getElementById('modalModeDirect').classList.add('active');
     if (mode === 'flashcard') document.getElementById('modalModeFlashcard').classList.add('active');
@@ -89,6 +149,9 @@ export function setModalMode(mode) {
             document.getElementById('modalSubText').innerText = modalLastEnglishText;
             modalIsRevealed = (mode === 'direct');
             updateModalVisibility();
+            if (modalLastSpanishText) {
+                updateModalSrsBadge(modalLastSpanishText);
+            }
         } else {
             document.getElementById('modalMainText').innerText = '---';
             document.getElementById('modalRollVal').innerText = 'Tira el dado para empezar';
@@ -138,6 +201,7 @@ export function rollModal() {
         document.getElementById('modalRollVal').innerText = "Tirada (SRS): " + val;
         document.getElementById('modalMainText').innerText = main;
         document.getElementById('modalSubText').innerText = sub;
+        updateModalSrsBadge(main);
 
         if (imageUrl) {
             modalVocabImg.classList.remove('loaded');

@@ -47,14 +47,46 @@ function setupEventListeners() {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+        if (document.activeElement && document.activeElement.id === 'writeInput') return;
+
         if (e.code === 'Space') {
             if (currentMode === 'direct' || currentMode === 'flashcard') {
                 if (isRevealed) roll();
                 else reveal();
                 e.preventDefault();
             }
+        } else if (e.key === '1') {
+            const srsF = document.getElementById('srsFeedback');
+            if (srsF && srsF.style.display === 'flex') {
+                rateSrs(false);
+            }
+        } else if (e.key === '2') {
+            const srsF = document.getElementById('srsFeedback');
+            if (srsF && srsF.style.display === 'flex') {
+                rateSrs(true);
+            }
         }
     });
+}
+
+function updateSrsBadge(spanishWord) {
+    const badge = document.getElementById('srsBadge');
+    if (!badge) return;
+    
+    if (currentMode === 'quiz' || currentMode === 'write') {
+        badge.style.display = 'none';
+        return;
+    }
+
+    const srsData = Storage.getSrsData()[packId] || {};
+    const srsInfo = srsData[spanishWord];
+    const box = srsInfo ? srsInfo.box : 1;
+    
+    badge.innerText = `Caja ${box}`;
+    badge.style.display = 'block';
+    
+    badge.className = 'srs-badge';
+    badge.classList.add(`srs-box-${box}`);
 }
 
 function initTts() {
@@ -71,6 +103,10 @@ function toggleImages() {
 
 function setMode(mode) {
     currentMode = mode;
+    
+    const badge = document.getElementById('srsBadge');
+    if (badge) badge.style.display = 'none';
+
     document.getElementById('modeDirect')?.classList.toggle('active', mode === 'direct');
     document.getElementById('modeFlashcard')?.classList.toggle('active', mode === 'flashcard');
     document.getElementById('modeQuiz')?.classList.toggle('active', mode === 'quiz');
@@ -131,6 +167,9 @@ function setMode(mode) {
             if (subT) subT.innerText = lastEnglishText;
             isRevealed = (mode === 'direct');
             updateVisibility();
+            if (lastSpanishText) {
+                updateSrsBadge(lastSpanishText);
+            }
         } else {
             const mainT = document.getElementById('mainText');
             if (mainT) mainT.innerText = '---';
@@ -228,6 +267,7 @@ function roll() {
             setTimeout(() => area.style.transform = "scale(1)", 150);
         }
 
+        updateSrsBadge(main);
         addHistory(val, main, sub);
     };
 
@@ -307,6 +347,7 @@ function reveal() {
 
 function rateSrs(isCorrect) {
     Srs.updateWordSrs(packId, lastSpanishText, isCorrect);
+    updateSrsBadge(lastSpanishText);
     const srsF = document.getElementById('srsFeedback');
     if (srsF) srsF.style.display = 'none';
 }

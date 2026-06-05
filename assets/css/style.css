@@ -812,3 +812,445 @@ footer {
     height: 16px;
     fill: currentColor;
 }
+
+/* Interactive Vocabulary Table in Admin */
+.vocab-table-container {
+    width: 100%;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--surface-variant);
+    background: var(--container);
+}
+.vocab-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+.vocab-table th, .vocab-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--surface-variant);
+}
+.vocab-table th {
+    background: var(--surface-variant);
+    color: var(--on-surface-variant);
+    font-weight: 700;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.vocab-table td input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 4px;
+    box-sizing: border-box;
+    color: var(--on-surface);
+}
+.vocab-table td input:focus {
+    outline: 1px solid var(--primary);
+    background: var(--surface-variant);
+    border-radius: 4px;
+}
+.vocab-table .btn-row-delete {
+    background: transparent;
+    border: none;
+    color: var(--error);
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+}
+.vocab-table-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.vocab-table-actions button {
+    flex: 1;
+}
+
+/* Collapsible Section for GitHub Credentials */
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 0;
+}
+.collapsible-header h2 {
+    margin: 0;
+}
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+.collapsible-content.expanded {
+    max-height: 500px;
+}
+.chevron-icon {
+    transition: transform 0.3s;
+    fill: var(--primary);
+    width: 24px;
+    height: 24px;
+}
+.chevron-icon.rotated {
+    transform: rotate(180deg);
+}
+
+/* SRS Level Badges */
+.srs-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 20;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    animation: scaleIn 0.3s ease;
+}
+@keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.srs-box-1 { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+.srs-box-2 { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+.srs-box-3 { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+.srs-box-4 { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+.srs-box-5 { 
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); 
+    color: #1B5E20; 
+    border: 1px solid #81C784;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+/* Drag & Drop Overlay Indicator */
+#dragOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(103, 80, 164, 0.15);
+    backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+.drag-content {
+    border: 3px dashed var(--primary);
+    padding: 50px 80px;
+    border-radius: 28px;
+    background: var(--container);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+#dragOverlay.active {
+    display: flex;
+}
+#dragOverlay.active .drag-content {
+    transform: scale(1);
+}
+.drag-content h2 {
+    color: var(--primary);
+    margin: 0 0 10px 0;
+}
+.drag-content p {
+    color: var(--on-surface-variant);
+    margin: 0;
+}
+
+/* ============================================================
+   RESPONSIVE — Tablet (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+    header {
+        padding: 36px 16px;
+    }
+    header h1 {
+        font-size: 28px;
+    }
+    header p {
+        font-size: 15px;
+    }
+
+    .container {
+        width: 94%;
+        padding: 24px 0;
+    }
+
+    .stats-dashboard {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+    .stat-card {
+        padding: 14px 10px;
+    }
+    .stat-value {
+        font-size: 20px;
+    }
+    .stat-label {
+        font-size: 11px;
+    }
+
+    .import-area {
+        padding: 22px 16px;
+        margin-bottom: 28px;
+    }
+    .import-area svg {
+        width: 36px;
+        height: 36px;
+    }
+    .import-area h3 {
+        font-size: 16px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
+
+    .card {
+        padding: 22px 18px;
+        border-radius: 20px;
+    }
+
+    /* Modal - tablet: allow scrolling */
+    .modal-overlay {
+        align-items: flex-end;
+    }
+    .modal-card {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 28px 28px 0 0;
+        max-height: 92vh;
+        overflow-y: auto;
+        padding: 28px 20px 32px;
+    }
+
+    .mode-toggle {
+        flex-wrap: wrap;
+    }
+    .chip-modal {
+        flex: 1 1 40%;
+        min-width: 0;
+        font-size: 11px;
+        padding: 8px 6px;
+    }
+
+    /* Interop buttons */
+    .interop-buttons {
+        flex-direction: column;
+    }
+
+    /* Drag overlay */
+    .drag-content {
+        padding: 32px 40px;
+    }
+}
+
+/* ============================================================
+   RESPONSIVE — Mobile (≤480px)
+   ============================================================ */
+@media (max-width: 480px) {
+    header {
+        padding: 28px 14px;
+    }
+    header h1 {
+        font-size: 22px;
+        letter-spacing: -0.2px;
+    }
+    header p {
+        font-size: 13px;
+        margin-top: 8px;
+    }
+
+    .container {
+        width: 100%;
+        padding: 16px 12px;
+    }
+
+    /* Stats: stack in a row that wraps if needed */
+    .stats-dashboard {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        padding: 12px 8px;
+        border-radius: 14px;
+    }
+    .stat-value {
+        font-size: 17px;
+    }
+    .stat-label {
+        font-size: 9px;
+        letter-spacing: 0;
+    }
+
+    /* Import area */
+    .import-area {
+        padding: 18px 12px;
+        border-radius: 18px;
+        margin-bottom: 20px;
+    }
+    .import-area svg {
+        width: 30px;
+        height: 30px;
+    }
+    .import-area h3 {
+        font-size: 15px;
+    }
+    .import-area p {
+        font-size: 12px;
+    }
+
+    /* Search */
+    .search-bar {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    /* Filter chips: scrollable row */
+    .filter-section {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        padding-bottom: 4px;
+        /* hide scrollbar visually */
+        scrollbar-width: none;
+    }
+    .filter-section::-webkit-scrollbar {
+        display: none;
+    }
+    .filter-chip {
+        flex-shrink: 0;
+        padding: 10px 18px;
+        font-size: 13px;
+    }
+
+    /* Grid: single column */
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .card {
+        padding: 18px 16px;
+        border-radius: 18px;
+    }
+    .card h3 {
+        font-size: 17px;
+    }
+    .card p {
+        font-size: 14px;
+    }
+
+    /* Modal: full-screen sheet */
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .modal-card {
+        max-width: 100%;
+        width: 100%;
+        border-radius: 24px 24px 0 0;
+        max-height: 95dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 24px 16px 40px;
+    }
+    .modal-card h2 {
+        font-size: 20px;
+    }
+    .modal-card p.desc {
+        font-size: 13px;
+    }
+
+    /* Mode toggle wraps */
+    .mode-toggle {
+        flex-wrap: wrap;
+        border-radius: 16px;
+    }
+    .chip-modal {
+        flex: 1 1 45%;
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+
+    /* Entry / translation text */
+    .entry-text {
+        font-size: 19px;
+    }
+    .translation {
+        font-size: 16px;
+    }
+
+    /* Quiz options: larger touch targets */
+    .quiz-option {
+        padding: 14px 12px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+
+    /* SRS buttons */
+    .srs-btn {
+        padding: 14px 8px;
+        font-size: 13px;
+    }
+
+    /* Main action button */
+    .modal-card button.main-btn {
+        padding: 16px;
+        font-size: 15px;
+    }
+
+    /* Close button - bigger tap target on mobile */
+    .close-btn {
+        width: 42px;
+        height: 42px;
+        top: 16px;
+        right: 16px;
+    }
+
+    /* Interop buttons */
+    .interop-buttons {
+        flex-direction: column;
+    }
+    .btn-export {
+        padding: 12px 16px;
+        font-size: 13px;
+        border-radius: 14px;
+    }
+
+    /* TTS controls */
+    .tts-controls label {
+        font-size: 11px;
+    }
+
+    /* Drag overlay */
+    .drag-content {
+        padding: 28px 24px;
+        margin: 16px;
+    }
+
+    /* Footer */
+    footer {
+        padding: 32px 16px;
+        font-size: 12px;
+    }
+
+    /* Custom decks section */
+    .custom-decks-section h2 {
+        font-size: 18px;
+    }
+}

@@ -52,10 +52,72 @@ function saveAuth() {
 }
 window.saveAuth = saveAuth;
 
+function toggleGithubCollapse() {
+    const content = document.getElementById('ghCollapsibleContent');
+    const chevron = document.getElementById('ghChevron');
+    content.classList.toggle('expanded');
+    chevron.classList.toggle('rotated');
+}
+window.toggleGithubCollapse = toggleGithubCollapse;
+
+function addTableRow(es = '', en = '') {
+    const tbody = document.getElementById('vocabTableBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><input type="text" class="vocab-es" value="${es.replace(/"/g, '&quot;')}" placeholder="ej: El perro"></td>
+        <td><input type="text" class="vocab-en" value="${en.replace(/"/g, '&quot;')}" placeholder="ej: The dog"></td>
+        <td style="text-align: center;"><button type="button" class="btn-row-delete" onclick="this.closest('tr').remove(); updateDiceFormula();">×</button></td>
+    `;
+    tr.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', updateDiceFormula);
+    });
+    tbody.appendChild(tr);
+    updateDiceFormula();
+}
+window.addTableRow = addTableRow;
+
+function clearTable() {
+    if (confirm('¿Estás seguro de que quieres limpiar toda la tabla?')) {
+        document.getElementById('vocabTableBody').innerHTML = '';
+        updateDiceFormula();
+    }
+}
+window.clearTable = clearTable;
+
+function updateDiceFormula() {
+    const tbody = document.getElementById('vocabTableBody');
+    const rowCount = tbody.querySelectorAll('tr').length;
+    const formulaInput = document.getElementById('packFormula');
+    if (formulaInput) {
+        formulaInput.value = `1d${rowCount > 0 ? rowCount : 6}`;
+    }
+}
+window.updateDiceFormula = updateDiceFormula;
+
 function loadAuth() {
-    document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || '';
-    document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
-    document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+    const owner = localStorage.getItem('gh_owner') || '';
+    const repo = localStorage.getItem('gh_repo') || '';
+    const token = localStorage.getItem('gh_token') || '';
+    
+    document.getElementById('ghOwner').value = owner;
+    document.getElementById('ghRepo').value = repo;
+    document.getElementById('ghToken').value = token;
+    
+    const content = document.getElementById('ghCollapsibleContent');
+    const chevron = document.getElementById('ghChevron');
+    if (owner && repo && token) {
+        content.classList.remove('expanded');
+        chevron.classList.add('rotated');
+    } else {
+        content.classList.add('expanded');
+        chevron.classList.remove('rotated');
+    }
+    
+    // Add default row to make the editor intuitive if empty
+    const tbody = document.getElementById('vocabTableBody');
+    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+        addTableRow('', '');
+    }
 }
 
 // UI Status
@@ -84,10 +146,22 @@ async function publishPack() {
     const category = document.getElementById('packCategory').value.trim();
     const desc = document.getElementById('packDesc').value.trim();
     const formula = document.getElementById('packFormula').value.trim();
-    const entriesText = document.getElementById('packEntries').value.trim();
 
-    if (!id || !title || !desc || !entriesText) {
-        showStatus('Faltan campos por rellenar en el pack.', 'error');
+    const tbody = document.getElementById('vocabTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    // Gather valid rows
+    let validEntries = [];
+    rows.forEach(row => {
+        const esVal = row.querySelector('.vocab-es').value.trim();
+        const enVal = row.querySelector('.vocab-en').value.trim();
+        if (esVal && enVal) {
+            validEntries.push({ es: esVal, en: enVal });
+        }
+    });
+
+    if (!id || !title || !desc || validEntries.length === 0) {
+        showStatus('Faltan campos por rellenar en el pack o la tabla de vocabulario está vacía.', 'error');
         return;
     }
 
@@ -96,14 +170,14 @@ async function publishPack() {
     btn.innerText = "Procesando...";
 
     try {
-        // 1. Parsear Entradas
-        const lines = entriesText.split('\n').filter(l => l.trim() !== '');
+        // 1. Parsear Entradas desde la Tabla
         let entriesJsonArray = [];
         let i = 1;
-        for (const line of lines) {
-            let parts = line.split('||');
-            let mainText = parts[0].trim().replace(/"/g, '\\"');
+        for (const entry of validEntries) {
+            let parts = entry.en.split('||');
+            let translation = parts[0].trim().replace(/"/g, '\\"');
             let exampleText = parts.length > 1 ? parts[1].trim().replace(/"/g, '\\"') : '';
+            let mainText = `${entry.es.replace(/"/g, '\\"')} -> ${translation}`;
             entriesJsonArray.push(`{min:${i}, max:${i}, text:"${mainText}", example:"${exampleText}"}`);
             i++;
         }
@@ -112,7 +186,6 @@ async function publishPack() {
         // 2. Generar HTML
         const htmlContent = Template.generateHtml(title, desc, formula, entriesString);
         const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent))); // Base64 safe
-
 
         // 3. Subir archivo HTML a GitHub
         showStatus('Subiendo HTML a GitHub...', 'warning');
@@ -153,7 +226,9 @@ async function publishPack() {
         document.getElementById('packId').value = '';
         document.getElementById('packTitle').value = '';
         document.getElementById('packDesc').value = '';
-        document.getElementById('packEntries').value = '';
+        tbody.innerHTML = '';
+        addTableRow('', '');
+        updateDiceFormula();
 
     } catch (e) {
         console.error(e);
@@ -326,15 +401,32 @@ async function runOcr() {
         if (parsedText.trim() === "") {
             alert("No se pudo extraer texto legible. Intenta seleccionar otra área o mejorar la calidad de la imagen.");
         } else {
-            const textarea = document.getElementById('packEntries');
-            if (textarea.value.trim() !== "") {
-                if (confirm("¿Deseas sobrescribir el vocabulario actual? Si cancelas, se añadirá al final.")) {
-                    textarea.value = parsedText;
-                } else {
-                    textarea.value += "\n" + parsedText;
+            const lines = parsedText.split('\n');
+            let overwrite = true;
+            const tbody = document.getElementById('vocabTableBody');
+            
+            // Check if table has rows other than a single blank row
+            const rows = tbody.querySelectorAll('tr');
+            let hasContent = false;
+            if (rows.length > 1) {
+                hasContent = true;
+            } else if (rows.length === 1) {
+                const es = rows[0].querySelector('.vocab-es').value.trim();
+                const en = rows[0].querySelector('.vocab-en').value.trim();
+                if (es || en) hasContent = true;
+            }
+
+            if (hasContent) {
+                overwrite = confirm("¿Deseas sobrescribir el vocabulario actual? Si cancelas, se añadirá al final.");
+            }
+            if (overwrite) {
+                tbody.innerHTML = '';
+            }
+            for (const line of lines) {
+                const parts = line.split("->");
+                if (parts.length >= 2) {
+                    addTableRow(parts[0].trim(), parts[1].trim());
                 }
-            } else {
-                textarea.value = parsedText;
             }
         }
         

@@ -80,8 +80,38 @@ async function loadPacks() {
 // Drag and Drop implementation
 function setupDragAndDrop() {
     const dropZone = document.getElementById('dropZone');
+    const dragOverlay = document.getElementById('dragOverlay');
     if (!dropZone) return;
 
+    // Window-level Drag & Drop Overlay
+    window.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        if (dragOverlay) dragOverlay.classList.add('active');
+    });
+
+    window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    if (dragOverlay) {
+        dragOverlay.addEventListener('dragleave', (e) => {
+            if (e.relatedTarget === null || e.target === dragOverlay) {
+                dragOverlay.classList.remove('active');
+            }
+        });
+
+        dragOverlay.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragOverlay.classList.remove('active');
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0 && (files[0].name.endsWith('.csv') || files[0].name.endsWith('.txt'))) {
+                processCsvFile(files[0]);
+            }
+        });
+    }
+
+    // Original Drop Zone Card
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, (e) => {
             e.preventDefault();
@@ -99,7 +129,7 @@ function setupDragAndDrop() {
     dropZone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         const files = dt.files;
-        if (files.length > 0 && files[0].name.endsWith('.csv')) {
+        if (files.length > 0 && (files[0].name.endsWith('.csv') || files[0].name.endsWith('.txt'))) {
             processCsvFile(files[0]);
         }
     });

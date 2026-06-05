@@ -90,6 +90,99 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         .history-item { font-size: 14px; padding: 12px 16px; border-bottom: 1px solid var(--surface-variant); display: flex; justify-content: space-between; align-items: center; }
         
         .back-link { margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+
+        /* SRS Level Badges */
+        .srs-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 20;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            animation: scaleIn 0.3s ease;
+        }
+        @keyframes scaleIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .srs-box-1 { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+        .srs-box-2 { background: #FFF3E0; color: #E65100; border: 1px solid #FFE0B2; }
+        .srs-box-3 { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+        .srs-box-4 { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+        .srs-box-5 { 
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); 
+            color: #1B5E20; 
+            border: 1px solid #81C784;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+        }
+
+        /* ── Responsive: Tablet ≤768px ── */
+        @media (max-width: 768px) {
+            body { padding: 16px; }
+            .card { padding: 24px 18px; border-radius: 22px; }
+            h1 { font-size: 22px; }
+            .mode-toggle { flex-wrap: wrap; border-radius: 16px; }
+            .chip { flex: 1 1 45%; font-size: 12px; padding: 8px 6px; }
+            .history-list { max-height: 160px; }
+        }
+
+        /* ── Responsive: Mobile ≤480px ── */
+        @media (max-width: 480px) {
+            body { padding: 0; background: var(--surface); }
+            .card {
+                max-width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                border: none;
+                padding: 20px 14px 24px;
+                min-height: 100dvh;
+                box-sizing: border-box;
+            }
+            h1 { font-size: 20px; margin-bottom: 6px; }
+            p.desc { font-size: 13px; margin-bottom: 14px; }
+
+            /* Mode chips: 2-column grid */
+            .mode-toggle { flex-wrap: wrap; border-radius: 14px; gap: 3px; }
+            .chip { flex: 1 1 45%; font-size: 11px; padding: 9px 4px; }
+
+            /* Result area */
+            .result-area { padding: 16px 12px; border-radius: 18px; min-height: 160px; }
+            .entry-text { font-size: 20px; }
+            .translation { font-size: 16px; gap: 8px; }
+
+            /* Quiz: larger tappable options */
+            .quiz-option { padding: 14px 12px; font-size: 14px; border-radius: 12px; }
+
+            /* Write input */
+            .write-input { padding: 13px; font-size: 15px; }
+
+            /* SRS buttons */
+            .srs-btn { padding: 14px 8px; font-size: 13px; }
+
+            /* Main button */
+            .main-btn { padding: 15px; font-size: 15px; }
+
+            /* TTS */
+            .tts-controls { padding: 12px; border-radius: 16px; }
+            .tts-controls label { font-size: 11px; }
+
+            /* History */
+            .history { margin-top: 20px; }
+            .history h2 { font-size: 16px; }
+            .history-list { max-height: 140px; }
+            .history-item { font-size: 13px; padding: 10px 12px; }
+
+            /* Back link */
+            .back-link {
+                display: block;
+                text-align: center;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -110,6 +203,7 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         </div>
 
         <div class="result-area" id="resultArea">
+            <div id="srsBadge" class="srs-badge" style="display: none;">Caja 1</div>
             <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
             
             <div class="dice-container" id="diceContainer">
