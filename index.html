@@ -4,61 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EstudiApp - Portal de Herramientas Didácticas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6750A4;
             --on-primary: #FFFFFF;
-            --primary-container: #EADDFF;
-            --on-primary-container: #21005D;
             --surface: #FEF7FF;
-            --on-surface: #1D1B20;
-            --surface-variant: #E7E0EC;
-            --on-surface-variant: #49454F;
+            --secondary: #625B71;
             --outline: #79747E;
+            --surface-variant: #E7E0EC;
             --container: #FFFFFF;
-            --error: #B3261E;
-            --success: #2E7D32;
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --primary: #D0BCFF;
                 --on-primary: #381E72;
-                --primary-container: #4F378B;
-                --on-primary-container: #EADDFF;
-                --surface: #141218;
-                --on-surface: #E6E1E5;
-                --surface-variant: #49454F;
-                --on-surface-variant: #CAC4D0;
+                --surface: #1C1B1F;
+                --secondary: #CCC2DC;
                 --outline: #938F99;
-                --container: #1D1B20;
-                --error: #F2B8B5;
-                --success: #81C784;
+                --surface-variant: #49454F;
+                --container: #25232A;
             }
         }
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: var(--surface);
-            color: var(--on-surface);
+            color: var(--outline);
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
             transition: background-color 0.3s;
         }
         header {
-            background: linear-gradient(135deg, var(--primary) 0%, #4F378B 100%);
+            background-color: var(--primary);
             color: var(--on-primary);
             width: 100%;
-            padding: 60px 20px;
+            padding: 50px 20px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        header h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -0.5px; }
-        header p { margin: 12px 0 0 0; opacity: 0.9; font-weight: 300; font-size: 18px; }
+        header h1 { margin: 0; font-size: 36px; letter-spacing: -1px; }
+        header p { margin: 12px 0 0 0; opacity: 0.9; font-weight: 300; }
 
         .container {
             max-width: 1200px;
@@ -66,64 +53,26 @@
             padding: 40px 0;
         }
 
-        /* Área de Importación */
-        .import-area {
-            background: var(--container);
-            border: 2px dashed var(--primary);
-            border-radius: 24px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 40px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-        }
-        .import-area:hover {
-            background: var(--surface-variant);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-        .import-area svg {
-            width: 48px;
-            height: 48px;
-            fill: var(--primary);
-            margin-bottom: 12px;
-        }
-        .import-area h3 {
-            margin: 0 0 8px 0;
-            color: var(--primary);
-            font-size: 18px;
-            font-weight: 600;
-        }
-        .import-area p {
-            margin: 0;
-            font-size: 14px;
-            color: var(--on-surface-variant);
-        }
-
         .controls {
             display: flex;
             flex-direction: column;
             gap: 20px;
             margin-bottom: 40px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
         }
 
         .search-bar {
             width: 100%;
-            padding: 18px 28px;
+            padding: 16px 24px;
             border-radius: 100px;
             border: 1px solid var(--outline);
             background: var(--container);
-            color: var(--on-surface);
+            color: inherit;
             font-size: 16px;
-            font-family: inherit;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             outline: none;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-        .search-bar:focus {
-            border-color: var(--primary);
         }
 
         .filter-section {
@@ -134,50 +83,45 @@
         }
 
         .filter-chip {
-            padding: 10px 22px;
-            border-radius: 100px;
+            padding: 10px 20px;
+            border-radius: 12px;
             background: var(--container);
             border: 1px solid var(--outline);
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            color: var(--on-surface-variant);
             transition: all 0.2s;
-        }
-        .filter-chip:hover {
-            background: var(--surface-variant);
         }
         .filter-chip.active {
             background: var(--primary);
             color: var(--on-primary);
             border-color: var(--primary);
-            box-shadow: 0 4px 10px rgba(103, 80, 164, 0.2);
+            transform: scale(1.05);
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
         }
 
         .card {
             background: var(--container);
-            border-radius: 28px;
-            padding: 30px;
+            border-radius: 24px;
+            padding: 28px;
             border: 1px solid var(--surface-variant);
             display: flex;
             flex-direction: column;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             color: inherit;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             animation: fadeIn 0.5s ease backwards;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
             border-color: var(--primary);
         }
         .card-header {
@@ -185,14 +129,13 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 16px;
-            gap: 12px;
         }
-        .card h3 { margin: 0; font-size: 20px; color: var(--primary); line-height: 1.3; font-weight: 600; }
+        .card h3 { margin: 0; font-size: 20px; color: var(--primary); line-height: 1.2; }
         
         .level-badge {
-            padding: 4px 12px;
+            padding: 4px 10px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 800;
             text-transform: uppercase;
         }
@@ -201,231 +144,36 @@
         .level-b1 { background: #FFF3E0; color: #E65100; }
         .level-b2 { background: #FCE4EC; color: #C2185B; }
 
-        .card p { font-size: 15px; color: var(--on-surface-variant); margin: 12px 0; flex-grow: 1; line-height: 1.5; }
+        .card p { font-size: 14px; color: var(--secondary); margin: 12px 0; flex-grow: 1; line-height: 1.5; }
         
         .card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 24px;
-            padding-top: 16px;
+            margin-top: 20px;
+            padding-top: 15px;
             border-top: 1px solid var(--surface-variant);
         }
-        .category { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+        .category { font-size: 11px; opacity: 0.7; font-weight: bold; }
         .btn-open {
             color: var(--primary);
-            font-weight: 700;
+            font-weight: 800;
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
         footer {
             margin-top: auto;
-            padding: 60px 20px;
+            padding: 60px;
             opacity: 0.6;
             font-size: 13px;
             text-align: center;
-            width: 100%;
-            box-sizing: border-box;
         }
 
         .no-results {
             grid-column: 1 / -1;
             text-align: center;
-            padding: 60px;
-            color: var(--on-surface-variant);
-            font-size: 16px;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(4px);
-        }
-        .modal-card {
-            background: var(--container);
-            border-radius: 28px;
-            padding: 32px 24px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-            border: 1px solid var(--surface-variant);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-            position: relative;
-        }
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--surface-variant);
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--on-surface);
-            font-weight: bold;
-            transition: all 0.2s;
-        }
-        .close-btn:hover {
-            transform: scale(1.1);
-            background: var(--primary-container);
-        }
-
-        /* Reusable Preset/Practice Card Styles inside modal */
-        .modal-card h2 { font-size: 26px; margin: 0 0 8px 0; color: var(--primary); font-weight: 600; }
-        .modal-card p.desc { color: var(--on-surface-variant); font-size: 14px; margin: 0 0 20px 0; }
-
-        .mode-toggle {
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-            margin-bottom: 20px;
-            background: var(--surface-variant);
-            padding: 4px;
-            border-radius: 100px;
-        }
-        .chip-modal {
-            padding: 8px 12px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            color: var(--on-surface-variant);
-            transition: all 0.2s;
-            flex: 1;
-        }
-        .chip-modal.active {
-            background: var(--primary);
-            color: var(--on-primary);
-        }
-
-        .result-area {
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: var(--surface-variant);
-            border-radius: 20px;
-            margin-bottom: 20px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            position: relative;
-            box-sizing: border-box;
-        }
-        .roll-val { font-size: 11px; opacity: 0.8; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .entry-text { font-size: 22px; font-weight: 600; color: var(--primary); margin: 0; line-height: 1.3; }
-
-        .translation {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px dashed var(--outline);
-            width: 100%;
-            font-size: 18px;
+            padding: 40px;
             font-style: italic;
-            color: var(--on-surface-variant);
-            transition: opacity 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-        }
-        .translation.hidden { opacity: 0; pointer-events: none; }
-
-        .btn-reveal {
-            background: var(--primary-container);
-            color: var(--on-primary-container);
-            padding: 10px 20px;
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .speaker-btn {
-            background: var(--primary-container);
-            border: none;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .speaker-btn svg { fill: var(--on-primary-container); width: 20px; height: 20px; }
-
-        .quiz-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .quiz-option {
-            background: var(--container);
-            border: 2px solid var(--surface-variant);
-            border-radius: 14px;
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--on-surface);
-            outline: none;
-        }
-        .quiz-option:hover:not(:disabled) {
-            border-color: var(--primary);
-            background: var(--surface-variant);
-        }
-        .quiz-option.correct {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-        .quiz-option.incorrect {
-            background: var(--error);
-            color: white;
-            border-color: var(--error);
-        }
-        .quiz-score {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--primary);
-        }
-
-        .modal-card button.main-btn {
-            background: var(--primary);
-            color: var(--on-primary);
-            border: none;
-            padding: 14px 28px;
-            border-radius: 100px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3);
-            transition: all 0.2s;
-            width: 100%;
         }
     </style>
 </head>
@@ -437,493 +185,102 @@
 </header>
 
 <div class="container">
-    <!-- Import Area -->
-    <div class="import-area" onclick="document.getElementById('csvInput').click()" id="dropZone">
-        <svg viewBox="0 0 24 24">
-            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-        </svg>
-        <h3>Importar Tabla Didáctica</h3>
-        <p>Arrastra tu archivo CSV exportado desde la app o haz clic para subirlo</p>
-        <input type="file" id="csvInput" class="import-input" accept=".csv" onchange="handleFileSelect(event)">
-    </div>
-
     <div class="controls">
         <input type="text" id="searchInput" class="search-bar" placeholder="Buscar un pack (ej: restaurante, salud...)" oninput="filterPacks()">
         <div class="filter-section">
-            <button class="filter-chip active" onclick="setFilter('Todos', this)">Todos</button>
-            <button class="filter-chip" onclick="setFilter('A1', this)">Nivel A1</button>
-            <button class="filter-chip" onclick="setFilter('A2', this)">Nivel A2</button>
-            <button class="filter-chip" onclick="setFilter('B1', this)">Nivel B1</button>
-            <button class="filter-chip" onclick="setFilter('B2', this)">Nivel B2</button>
+            <div class="filter-chip active" onclick="setFilter('Todos', this)">Todos</div>
+            <div class="filter-chip" onclick="setFilter('A1', this)">Nivel A1</div>
+            <div class="filter-chip" onclick="setFilter('A2', this)">Nivel A2</div>
+            <div class="filter-chip" onclick="setFilter('B1', this)">Nivel B1</div>
+            <div class="filter-chip" onclick="setFilter('B2', this)">Nivel B2</div>
         </div>
     </div>
 
     <div class="grid" id="grid">
-        <!-- Generación dinámica de tarjetas -->
-        <a href="presets/saludos.html" class="card" data-level="A1">
-            <div class="card-header"><h3>Saludos y Cortesía</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Frases básicas para iniciar una conversación y mostrar cortesía.</p>
-            <div class="card-footer"><span class="category">Supervivencia</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/compras.html" class="card" data-level="A1">
-            <div class="card-header"><h3>Compras (En la Tienda)</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Navegar por una tienda, preguntar precios y tallas de ropa.</p>
-            <div class="card-footer"><span class="category">Vida Diaria</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/supermercado.html" class="card" data-level="A1">
-            <div class="card-header"><h3>El Supermercado</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Ingredientes básicos, frutas, verduras y secciones de la tienda.</p>
-            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/rutina_manana.html" class="card" data-level="A1">
-            <div class="card-header"><h3>Rutina: Mañana</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Acciones comunes desde el despertar hasta salir de casa.</p>
-            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/tarde_noche.html" class="card" data-level="A1">
-            <div class="card-header"><h3>Rutina: Tarde y Noche</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Acciones desde el regreso a casa hasta el descanso nocturno.</p>
-            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/restaurante.html" class="card" data-level="A1">
-            <div class="card-header"><h3>Restaurante</h3><span class="level-badge level-a1">A1</span></div>
-            <p>Frases clave para pedir comida, bebidas y pagar la cuenta.</p>
-            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/cocinando.html" class="card" data-level="A2">
-            <div class="card-header"><h3>Cocinando</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Verbos de preparación (hervir, picar) y utensilios de cocina.</p>
-            <div class="card-footer"><span class="category">Comida</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/ocio.html" class="card" data-level="A2">
-            <div class="card-header"><h3>Tiempo Libre</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Actividades de ocio, hobbies, deportes y quedadas con amigos.</p>
-            <div class="card-footer"><span class="category">Acciones</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/salud.html" class="card" data-level="A2">
-            <div class="card-header"><h3>Salud y el Médico</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Describir síntomas, enfermedades y entender al doctor.</p>
-            <div class="card-footer"><span class="category">Bienestar</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/direcciones.html" class="card" data-level="A2">
-            <div class="card-header"><h3>Ciudad y Direcciones</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Cómo pedir y dar indicaciones para navegar por la ciudad.</p>
-            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/aeropuerto.html" class="card" data-level="A2">
-            <div class="card-header"><h3>En el Aeropuerto</h3><span class="level-badge level-a2">A2</span></div>
-            <p>Navegar por la terminal, check-in, maletas y aduanas.</p>
-            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/vida_digital.html" class="card" data-level="B1">
-            <div class="card-header"><h3>Vida Digital</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Términos sobre internet, redes sociales y dispositivos modernos.</p>
-            <div class="card-footer"><span class="category">Tecnología</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/alojamiento.html" class="card" data-level="B1">
-            <div class="card-header"><h3>Hotel y Alojamiento</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Hacer reservas, pedir servicios y resolver problemas de hotel.</p>
-            <div class="card-footer"><span class="category">Viajes</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/reuniones.html" class="card" data-level="B1">
-            <div class="card-header"><h3>Reuniones Profesionales</h3><span class="level-badge level-b1">B1</span></div>
-            <p>Frases para opinar, interrumpir y concluir en el trabajo.</p>
-            <div class="card-footer"><span class="category">Negocios</span><span class="btn-open">Practicar →</span></div>
-        </a>
-
-        <a href="presets/academico.html" class="card" data-level="B2">
-            <div class="card-header"><h3>Ensayos y Debates</h3><span class="level-badge level-b2">B2</span></div>
-            <p>Conectores avanzados y verbos para argumentación formal.</p>
-            <div class="card-footer"><span class="category">Académico</span><span class="btn-open">Practicar →</span></div>
-        </a>
-    </div>
-</div>
-
-<!-- Modal para Práctica de CSV Importado -->
-<div class="modal-overlay" id="practiceModal">
-    <div class="modal-card">
-        <button class="close-btn" onclick="closeModal()">×</button>
-        <h2 id="modalTitle">Tabla Importada</h2>
-        <p class="desc" id="modalDesc">Practica vocabulario con esta tabla importada</p>
-
-        <div class="mode-toggle">
-            <button id="modalModeDirect" class="chip-modal active" onclick="setModalMode('direct')">Modo Directo</button>
-            <button id="modalModeFlashcard" class="chip-modal" onclick="setModalMode('flashcard')">Flashcard</button>
-            <button id="modalModeQuiz" class="chip-modal" onclick="setModalMode('quiz')">Modo Quiz</button>
-        </div>
-
-        <div class="result-area" id="modalResultArea">
-            <div id="modalQuizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
-            <div class="roll-val" id="modalRollVal">Tira el dado para empezar</div>
-            <div id="modalMainText" class="entry-text">---</div>
-
-            <div id="modalSubContainer" class="translation">
-                <span id="modalSubText"></span>
-                <button id="modalSpeaker" class="speaker-btn" onclick="speakModal()" title="Escuchar pronunciación">
-                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                </button>
-            </div>
-            <button id="modalBtnReveal" class="btn-reveal" onclick="revealModal()" style="display:none">MOSTRAR TRADUCCIÓN</button>
-            
-            <div id="modalQuizOptions" class="quiz-container" style="display:none"></div>
-        </div>
-
-        <button id="modalActionBtn" class="main-btn" onclick="rollModal()">Tirar Dado</button>
+        <!-- Generación dinámica de tarjetas vía JavaScript -->
     </div>
 </div>
 
 <footer>
-    Generado con EstudiApp &copy; 2026 | Recursos Didácticos de Práctica Libre
+    <p>Generado con EstudiApp &copy; 2026 | Recursos Didácticos de Práctica Libre</p>
+    <a href="admin.html" style="color: var(--outline); font-size: 11px; text-decoration: none; opacity: 0.5;">Panel de Administración</a>
 </footer>
 
 <script>
     let currentFilter = 'Todos';
+    let allPacks = [];
+
+    // Cargar datos dinámicamente
+    async function loadPacks() {
+        try {
+            // Check if we are running locally without a server (file://)
+            if (window.location.protocol === 'file:') {
+                console.warn('Ejecutando en local. Para usar fetch() se necesita un servidor HTTP. Usaremos un fallback temporal.');
+                document.getElementById('grid').innerHTML = '<div class="no-results">Estás abriendo el archivo localmente. Para ver los packs dinámicos debes usar Live Server o alojarlo en GitHub Pages.</div>';
+                return;
+            }
+            const response = await fetch('data/packs.json');
+            allPacks = await response.json();
+            renderPacks(allPacks);
+        } catch (error) {
+            console.error('Error cargando los packs:', error);
+            document.getElementById('grid').innerHTML = '<div class="no-results">Error cargando los datos. Asegúrate de estar corriendo esto en un servidor.</div>';
+        }
+    }
+
+    function renderPacks(packs) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = ''; // Limpiar grilla
+
+        if (packs.length === 0) {
+            grid.innerHTML = '<div class="no-results">No se encontraron packs que coincidan con tu búsqueda.</div>';
+            return;
+        }
+
+        packs.forEach(pack => {
+            const card = document.createElement('a');
+            card.href = pack.file;
+            card.className = 'card';
+            card.setAttribute('data-level', pack.level);
+
+            const levelClass = 'level-' + pack.level.toLowerCase();
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3>${pack.title}</h3>
+                    <span class="level-badge ${levelClass}">${pack.level}</span>
+                </div>
+                <p>${pack.desc}</p>
+                <div class="card-footer">
+                    <span class="category">${pack.category}</span>
+                    <span class="btn-open">Practicar →</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
 
     function setFilter(level, el) {
         currentFilter = level;
-        document.querySelectorAll('.filter-section .filter-chip').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
         filterPacks();
     }
 
     function filterPacks() {
         const query = document.getElementById('searchInput').value.toLowerCase();
-        const cards = document.querySelectorAll('.card');
-        let visibleCount = 0;
-
-        cards.forEach(card => {
-            const title = card.querySelector('h3').innerText.toLowerCase();
-            const desc = card.querySelector('p').innerText.toLowerCase();
-            const level = card.getAttribute('data-level');
-
-            const matchesSearch = title.includes(query) || desc.includes(query);
-            const matchesFilter = currentFilter === 'Todos' || level === currentFilter;
-
-            if (matchesSearch && matchesFilter) {
-                card.style.display = 'flex';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        const grid = document.getElementById('grid');
-        const noRes = document.querySelector('.no-results');
-        if (visibleCount === 0) {
-            if (!noRes) {
-                const div = document.createElement('div');
-                div.className = 'no-results';
-                div.innerText = 'No se encontraron packs que coincidan con tu búsqueda.';
-                grid.appendChild(div);
-            }
-        } else if (noRes) {
-            noRes.remove();
-        }
-    }
-
-    // Drag and Drop implementation
-    const dropZone = document.getElementById('dropZone');
-    
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.style.background = 'var(--surface-variant)';
-        }, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.style.background = 'var(--container)';
-        }, false);
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files.length > 0 && files[0].name.endsWith('.csv')) {
-            processCsvFile(files[0]);
-        }
-    });
-
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            processCsvFile(file);
-        }
-    }
-
-    function processCsvFile(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const text = e.target.result;
-            const parsedData = parseImportedCsv(text);
-            if (parsedData.entries.length > 0) {
-                openPracticeModal(parsedData);
-            } else {
-                alert("No se pudieron encontrar entradas válidas en el archivo CSV.");
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    function parseCsvRow(row) {
-        const result = [];
-        let insideQuote = false;
-        let entries = '';
-        for (let i = 0; i < row.length; i++) {
-            const char = row[i];
-            if (char === '"') {
-                insideQuote = !insideQuote;
-            } else if (char === ',' && !insideQuote) {
-                result.push(entries.trim());
-                entries = '';
-            } else {
-                entries += char;
-            }
-        }
-        result.push(entries.trim());
-        return result;
-    }
-
-    function parseImportedCsv(text) {
-        const lines = text.split('\n');
-        let title = "Tabla Importada";
-        let formula = "1d8";
-        let desc = "Practica con tu tabla didáctica importada.";
-        const entries = [];
-
-        for (let line of lines) {
-            line = line.trim();
-            if (!line) continue;
-            if (line.startsWith('#')) {
-                if (line.startsWith('# Tabla:')) {
-                    title = line.replace('# Tabla:', '').trim();
-                } else if (line.startsWith('# Fórmula de tirada:')) {
-                    formula = line.replace('# Fórmula de tirada:', '').trim();
-                } else if (line.startsWith('# Descripción:')) {
-                    desc = line.replace('# Descripción:', '').trim();
-                }
-                continue;
-            }
-
-            const matches = parseCsvRow(line);
-            if (matches.length >= 3) {
-                const minStr = matches[0].replace(/"/g, '').trim();
-                const maxStr = matches[1].replace(/"/g, '').trim();
-                const textRaw = matches[2].replace(/"/g, '').trim();
-                
-                const min = parseInt(minStr);
-                const max = parseInt(maxStr);
-                if (!isNaN(min) && !isNaN(max) && textRaw !== "Entrada") {
-                    entries.push({ min, max, text: textRaw });
-                }
-            }
-        }
-        return { title, formula, desc, entries };
-    }
-
-    // Modal Practice Logic
-    let importedTableData = null;
-    let modalCurrentMode = 'direct';
-    let modalIsRevealed = true;
-    let modalLastEnglishText = "";
-    let modalQuizAttempts = 0;
-    let modalQuizCorrect = 0;
-
-    function openPracticeModal(data) {
-        importedTableData = data;
-        document.getElementById('modalTitle').innerText = data.title;
-        document.getElementById('modalDesc').innerText = data.desc;
-        document.getElementById('practiceModal').style.display = 'flex';
-        setModalMode('direct');
-    }
-
-    function closeModal() {
-        document.getElementById('practiceModal').style.display = 'none';
-        importedTableData = null;
-    }
-
-    function setModalMode(mode) {
-        modalCurrentMode = mode;
-        document.querySelectorAll('.chip-modal').forEach(c => c.classList.remove('active'));
-        if (mode === 'direct') document.getElementById('modalModeDirect').classList.add('active');
-        if (mode === 'flashcard') document.getElementById('modalModeFlashcard').classList.add('active');
-        if (mode === 'quiz') document.getElementById('modalModeQuiz').classList.add('active');
-
-        const actionBtn = document.getElementById('modalActionBtn');
-        const quizScore = document.getElementById('modalQuizScore');
-
-        if (mode === 'quiz') {
-            actionBtn.innerText = 'Siguiente Pregunta';
-            actionBtn.onclick = startModalQuizQuestion;
-            quizScore.style.display = 'block';
-            modalQuizAttempts = 0;
-            modalQuizCorrect = 0;
-            updateModalQuizScore();
-            startModalQuizQuestion();
-        } else {
-            actionBtn.innerText = 'Tirar ' + (importedTableData ? importedTableData.formula : 'Dado');
-            actionBtn.onclick = rollModal;
-            quizScore.style.display = 'none';
-            document.getElementById('modalQuizOptions').style.display = 'none';
-            document.getElementById('modalSubContainer').style.display = 'flex';
-            document.getElementById('modalRollVal').style.display = 'block';
-
-            if (modalLastEnglishText) {
-                document.getElementById('modalSubText').innerText = modalLastEnglishText;
-                modalIsRevealed = (mode === 'direct');
-                updateModalVisibility();
-            } else {
-                document.getElementById('modalMainText').innerText = '---';
-                document.getElementById('modalRollVal').innerText = 'Tira el dado para empezar';
-                document.getElementById('modalSubContainer').classList.add('hidden');
-                document.getElementById('modalBtnReveal').style.display = 'none';
-            }
-        }
-    }
-
-    function rollModal() {
-        if (!importedTableData) return;
-        const val = parseRoll(importedTableData.formula);
-        const entry = importedTableData.entries.find(e => val >= e.min && val <= e.max);
-        const rawText = entry ? entry.text : "--- -> ---";
-
-        const parts = rawText.split("->");
-        const main = parts[0].trim();
-        const sub = parts.length > 1 ? parts[1].trim() : "";
-        modalLastEnglishText = sub;
-
-        document.getElementById('modalRollVal').innerText = "Tirada: " + val;
-        document.getElementById('modalMainText').innerText = main;
-        document.getElementById('modalSubText').innerText = sub;
-
-        modalIsRevealed = (modalCurrentMode === 'direct' || sub === "");
-        updateModalVisibility();
-
-        const area = document.getElementById('modalResultArea');
-        area.style.transform = "scale(1.02)";
-        setTimeout(() => area.style.transform = "scale(1)", 150);
-    }
-
-    function updateModalVisibility() {
-        const subContainer = document.getElementById('modalSubContainer');
-        const btnReveal = document.getElementById('modalBtnReveal');
-
-        if (modalIsRevealed) {
-            subContainer.classList.remove('hidden');
-            btnReveal.style.display = 'none';
-        } else {
-            subContainer.classList.add('hidden');
-            btnReveal.style.display = 'block';
-        }
-    }
-
-    function revealModal() {
-        modalIsRevealed = true;
-        updateModalVisibility();
-        speakModal();
-    }
-
-    function speakModal() {
-        if (!modalLastEnglishText) return;
-        const textToSpeak = modalLastEnglishText.split('/')[0].split(';')[0].trim();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
-    }
-
-    function parseRoll(f) {
-        const match = f.match(/(\d+)d(\d+)/);
-        if (!match) return Math.floor(Math.random() * 8) + 1;
-        const n = parseInt(match[1]);
-        const d = parseInt(match[2]);
-        let total = 0;
-        for(let i=0; i<n; i++) total += Math.floor(Math.random() * d) + 1;
-        return total;
-    }
-
-    // Quiz Functions
-    function updateModalQuizScore() {
-        document.getElementById('modalQuizScore').innerText = "Puntuación: " + modalQuizCorrect + "/" + modalQuizAttempts;
-    }
-
-    function startModalQuizQuestion() {
-        if (!importedTableData || importedTableData.entries.length < 2) {
-            document.getElementById('modalMainText').innerText = "Se necesitan al menos 2 elementos para jugar.";
-            return;
-        }
-
-        document.getElementById('modalSubContainer').style.display = 'none';
-        document.getElementById('modalBtnReveal').style.display = 'none';
-        document.getElementById('modalRollVal').style.display = 'none';
-
-        const correctEntry = importedTableData.entries[Math.floor(Math.random() * importedTableData.entries.length)];
-        const parts = correctEntry.text.split("->");
-        const spanish = parts[0].trim();
-        const english = parts.length > 1 ? parts[1].trim() : "";
-        modalLastEnglishText = english;
-
-        document.getElementById('modalMainText').innerText = spanish;
-
-        const options = [english];
-        const otherEntries = importedTableData.entries.filter(e => e !== correctEntry);
-        const distractors = otherEntries
-            .map(e => e.text.split("->")[1]?.trim() || "")
-            .filter(txt => txt !== "" && txt !== english);
         
-        const uniqueDistractors = [...new Set(distractors)];
-
-        while (options.length < Math.min(4, uniqueDistractors.length + 1)) {
-            const randomDist = uniqueDistractors[Math.floor(Math.random() * uniqueDistractors.length)];
-            if (!options.includes(randomDist)) {
-                options.push(randomDist);
-            }
-        }
-
-        options.sort(() => Math.random() - 0.5);
-
-        const optionsContainer = document.getElementById('modalQuizOptions');
-        optionsContainer.innerHTML = '';
-        optionsContainer.style.display = 'flex';
-
-        options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'quiz-option';
-            btn.innerText = opt;
-            btn.onclick = () => {
-                const buttons = document.querySelectorAll('#modalQuizOptions .quiz-option');
-                buttons.forEach(b => b.disabled = true);
-                
-                modalQuizAttempts++;
-                if (opt === english) {
-                    btn.classList.add('correct');
-                    modalQuizCorrect++;
-                    speakModal();
-                } else {
-                    btn.classList.add('incorrect');
-                    buttons.forEach(b => {
-                        if (b.innerText === english) b.classList.add('correct');
-                    });
-                }
-                updateModalQuizScore();
-            };
-            optionsContainer.appendChild(btn);
+        const filtered = allPacks.filter(pack => {
+            const matchesSearch = pack.title.toLowerCase().includes(query) || pack.desc.toLowerCase().includes(query);
+            const matchesFilter = currentFilter === 'Todos' || pack.level === currentFilter;
+            return matchesSearch && matchesFilter;
         });
+
+        renderPacks(filtered);
     }
+
+    // Inicializar
+    loadPacks();
 </script>
 
 </body>
