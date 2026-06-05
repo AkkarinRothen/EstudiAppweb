@@ -1,0 +1,363 @@
+
+/* ============================================================
+   DECKS PAGE — decks.html
+   ============================================================ */
+
+/* Header especial de la página de mazos */
+.decks-header {
+    background: linear-gradient(135deg, var(--primary) 0%, #4F378B 100%);
+    color: var(--on-primary);
+    width: 100%;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.decks-header-inner {
+    max-width: 1200px;
+    width: 90%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+.decks-back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.decks-back-link:hover {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+.decks-back-link svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+.decks-header-title h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+.decks-header-title p {
+    margin: 8px 0 0 0;
+    opacity: 0.85;
+    font-size: 16px;
+    font-weight: 300;
+}
+
+/* Filter chip variante personalizado */
+.filter-chip--custom {
+    background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+    color: white;
+    border-color: transparent;
+}
+.filter-chip--custom:hover {
+    background: linear-gradient(135deg, #6D28D9 0%, #4C1D95 100%);
+    color: white;
+}
+.filter-chip--custom.active {
+    background: linear-gradient(135deg, #5B21B6 0%, #3B0764 100%);
+    border-color: transparent;
+}
+
+/* Section headers */
+.decks-section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--surface-variant);
+}
+.decks-section-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+}
+.decks-section-subtitle {
+    font-size: 13px;
+    color: var(--on-surface-variant);
+    font-weight: 500;
+}
+
+/* Deck grid */
+.deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* Deck card base */
+.deck-card {
+    background: var(--container);
+    border-radius: 24px;
+    border: 1px solid var(--surface-variant);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    text-decoration: none;
+    color: inherit;
+    animation: fadeIn 0.4s ease backwards;
+    position: relative;
+}
+.deck-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+    border-color: var(--primary);
+}
+
+/* Type badge ribbon */
+.deck-card-type {
+    padding: 4px 16px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.deck-card-type--official {
+    background: linear-gradient(90deg, var(--primary-container), transparent);
+    color: var(--on-primary-container);
+}
+.deck-card-type--custom {
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.15), transparent);
+    color: #6D28D9;
+}
+@media (prefers-color-scheme: dark) {
+    .deck-card-type--custom {
+        color: #C4B5FD;
+        background: linear-gradient(90deg, rgba(124, 58, 237, 0.25), transparent);
+    }
+}
+
+/* Card body */
+.deck-card-body {
+    padding: 20px 20px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.deck-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.deck-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary);
+    line-height: 1.3;
+    flex: 1;
+}
+.deck-card-desc {
+    font-size: 14px;
+    color: var(--on-surface-variant);
+    margin: 0 0 14px;
+    line-height: 1.5;
+    flex: 1;
+}
+.deck-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+.deck-progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    margin-bottom: 6px;
+}
+.deck-progress-pct {
+    color: var(--primary);
+}
+
+/* Card footer */
+.deck-card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--surface-variant);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+.deck-btn-open {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* Delete button inside custom card header */
+.deck-delete-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--error);
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+.deck-delete-btn:hover {
+    background: rgba(179, 38, 30, 0.1);
+    transform: scale(1.1);
+}
+.deck-delete-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* No results state */
+.decks-no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    color: var(--on-surface-variant);
+    gap: 12px;
+}
+.decks-no-results h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--on-surface);
+}
+.decks-no-results p {
+    margin: 0;
+    font-size: 15px;
+}
+
+/* Empty state dentro de grid */
+.decks-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    gap: 12px;
+    background: var(--container);
+    border-radius: 24px;
+    border: 2px dashed var(--surface-variant);
+}
+.decks-empty-icon {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.decks-empty-state h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--on-surface);
+    font-weight: 600;
+}
+.decks-empty-state p {
+    margin: 0;
+    font-size: 15px;
+    color: var(--on-surface-variant);
+    max-width: 400px;
+    line-height: 1.6;
+}
+.decks-empty-cta {
+    margin-top: 8px;
+    display: inline-block;
+    background: var(--primary);
+    color: var(--on-primary);
+    padding: 12px 28px;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3);
+}
+.decks-empty-cta:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+.decks-empty-inline {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: var(--on-surface-variant);
+    font-size: 15px;
+}
+
+/* Portal link en index.html header */
+.portal-decks-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 20px;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+}
+.portal-decks-link:hover {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+
+/* Responsive: Decks page tablet */
+@media (max-width: 768px) {
+    .decks-header { padding: 28px 16px; }
+    .decks-header-title h1 { font-size: 26px; }
+    .decks-header-title p { font-size: 14px; }
+    .deck-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+    .decks-section-title { font-size: 18px; }
+}
+
+/* Responsive: Decks page mobile */
+@media (max-width: 480px) {
+    .decks-header { padding: 22px 14px; }
+    .decks-header-inner { flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; }
+    .decks-header-title h1 { font-size: 22px; }
+    .decks-header-title p { font-size: 13px; }
+    .deck-grid { grid-template-columns: 1fr; gap: 14px; }
+    .deck-card-header h3 { font-size: 16px; }
+    .deck-card-body { padding: 16px 16px 10px; }
+    .deck-card-footer { padding: 10px 16px; }
+    .decks-section-header { flex-direction: column; gap: 4px; align-items: flex-start; }
+    .decks-section-title { font-size: 17px; }
+    .decks-section-subtitle { font-size: 12px; }
+}

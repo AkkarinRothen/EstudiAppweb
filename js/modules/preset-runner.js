@@ -114,7 +114,7 @@ function updateSpeedLabel(val) {
 function saveTtsPreferences() {
     const voice = document.getElementById('voiceSelect').value;
     const speed = document.getElementById('speedSlider').value;
-    Storage.saveTtsPrefs({ voice, speed });
+    Storage.saveTtsPreferences({ voiceIndex: voice, speed });
 }
 
 function speak() {
