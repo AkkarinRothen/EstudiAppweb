@@ -540,13 +540,23 @@ function buildFolderCardHTML(folder, deckCount) {
     `;
 }
 
+function getResourceTypeBadgeHTML(type) {
+    const t = (type || 'tabla').toLowerCase();
+    if (t === 'carta') return `<span class="badge-resource-type badge-type-carta">🎴 Carta</span>`;
+    if (t === 'mazo') return `<span class="badge-resource-type badge-type-mazo">🗂️ Mazo</span>`;
+    return `<span class="badge-resource-type badge-type-tabla">📋 Tabla</span>`;
+}
+
 function buildOfficialCardHTML(pack, percent, encountered) {
     const reviewedLabel = encountered > 0
         ? `${encountered} palabras`
         : 'Sin iniciar';
 
     return `
-        <div class="deck-card-type deck-card-type--official">Oficial</div>
+        <div class="deck-card-badges-row">
+            ${getResourceTypeBadgeHTML(pack.type)}
+            <span class="badge-origin badge-origin-official">Oficial</span>
+        </div>
         <div class="deck-card-body">
             <div class="deck-card-header">
                 <h3>${pack.title}</h3>
@@ -579,7 +589,10 @@ function buildCustomCardHTML(deck, percent, encountered, wordCount) {
     const wordLabel = wordCount > 0 ? `${wordCount} palabras` : '';
 
     return `
-        <div class="deck-card-type deck-card-type--custom">Personalizado</div>
+        <div class="deck-card-badges-row">
+            ${getResourceTypeBadgeHTML(deck.type || 'tabla')}
+            <span class="badge-origin badge-origin-custom">Personalizado</span>
+        </div>
         <div class="deck-card-body deck-card-click" style="cursor:pointer">
             <div class="deck-card-header">
                 <h3>${deck.title}</h3>
