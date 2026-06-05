@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+/**
+ * Node.js CommonJS version of the preset template.
+ */
+const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viajes: En el Aeropuerto - EstudiApp Interactive</title>
+    <title>${title} - EstudiApp Interactive</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -91,8 +94,8 @@
 </head>
 <body>
     <div class="card">
-        <h1>Viajes: En el Aeropuerto</h1>
-        <p class="desc">Navegar por la terminal, check-in y aduanas.</p>
+        <h1>${title}</h1>
+        <p class="desc">${desc}</p>
 
         <div class="image-toggle-container">
             <input type="checkbox" id="enableImages" checked onchange="toggleImages()">
@@ -165,9 +168,11 @@
 
     <script type="module">
         import { initPreset } from '../js/modules/preset-runner.js';
-        const entries = [{min:1, max:1, text:"Tarjeta de embarque -> Boarding pass"},{min:2, max:2, text:"Puerta de salida -> Departure gate"},{min:3, max:3, text:"Equipaje de mano -> Carry-on luggage"},{min:4, max:4, text:"Escala / Conexión -> Layover"},{min:5, max:5, text:"Mostrador de facturación -> Check-in counter"},{min:6, max:6, text:"Reclamación de equipaje -> Baggage claim"},{min:7, max:7, text:"Asiento de pasillo/ventana -> Aisle/Window seat"},{min:8, max:8, text:"Despegar / Aterrizar -> To take off / To land"}];
-        const formula = "1d8";
+        const entries = [${entriesJson}];
+        const formula = "${formula}";
         initPreset(entries, formula);
     </script>
 </body>
-</html>
+</html>`;
+
+module.exports = { generateHtml };

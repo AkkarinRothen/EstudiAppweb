@@ -1,15 +1,13 @@
+// Admin Panel Logic for EstudiApp
+import * as Utils from './modules/utils.js';
+import * as GitHub from './modules/github.js';
+import * as Template from './modules/template.js';
+
 // Seguridad / Login (Client-Side Hashing)
 // NOTA: En un sitio estático no hay seguridad real. El hashing evita la lectura en texto plano del HTML/JS.
 // Hashes para Usuario: AkkarinRothen | Pass: Mily2505
 const expectedUserHash = "a27b081436cabe3e7a2774b46e663a373d8fd769446d981c525155745879e557";
 const expectedPassHash = "b8fbc28f6a067474710ea06018665c0615999fa201bd2adc6236ee1db76e92f2";
-
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
 
 async function checkLogin() {
     const user = document.getElementById('loginUser').value.trim();
@@ -21,8 +19,8 @@ async function checkLogin() {
         return;
     }
 
-    const userHash = await sha256(user);
-    const passHash = await sha256(pass);
+    const userHash = await Utils.sha256(user);
+    const passHash = await Utils.sha256(pass);
 
     if (userHash === expectedUserHash && passHash === expectedPassHash) {
         document.getElementById('loginOverlay').style.display = 'none';
@@ -33,6 +31,7 @@ async function checkLogin() {
         document.getElementById('loginPass').value = '';
     }
 }
+window.checkLogin = checkLogin;
 
 // Gestión de credenciales GitHub
 function saveAuth() {
@@ -51,6 +50,7 @@ function saveAuth() {
     
     showStatus('Credenciales guardadas en tu navegador.', 'success');
 }
+window.saveAuth = saveAuth;
 
 function loadAuth() {
     document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || '';
@@ -61,6 +61,7 @@ function loadAuth() {
 // UI Status
 function showStatus(msg, type) {
     const box = document.getElementById('statusBox');
+    if (!box) return;
     box.style.display = 'block';
     box.className = type;
     box.innerText = msg;
@@ -109,19 +110,19 @@ async function publishPack() {
         const entriesString = entriesJsonArray.join(',');
 
         // 2. Generar HTML
-        const htmlContent = generateHtml(title, desc, formula, entriesString);
+        const htmlContent = Template.generateHtml(title, desc, formula, entriesString);
         const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent))); // Base64 safe
 
 
         // 3. Subir archivo HTML a GitHub
         showStatus('Subiendo HTML a GitHub...', 'warning');
         const htmlPath = `presets/${id}.html`;
-        await githubPut(owner, repo, token, htmlPath, encodedHtml, `✨ Add new pack: ${id}`);
+        await GitHub.githubPut(owner, repo, token, htmlPath, encodedHtml, `✨ Add new pack: ${id}`);
 
         // 4. Actualizar packs.json
         showStatus('Actualizando catálogo packs.json...', 'warning');
         const jsonPath = `data/packs.json`;
-        const currentJsonObj = await githubGet(owner, repo, token, jsonPath);
+        const currentJsonObj = await GitHub.githubGet(owner, repo, token, jsonPath);
         
         let packs = [];
         let jsonSha = null;
@@ -144,7 +145,7 @@ async function publishPack() {
         const newJsonContent = JSON.stringify(packs, null, 4);
         const encodedJson = btoa(unescape(encodeURIComponent(newJsonContent)));
 
-        await githubPut(owner, repo, token, jsonPath, encodedJson, `📦 Update catalog with ${id}`, jsonSha);
+        await GitHub.githubPut(owner, repo, token, jsonPath, encodedJson, `📦 Update catalog with ${id}`, jsonSha);
 
         showStatus(`¡Éxito! El pack "${title}" se ha publicado correctamente.`, 'success');
         
@@ -162,288 +163,213 @@ async function publishPack() {
         btn.innerText = "Generar y Publicar en GitHub";
     }
 }
+window.publishPack = publishPack;
 
-// Interacciones con GitHub API
-async function githubGet(owner, repo, token, path) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const res = await fetch(url, {
-        headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-        }
+// ==========================================
+// CLIENT-SIDE OCR & IMAGE CROPPING TOOL
+// ==========================================
+let ocrImage = null;
+let isDrawing = false;
+let startX = 0, startY = 0;
+let cropX = 0, cropY = 0, cropW = 0, cropH = 0;
+
+function loadOcrImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        ocrImage = new Image();
+        ocrImage.onload = function() {
+            const canvas = document.getElementById('ocrCanvas');
+            const wrapper = document.getElementById('cropperWrapper');
+            if (!canvas || !wrapper) return;
+            
+            const maxDisplayWidth = 600;
+            let displayWidth = ocrImage.width;
+            let displayHeight = ocrImage.height;
+            if (displayWidth > maxDisplayWidth) {
+                displayHeight = (maxDisplayWidth / displayWidth) * displayHeight;
+                displayWidth = maxDisplayWidth;
+            }
+            
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(ocrImage, 0, 0, displayWidth, displayHeight);
+            wrapper.style.display = 'flex';
+            
+            cropX = 0; cropY = 0;
+            cropW = displayWidth; cropH = displayHeight;
+            
+            setupCanvasEvents();
+        };
+        ocrImage.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+window.loadOcrImage = loadOcrImage;
+
+function setupCanvasEvents() {
+    const canvas = document.getElementById('ocrCanvas');
+    if (!canvas) return;
+    
+    canvas.onmousedown = null;
+    canvas.onmousemove = null;
+    canvas.onmouseup = null;
+    
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        startX = (e.clientX - rect.left) * scaleX;
+        startY = (e.clientY - rect.top) * scaleY;
+        isDrawing = true;
     });
-    if (res.status === 404) return null; // File doesn't exist
-    if (!res.ok) throw new Error(`HTTP ${res.status} al obtener ${path}`);
-    return await res.json();
+    
+    canvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        const currentX = (e.clientX - rect.left) * scaleX;
+        const currentY = (e.clientY - rect.top) * scaleY;
+        
+        cropX = Math.min(startX, currentX);
+        cropY = Math.min(startY, currentY);
+        cropW = Math.max(5, Math.abs(startX - currentX));
+        cropH = Math.max(5, Math.abs(startY - currentY));
+        
+        drawCanvasOverlay();
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
 }
 
-async function githubPut(owner, repo, token, path, contentBase64, message, sha = null) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-    const body = {
-        message: message,
-        content: contentBase64
-    };
-    if (sha) body.sha = sha;
+function drawCanvasOverlay() {
+    const canvas = document.getElementById('ocrCanvas');
+    if (!ocrImage || !canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(ocrImage, 0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.clearRect(cropX, cropY, cropW, cropH);
+    ctx.drawImage(ocrImage, 
+        (cropX / canvas.width) * ocrImage.width, 
+        (cropY / canvas.height) * ocrImage.height, 
+        (cropW / canvas.width) * ocrImage.width, 
+        (cropH / canvas.height) * ocrImage.height, 
+        cropX, cropY, cropW, cropH
+    );
+    
+    ctx.strokeStyle = '#6750A4';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(cropX, cropY, cropW, cropH);
+    ctx.setLineDash([]);
+}
 
-    const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-    });
-
-    if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || `Error HTTP ${res.status}`);
+async function runOcr() {
+    const canvas = document.getElementById('ocrCanvas');
+    if (!ocrImage || !canvas || cropW <= 10 || cropH <= 10) {
+        alert("Por favor, selecciona una zona válida arrastrando el ratón sobre la imagen.");
+        return;
+    }
+    
+    const progressDiv = document.getElementById('ocrProgress');
+    const btn = document.getElementById('btnRunOcr');
+    if (progressDiv) {
+        progressDiv.style.display = 'block';
+        progressDiv.innerText = 'Cargando motor OCR Tesseract...';
+    }
+    btn.disabled = true;
+    
+    try {
+        const cropCanvas = document.createElement('canvas');
+        const cropCtx = cropCanvas.getContext('2d');
+        
+        const origX = (cropX / canvas.width) * ocrImage.width;
+        const origY = (cropY / canvas.height) * ocrImage.height;
+        const origW = (cropW / canvas.width) * ocrImage.width;
+        const origH = (cropH / canvas.height) * ocrImage.height;
+        
+        cropCanvas.width = origW;
+        cropCanvas.height = origH;
+        
+        cropCtx.drawImage(ocrImage, origX, origY, origW, origH, 0, 0, origW, origH);
+        
+        const worker = await Tesseract.createWorker({
+            logger: m => {
+                if (m.status === 'recognizing') {
+                    progressDiv.innerText = `Reconociendo texto: ${Math.round(m.progress * 100)}%`;
+                }
+            }
+        });
+        
+        // Support Spanish and English vocab extraction
+        const { data: { text } } = await worker.recognize(cropCanvas);
+        await worker.terminate();
+        
+        if (progressDiv) progressDiv.innerText = '¡OCR Completado!';
+        
+        const parsedText = parseOcrResults(text);
+        if (parsedText.trim() === "") {
+            alert("No se pudo extraer texto legible. Intenta seleccionar otra área o mejorar la calidad de la imagen.");
+        } else {
+            const textarea = document.getElementById('packEntries');
+            if (textarea.value.trim() !== "") {
+                if (confirm("¿Deseas sobrescribir el vocabulario actual? Si cancelas, se añadirá al final.")) {
+                    textarea.value = parsedText;
+                } else {
+                    textarea.value += "\n" + parsedText;
+                }
+            } else {
+                textarea.value = parsedText;
+            }
+        }
+        
+    } catch (e) {
+        console.error(e);
+        alert(`Error al procesar OCR: ${e.message}`);
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => {
+            if (progressDiv) progressDiv.style.display = 'none';
+        }, 3000);
     }
 }
+window.runOcr = runOcr;
 
-// Motor de Plantilla HTML (Idéntico a la App Android)
-function generateHtml(title, desc, formula, entriesArrayString) {
-    return `<!DOCTYPE html>
-<html lang='es'>
-<head>
-    <meta charset='UTF-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>${title} - EstudiApp Interactive</title>
-    <style>
-        :root { --primary: #6750A4; --on-primary: #FFFFFF; --surface: #FEF7FF; --outline: #79747E; --surface-variant: #E7E0EC; --tertiary: #7D5260; --container: #FFFFFF; --success: #2E7D32; --error: #C62828; }
-        @media (prefers-color-scheme: dark) { :root { --primary: #D0BCFF; --on-primary: #381E72; --surface: #1C1B1F; --outline: #938F99; --surface-variant: #49454F; --container: #25232A; --success: #81C784; --error: #E57373; } }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--surface); color: var(--outline); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; transition: all 0.3s; }
-        .card { background: var(--container); border-radius: 28px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; border: 1px solid var(--surface-variant); }
-        h1 { font-size: 24px; margin-bottom: 8px; color: var(--primary); }
-        p.desc { color: var(--outline); font-size: 14px; margin-bottom: 24px; }
+function parseOcrResults(text) {
+    const lines = text.split('\n');
+    let outputLines = [];
+    
+    for (let line of lines) {
+        line = line.trim();
+        if (!line || line.length < 3) continue;
         
-        /* Tabs */
-        .mode-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .chip { padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; background: var(--surface-variant); border: 1px solid var(--outline); transition: 0.2s; }
-        .chip.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+        const cleanLine = line.replace(/\s*(?:[-—–→>:=|\t]|-\>)\s*/, " -> ");
         
-        /* Study Area */
-        .result-area { min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 20px; margin-bottom: 24px; padding: 20px; transition: all 0.3s ease; position: relative; }
-        .roll-val { font-size: 12px; opacity: 0.8; font-weight: bold; margin-bottom: 10px; }
-        .entry-text { font-size: 24px; font-weight: 600; color: var(--primary); }
-        .translation { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--outline); width: 100%; font-size: 18px; font-style: italic; color: var(--tertiary); display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.2s; }
-        .translation.hidden { opacity: 0; pointer-events: none; }
-        .example-text { font-size: 14px; color: var(--outline); font-style: normal; margin-top: 5px; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 8px; width: 90%; }
-        
-        /* Buttons */
-        .btn-reveal { background: var(--primary); color: var(--on-primary); padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; border: none; }
-        .speaker-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-        .speaker-btn:hover { background: rgba(0,0,0,0.1); }
-        .speaker-btn svg { fill: var(--tertiary); width: 24px; height: 24px; }
-        .main-btn { background: var(--primary); color: var(--on-primary); border: none; padding: 16px 32px; border-radius: 100px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; width: 100%; }
-        .main-btn:active { transform: scale(0.95); }
-        
-        /* Quiz Area */
-        #quizSection { display: none; flex-direction: column; width: 100%; }
-        .quiz-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
-        .quiz-question { font-size: 22px; font-weight: bold; color: var(--primary); margin-bottom: 20px; background: var(--surface-variant); padding: 20px; border-radius: 16px; }
-        .quiz-options { display: flex; flex-direction: column; gap: 10px; }
-        .quiz-opt { background: var(--container); border: 2px solid var(--surface-variant); padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--outline); }
-        .quiz-opt:hover { border-color: var(--primary); color: var(--primary); }
-        .quiz-opt.correct { background: var(--success); color: white; border-color: var(--success); }
-        .quiz-opt.wrong { background: var(--error); color: white; border-color: var(--error); }
-        
-        /* History & Misc */
-        .history { margin-top: 32px; width: 100%; max-width: 500px; text-align: left; }
-        .history h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
-        .history-list { max-height: 250px; overflow-y: auto; }
-        .history-item { font-size: 14px; padding: 12px; border-bottom: 1px solid var(--surface-variant); display: flex; flex-direction: column; gap: 4px; }
-        .history-main { display: flex; justify-content: space-between; align-items: center; }
-        .history-example { font-size: 12px; opacity: 0.8; font-style: italic; }
-        .back-link { margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class='card'>
-        <h1>${title}</h1>
-        <p class='desc'>${desc}</p>
-        
-        <div class='mode-toggle'>
-            <div id='modeDirect' class='chip active' onclick='setMode("direct")'>Directo</div>
-            <div id='modeFlashcard' class='chip' onclick='setMode("flashcard")'>Flashcard</div>
-            <div id='modeQuiz' class='chip' onclick='setMode("quiz")'>Minijuego (Quiz)</div>
-        </div>
-
-        <!-- Study Section -->
-        <div id='studySection'>
-            <div class='result-area' id='resultArea'>
-                <div class='roll-val' id='rollVal'>Tira el dado para empezar</div>
-                <div id='mainText' class='entry-text'>---</div>
-                
-                <div id='subContainer' class='translation'>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span id='subText'></span>
-                        <button id='speaker' class='speaker-btn' onclick='speak()' title='Escuchar'>
-                            <svg viewBox='0 0 24 24'><path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/></svg>
-                        </button>
-                    </div>
-                    <div id='exampleText' class='example-text' style='display:none'></div>
-                </div>
-                <button id='btnReveal' class='btn-reveal' onclick='reveal()' style='display:none'>MOSTRAR</button>
-            </div>
-            <button class='main-btn' onclick='roll()'>Tirar ${formula}</button>
-            
-            <div class='history'><h2>Historial</h2><div id='historyList' class='history-list'></div></div>
-        </div>
-
-        <!-- Quiz Section -->
-        <div id='quizSection'>
-            <div class='quiz-header'>
-                <span id='quizScore'>Aciertos: 0 / 0</span>
-                <span id='quizStreak'>🔥 Racha: 0</span>
-            </div>
-            <div class='quiz-question' id='quizQ'>Presiona Iniciar</div>
-            <div class='quiz-options' id='quizOpts'></div>
-            <button class='main-btn' id='btnNextQuiz' onclick='nextQuestion()' style='margin-top:20px'>Iniciar Quiz</button>
-        </div>
-    </div>
-
-    <a href='../index.html' class='back-link'>← Volver al Portal</a>
-
-    <script>
-        const entries = [${entriesArrayString}];
-        let currentMode = 'direct'; let isRevealed = true; let lastEng = ''; let lastExample = '';
-        
-        // Quiz State
-        let quizScore = 0; let quizTotal = 0; let quizStreak = 0; let currentQ = null; let answered = false;
-
-        function setMode(m) { 
-            currentMode = m; 
-            document.getElementById('modeDirect').classList.toggle('active', m === 'direct'); 
-            document.getElementById('modeFlashcard').classList.toggle('active', m === 'flashcard'); 
-            document.getElementById('modeQuiz').classList.toggle('active', m === 'quiz'); 
-            
-            if(m === 'quiz') {
-                document.getElementById('studySection').style.display = 'none';
-                document.getElementById('quizSection').style.display = 'flex';
-                if(quizTotal === 0) nextQuestion();
-            } else {
-                document.getElementById('studySection').style.display = 'block';
-                document.getElementById('quizSection').style.display = 'none';
-                updateVis(); 
+        if (cleanLine.includes("->")) {
+            outputLines.push(cleanLine);
+        } else {
+            const parts = cleanLine.split(/\s{2,}/);
+            if (parts.length >= 2) {
+                outputLines.push(`${parts[0].trim()} -> ${parts[1].trim()}`);
             }
         }
-        
-        function parseEntryText(raw) {
-            const pts = raw.split('->'); 
-            const m = pts[0].trim(); 
-            const s = pts.length > 1 ? pts[1].trim() : '';
-            return { es: m, en: s };
-        }
-
-        // --- STUDY MODE ---
-        function roll() {
-            const val = Math.floor(Math.random() * entries.length) + 1;
-            const entry = entries.find(e => val >= e.min && val <= e.max);
-            const raw = entry ? entry.text : '--- -> ---';
-            const { es, en } = parseEntryText(raw);
-            const ex = entry && entry.example ? entry.example : '';
-            
-            lastEng = en; lastExample = ex;
-            document.getElementById('rollVal').innerText = 'Tirada: ' + val;
-            document.getElementById('mainText').innerText = es; 
-            document.getElementById('subText').innerText = en;
-            
-            const exDiv = document.getElementById('exampleText');
-            if(ex) { exDiv.innerText = '"' + ex + '"'; exDiv.style.display = 'block'; } 
-            else { exDiv.style.display = 'none'; }
-
-            isRevealed = (currentMode === 'direct' || en === ''); 
-            updateVis();
-            
-            // Add to history
-            const item = document.createElement('div'); item.className = 'history-item';
-            let histHtml = '<div class="history-main"><span><b>[' + val + ']</b> ' + es + '</span><span style="color:var(--tertiary)">' + en + '</span></div>';
-            if(ex) histHtml += '<div class="history-example">Ej: ' + ex + '</div>';
-            item.innerHTML = histHtml;
-            document.getElementById('historyList').prepend(item);
-        }
-
-        function updateVis() {
-            const sub = document.getElementById('subContainer'); const btn = document.getElementById('btnReveal');
-            if (isRevealed) { sub.classList.remove('hidden'); btn.style.display = 'none'; }
-            else { sub.classList.add('hidden'); btn.style.display = 'block'; }
-        }
-        function reveal() { isRevealed = true; updateVis(); }
-        
-        function speak() { 
-            if (!lastEng) return; 
-            let textToSpeak = lastEng;
-            if (lastExample) textToSpeak += ". " + lastExample;
-            const u = new SpeechSynthesisUtterance(textToSpeak); 
-            u.lang = 'en-US'; 
-            window.speechSynthesis.speak(u); 
-        }
-
-        // --- QUIZ MODE ---
-        function nextQuestion() {
-            answered = false;
-            document.getElementById('btnNextQuiz').style.display = 'none';
-            
-            // Pick random target
-            const targetEntry = entries[Math.floor(Math.random() * entries.length)];
-            currentQ = parseEntryText(targetEntry.text);
-            document.getElementById('quizQ').innerText = currentQ.es;
-            
-            // Pick 3 wrong options
-            let options = [currentQ.en];
-            let attempts = 0;
-            while(options.length < 4 && attempts < 50) {
-                let randomEntry = entries[Math.floor(Math.random() * entries.length)];
-                let randomEn = parseEntryText(randomEntry.text).en;
-                if(!options.includes(randomEn) && randomEn !== '') options.push(randomEn);
-                attempts++;
-            }
-            
-            // Shuffle
-            options.sort(() => Math.random() - 0.5);
-            
-            // Render
-            const optsContainer = document.getElementById('quizOpts');
-            optsContainer.innerHTML = '';
-            options.forEach(opt => {
-                let btn = document.createElement('div');
-                btn.className = 'quiz-opt';
-                btn.innerText = opt;
-                btn.onclick = () => answerQuiz(btn, opt === currentQ.en);
-                optsContainer.appendChild(btn);
-            });
-        }
-        
-        function answerQuiz(btn, isCorrect) {
-            if(answered) return;
-            answered = true;
-            quizTotal++;
-            
-            const optsContainer = document.getElementById('quizOpts');
-            Array.from(optsContainer.children).forEach(child => {
-                if(child.innerText === currentQ.en) child.classList.add('correct');
-                else child.style.opacity = '0.5';
-            });
-
-            if(isCorrect) {
-                quizScore++;
-                quizStreak++;
-            } else {
-                btn.classList.add('wrong');
-                quizStreak = 0;
-            }
-            
-            document.getElementById('quizScore').innerText = 'Aciertos: ' + quizScore + ' / ' + quizTotal;
-            document.getElementById('quizStreak').innerText = '🔥 Racha: ' + quizStreak;
-            
-            let nxtBtn = document.getElementById('btnNextQuiz');
-            nxtBtn.innerText = 'Siguiente Pregunta';
-            nxtBtn.style.display = 'block';
-        }
-    </script>
-</body>
-</html>`;
+    }
+    return outputLines.join('\n');
 }
 
 // Inicialización

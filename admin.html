@@ -171,6 +171,22 @@
             <label>Fórmula del Dado:</label>
             <input type="text" id="packFormula" value="1d8">
         </div>
+        <!-- Herramienta de OCR y Recorte -->
+        <div class="form-group" style="background: var(--surface-variant); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <label style="color: var(--primary);">📷 Extraer Vocabulario desde Imagen (OCR)</label>
+            <p class="info" style="margin-bottom: 10px;">Sube una imagen de una tabla de vocabulario, arrastra para recortar las palabras y haz clic en "Procesar OCR".</p>
+            
+            <input type="file" id="ocrImageInput" accept="image/*" onchange="loadOcrImage(event)" style="margin-bottom: 10px; font-size: 13px;">
+            
+            <div id="cropperWrapper" style="display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                <div style="position: relative; max-width: 100%; overflow: auto; border: 2px solid var(--outline); border-radius: 8px; background: #000;">
+                    <canvas id="ocrCanvas" style="display: block; cursor: crosshair; max-width: 100%;"></canvas>
+                </div>
+                <button type="button" id="btnRunOcr" onclick="runOcr()" style="background: var(--primary); margin-top: 5px;">🔍 Procesar Selección (OCR)</button>
+                <div id="ocrProgress" class="info" style="font-weight: bold; color: var(--primary); display: none;">Progreso: 0%</div>
+            </div>
+        </div>
+
         <div class="form-group">
             <label>Entradas (Una por línea):</label>
             <p class="info">Formato: Español -> Inglés || Ejemplo opcional en inglés</p>
@@ -184,6 +200,7 @@
     <a href="index.html" style="color:var(--primary); font-weight:bold; margin-bottom: 40px;">Volver al Portal</a>
 </div>
 
-<script src="js/admin.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script type="module" src="js/admin.js"></script>
 </body>
 </html>

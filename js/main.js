@@ -1,4 +1,26 @@
 // Main Application Logic for EstudiApp Portal
+import * as Storage from './modules/storage.js';
+import * as Srs from './modules/srs.js';
+import * as Speech from './modules/speech.js';
+import * as Utils from './modules/utils.js';
+
+window.setFilter = setFilter;
+window.filterPacks = filterPacks;
+window.handleFileSelect = handleFileSelect;
+window.toggleModalImages = toggleModalImages;
+window.setModalMode = setModalMode;
+window.rollModal = rollModal;
+window.revealModal = revealModal;
+window.rateModalSrs = rateModalSrs;
+window.speakModal = speakModal;
+window.checkModalWriteAnswer = checkModalWriteAnswer;
+window.startModalQuizQuestion = startModalQuizQuestion;
+window.closeModal = closeModal;
+window.saveActiveDeckToLibrary = saveActiveDeckToLibrary;
+window.exportActiveDeck = exportActiveDeck;
+window.saveTtsPreferences = saveTtsPreferences;
+window.updateSpeedLabel = updateSpeedLabel;
+
 let currentFilter = 'Todos';
 let packsData = [];
 
@@ -7,98 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPacks();
     setupDragAndDrop();
     updateStatsUI();
+    initTtsControls();
 });
 
-// State and Storage Helpers
-function getSrsData() {
-    try {
-        return JSON.parse(localStorage.getItem('estudiapp_srs_data')) || {};
-    } catch (e) {
-        return {};
-    }
-}
-
-function saveSrsData(data) {
-    localStorage.setItem('estudiapp_srs_data', JSON.stringify(data));
-}
-
-function getStats() {
-    try {
-        let stats = JSON.parse(localStorage.getItem('estudiapp_stats'));
-        if (!stats) {
-            stats = { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
-        }
-        return stats;
-    } catch (e) {
-        return { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
-    }
-}
-
-function saveStats(stats) {
-    localStorage.setItem('estudiapp_stats', JSON.stringify(stats));
-}
-
 function recordSrsAttempt(isCorrect) {
-    let stats = getStats();
-    stats.totalReviews++;
-    if (isCorrect) stats.totalCorrect++;
-
-    // Calculate Streak
-    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-    if (stats.lastStudyDate !== todayStr) {
-        if (stats.lastStudyDate) {
-            const lastDate = new Date(stats.lastStudyDate);
-            const today = new Date(todayStr);
-            const diffTime = Math.abs(today - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays === 1) {
-                stats.streak++;
-            } else if (diffDays > 1) {
-                stats.streak = 1;
-            }
-        } else {
-            stats.streak = 1;
-        }
-        stats.lastStudyDate = todayStr;
-    }
-    saveStats(stats);
-    updateStatsUI();
+    Srs.recordSrsAttempt(isCorrect, updateStatsUI);
 }
 
 function updateWordSrs(packId, wordKey, isCorrect) {
-    if (!packId || !wordKey) return;
-    let srsData = getSrsData();
-    if (!srsData[packId]) srsData[packId] = {};
-    if (!srsData[packId][wordKey]) {
-        srsData[packId][wordKey] = { box: 1, nextReview: 0, lastAttempt: 0 };
-    }
-    
-    let entry = srsData[packId][wordKey];
-    entry.lastAttempt = Date.now();
-    
-    if (isCorrect) {
-        entry.box = Math.min(5, entry.box + 1);
-    } else {
-        entry.box = 1;
-    }
-    
-    // Set nextReview intervals
-    let interval = 60 * 1000; // 1 min (box 1)
-    if (entry.box === 2) interval = 10 * 60 * 1000; // 10 mins
-    else if (entry.box === 3) interval = 60 * 60 * 1000; // 1 hour
-    else if (entry.box === 4) interval = 24 * 60 * 60 * 1000; // 1 day
-    else if (entry.box === 5) interval = 4 * 24 * 60 * 60 * 1000; // 4 days
-    
-    entry.nextReview = Date.now() + interval;
-    saveSrsData(srsData);
-    
-    recordSrsAttempt(isCorrect);
+    Srs.updateWordSrs(packId, wordKey, isCorrect, updateStatsUI);
 }
 
 function updateStatsUI() {
-    const stats = getStats();
-    const srsData = getSrsData();
+    const stats = Storage.getStats();
+    const srsData = Storage.getSrsData();
     
     let totalEncountered = 0;
     let totalMastered = 0;
@@ -131,6 +75,7 @@ async function loadPacks() {
         const response = await fetch('data/packs.json');
         packsData = await response.json();
         renderPacks(packsData);
+        renderCustomDecks();
     } catch (error) {
         console.error('Error loading packs:', error);
     }
@@ -139,7 +84,7 @@ async function loadPacks() {
 function renderPacks(packs) {
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
-    const srsData = getSrsData();
+    const srsData = Storage.getSrsData();
 
     packs.forEach(pack => {
         // Calculate mastery for this pack
@@ -300,6 +245,8 @@ function parseImportedCsv(text) {
     let desc = "Practica con tu tabla didáctica importada.";
     const entries = [];
 
+    const isTsv = text.includes('\t');
+
     for (let line of lines) {
         line = line.trim();
         if (!line) continue;
@@ -314,7 +261,13 @@ function parseImportedCsv(text) {
             continue;
         }
 
-        const matches = parseCsvRow(line);
+        let matches = [];
+        if (isTsv) {
+            matches = line.split('\t').map(s => s.trim());
+        } else {
+            matches = parseCsvRow(line);
+        }
+        
         if (matches.length >= 3) {
             const minStr = matches[0].replace(/"/g, '').trim();
             const maxStr = matches[1].replace(/"/g, '').trim();
@@ -325,7 +278,18 @@ function parseImportedCsv(text) {
             if (!isNaN(min) && !isNaN(max) && textRaw !== "Entrada") {
                 entries.push({ min, max, text: textRaw });
             }
+        } else if (isTsv && matches.length === 2) {
+            const index = entries.length + 1;
+            const esVal = matches[0].replace(/"/g, '').trim();
+            const enVal = matches[1].replace(/"/g, '').trim();
+            if (esVal && enVal) {
+                entries.push({ min: index, max: index, text: `${esVal} -> ${enVal}` });
+            }
         }
+    }
+    
+    if (entries.length > 0 && (formula === "1d8" || formula === "")) {
+        formula = `1d${entries.length}`;
     }
     return { title, formula, desc, entries };
 }
@@ -370,9 +334,11 @@ function setModalMode(mode) {
     const quizScore = document.getElementById('modalQuizScore');
     const writeArea = document.getElementById('modalWriteArea');
     const srsFeedback = document.getElementById('modalSrsFeedback');
+    const diceContainer = document.getElementById('modalDiceContainer');
 
     writeArea.style.display = 'none';
     srsFeedback.style.display = 'none';
+    if (diceContainer) diceContainer.style.display = 'none';
 
     if (mode === 'quiz') {
         actionBtn.innerText = 'Siguiente Pregunta';
@@ -417,9 +383,15 @@ function setModalMode(mode) {
 
 // Selects next entry smart using Spaced Repetition (SRS)
 function selectNextModalEntry() {
-    if (!importedTableData || importedTableData.entries.length === 0) return null;
+    modalCurrentEntry = Srs.selectNextSrsEntry(importedTableData);
+    return modalCurrentEntry;
+}
+
+// Peeks next entry image URL for prefetching without mutating current entry
+function peekNextModalImageUrl() {
+    if (!importedTableData || importedTableData.entries.length === 0) return "";
     const packId = "csv_" + importedTableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
-    const srsData = getSrsData()[packId] || {};
+    const srsData = Storage.getSrsData()[packId] || {};
     
     let dueEntries = [];
     let neverReviewed = [];
@@ -439,19 +411,38 @@ function selectNextModalEntry() {
         }
     });
     
+    let candidate = null;
     if (dueEntries.length > 0) {
-        modalCurrentEntry = dueEntries[Math.floor(Math.random() * dueEntries.length)];
+        candidate = dueEntries[Math.floor(Math.random() * dueEntries.length)];
     } else if (neverReviewed.length > 0) {
-        modalCurrentEntry = neverReviewed[Math.floor(Math.random() * neverReviewed.length)];
+        candidate = neverReviewed[Math.floor(Math.random() * neverReviewed.length)];
     } else {
         lowBoxEntries.sort((a, b) => a.box - b.box);
         if (lowBoxEntries.length > 0) {
-            modalCurrentEntry = lowBoxEntries[0].entry;
+            candidate = lowBoxEntries[0].entry;
         } else {
-            modalCurrentEntry = importedTableData.entries[Math.floor(Math.random() * importedTableData.entries.length)];
+            candidate = importedTableData.entries[Math.floor(Math.random() * importedTableData.entries.length)];
         }
     }
-    return modalCurrentEntry;
+    
+    if (!candidate) return "";
+    
+    const parts = candidate.text.split("->");
+    let imageUrl = "";
+    if (parts.length > 2) {
+        const third = parts[2].trim();
+        if (third.startsWith("http://") || third.startsWith("https://")) {
+            imageUrl = third;
+        }
+    }
+    if (!imageUrl && parts.length > 1) {
+        const sub = parts[1].trim();
+        const queryWord = sub.split('/')[0].split(';')[0].split(',')[0].trim().toLowerCase();
+        if (queryWord) {
+            imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
+        }
+    }
+    return imageUrl;
 }
 
 function rollModal() {
@@ -487,31 +478,95 @@ function rollModal() {
         }
     }
 
-    document.getElementById('modalRollVal').innerText = "Tirada (SRS): " + val;
-    document.getElementById('modalMainText').innerText = main;
-    document.getElementById('modalSubText').innerText = sub;
-
     const modalVocabImg = document.getElementById('modalVocabImg');
-    if (imageUrl) {
-        modalVocabImg.src = imageUrl;
+    const modalImgContainer = document.getElementById('modalImgContainer');
+    
+    const setupCardContent = () => {
+        document.getElementById('modalRollVal').innerText = "Tirada (SRS): " + val;
+        document.getElementById('modalMainText').innerText = main;
+        document.getElementById('modalSubText').innerText = sub;
+
+        if (imageUrl) {
+            modalVocabImg.classList.remove('loaded');
+            modalImgContainer.classList.add('loading');
+            
+            modalVocabImg.onload = () => {
+                modalImgContainer.classList.remove('loading');
+                modalVocabImg.classList.add('loaded');
+            };
+            
+            modalVocabImg.onerror = () => {
+                modalVocabImg.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='%2379747E'><path d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0-2-.9-2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/></svg>";
+                modalImgContainer.classList.remove('loading');
+                modalVocabImg.classList.add('loaded');
+            };
+            
+            modalVocabImg.src = imageUrl;
+        } else {
+            modalVocabImg.src = "";
+            modalImgContainer.classList.remove('loading');
+            modalVocabImg.classList.remove('loaded');
+        }
+
+        modalIsRevealed = (modalCurrentMode === 'direct' || sub === "");
+        updateModalVisibility();
+
+        // Prefetch next image
+        setTimeout(() => {
+            const nextImgUrl = peekNextModalImageUrl();
+            if (nextImgUrl) {
+                const prefetchImg = new Image();
+                prefetchImg.src = nextImgUrl;
+            }
+        }, 500);
+
+        // Show SRS grading buttons if direct mode
+        const srsFeedback = document.getElementById('modalSrsFeedback');
+        if (modalCurrentMode === 'direct') {
+            srsFeedback.style.display = 'flex';
+        } else {
+            srsFeedback.style.display = 'none';
+        }
+
+        const area = document.getElementById('modalResultArea');
+        area.style.transform = "scale(1.02)";
+        setTimeout(() => area.style.transform = "scale(1)", 150);
+    };
+
+    // 3D Dice Simulation
+    const die = document.getElementById('modalDie');
+    const diceContainer = document.getElementById('modalDiceContainer');
+    
+    if (diceContainer && die && (modalCurrentMode === 'direct' || modalCurrentMode === 'flashcard')) {
+        document.getElementById('modalMainText').innerText = "Rodando...";
+        document.getElementById('modalSubContainer').classList.add('hidden');
+        document.getElementById('modalBtnReveal').style.display = 'none';
+        modalImgContainer.style.display = 'none';
+        
+        diceContainer.style.display = 'block';
+        
+        const maxRange = importedTableData.entries.length;
+        document.querySelector('#modalDie .face-1').innerText = val;
+        for (let f = 2; f <= 6; f++) {
+            let randVal = Math.floor(Math.random() * maxRange) + 1;
+            document.querySelector(`#modalDie .face-${f}`).innerText = randVal;
+        }
+        
+        die.classList.add('rolling');
+        die.removeAttribute('data-face');
+        
+        setTimeout(() => {
+            die.classList.remove('rolling');
+            die.setAttribute('data-face', '1'); // Land on face 1
+            
+            setTimeout(() => {
+                setupCardContent();
+            }, 600);
+        }, 600);
     } else {
-        modalVocabImg.src = "";
+        if (diceContainer) diceContainer.style.display = 'none';
+        setupCardContent();
     }
-
-    modalIsRevealed = (modalCurrentMode === 'direct' || sub === "");
-    updateModalVisibility();
-
-    // Show SRS grading buttons if direct mode
-    const srsFeedback = document.getElementById('modalSrsFeedback');
-    if (modalCurrentMode === 'direct') {
-        srsFeedback.style.display = 'flex';
-    } else {
-        srsFeedback.style.display = 'none';
-    }
-
-    const area = document.getElementById('modalResultArea');
-    area.style.transform = "scale(1.02)";
-    setTimeout(() => area.style.transform = "scale(1)", 150);
 }
 
 function updateModalVisibility() {
@@ -556,10 +611,11 @@ function rateModalSrs(isCorrect) {
 
 function speakModal() {
     if (!modalLastEnglishText) return;
-    const textToSpeak = modalLastEnglishText.split('/')[0].split(';')[0].trim();
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = 'en-US';
-    window.speechSynthesis.speak(utterance);
+    Speech.speak(
+        modalLastEnglishText, 
+        document.getElementById('modalVoiceSelect'), 
+        document.getElementById('modalSpeedSlider')
+    );
 }
 
 function parseRoll(f) {
@@ -570,31 +626,6 @@ function parseRoll(f) {
     let total = 0;
     for(let i=0; i<n; i++) total += Math.floor(Math.random() * d) + 1;
     return total;
-}
-
-// Clean text for validation
-function cleanText(txt) {
-    if (!txt) return "";
-    return txt.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")      // remove punctuation
-        .replace(/\s+/g, " ")                             // normalize spaces
-        .trim();
-}
-
-// Simple difference highlight side-by-side helper
-function getDiffHighlight(typed, correct) {
-    let html = "";
-    const len = Math.max(typed.length, correct.length);
-    for (let i = 0; i < len; i++) {
-        if (typed[i] === correct[i]) {
-            html += typed[i];
-        } else {
-            if (typed[i]) html += `<span class="diff-del">${typed[i]}</span>`;
-            if (correct[i]) html += `<span class="diff-ins">${correct[i]}</span>`;
-        }
-    }
-    return html;
 }
 
 // Write Mode Functions
@@ -653,8 +684,8 @@ function checkModalWriteAnswer() {
     input.disabled = true;
 
     // Split valid answers by slash, semicolon or comma
-    const correctOptions = modalLastEnglishText.split(/[/\;,]/).map(s => cleanText(s.trim()));
-    const typedClean = cleanText(typed);
+    const correctOptions = modalLastEnglishText.split(/[/\;,]/).map(s => Utils.cleanText(s.trim()));
+    const typedClean = Utils.cleanText(typed);
 
     const isCorrect = correctOptions.includes(typedClean);
     const packId = "csv_" + importedTableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -666,7 +697,7 @@ function checkModalWriteAnswer() {
         feedback.className = "write-feedback correct";
         speakModal();
     } else {
-        const diffMarkup = getDiffHighlight(typed, modalLastEnglishText.split(/[/\;,]/)[0].trim());
+        const diffMarkup = Utils.getDiffHighlight(typed, modalLastEnglishText.split(/[/\;,]/)[0].trim());
         feedback.innerHTML = `Incorrecto. <br>Tu intento: <span style="font-weight:normal;">${diffMarkup}</span><br>Correcto: <strong>${modalLastEnglishText}</strong>`;
         feedback.className = "write-feedback incorrect";
     }
@@ -754,4 +785,172 @@ function startModalQuizQuestion() {
         };
         optionsContainer.appendChild(btn);
     });
+}
+
+// Persistent Decks Library (LocalStorage)
+function saveActiveDeckToLibrary() {
+    if (!importedTableData || importedTableData.entries.length === 0) return;
+    
+    let customDecks = Storage.getCustomDecks();
+    
+    const existsIndex = customDecks.findIndex(d => d.title === importedTableData.title);
+    
+    const deckToSave = {
+        id: existsIndex !== -1 ? customDecks[existsIndex].id : "custom_" + Date.now(),
+        title: importedTableData.title,
+        desc: importedTableData.desc,
+        formula: importedTableData.formula,
+        entries: importedTableData.entries
+    };
+    
+    if (existsIndex !== -1) {
+        customDecks[existsIndex] = deckToSave;
+    } else {
+        customDecks.push(deckToSave);
+    }
+    
+    Storage.saveCustomDecks(customDecks);
+    alert(`El mazo "${importedTableData.title}" se ha guardado en tu biblioteca local.`);
+    
+    renderCustomDecks();
+}
+
+function exportActiveDeck() {
+    if (!importedTableData || importedTableData.entries.length === 0) return;
+    
+    let output = "";
+    importedTableData.entries.forEach(entry => {
+        const parts = entry.text.split("->");
+        if (parts.length >= 2) {
+            output += `${parts[0].trim()}\t${parts[1].trim()}\r\n`;
+        }
+    });
+    
+    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${importedTableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_")}_export.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function renderCustomDecks() {
+    const customGrid = document.getElementById('customGrid');
+    const customDecksSection = document.getElementById('customDecksSection');
+    if (!customGrid || !customDecksSection) return;
+    
+    let customDecks = Storage.getCustomDecks();
+    
+    if (customDecks.length === 0) {
+        customDecksSection.style.display = 'none';
+        customGrid.innerHTML = '';
+        return;
+    }
+    
+    customDecksSection.style.display = 'block';
+    customGrid.innerHTML = '';
+    
+    const srsData = Storage.getSrsData();
+    
+    customDecks.forEach(deck => {
+        const packId = "csv_" + deck.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        let encountered = 0;
+        let mastered = 0;
+        
+        if (srsData[packId]) {
+            Object.keys(srsData[packId]).forEach(key => {
+                encountered++;
+                if (srsData[packId][key].box === 5) {
+                    mastered++;
+                }
+            });
+        }
+        const percent = encountered > 0 ? Math.round((mastered / encountered) * 100) : 0;
+        
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <div class="card-header-with-delete">
+                <div class="card-header" style="flex: 1; border: none; padding: 0; margin-bottom: 0;">
+                    <h3 style="cursor: pointer;" onclick="openCustomDeck('${deck.id}')">${deck.title}</h3>
+                </div>
+                <button class="btn-delete" id="btnDelete_${deck.id}" title="Eliminar mazo">
+                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            </div>
+            <p style="cursor: pointer;" onclick="openCustomDeck('${deck.id}')">${deck.desc || 'Tabla personalizada guardada.'}</p>
+            <div style="margin-top: auto; margin-bottom: 12px; cursor: pointer;" onclick="openCustomDeck('${deck.id}')">
+                <div style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant); display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Dominio SRS</span>
+                    <span>${percent}%</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-fill" style="width: ${percent}%;"></div>
+                </div>
+            </div>
+            <div class="card-footer" style="cursor: pointer;" onclick="openCustomDeck('${deck.id}')">
+                <span class="category">Personalizado</span>
+                <span class="btn-open">Practicar →</span>
+            </div>
+        `;
+        customGrid.appendChild(card);
+        document.getElementById(`btnDelete_${deck.id}`).onclick = (e) => {
+            e.stopPropagation();
+            deleteCustomDeck(deck.id);
+        };
+    });
+}
+
+function openCustomDeck(id) {
+    let customDecks = Storage.getCustomDecks();
+    const deck = customDecks.find(d => d.id === id);
+    if (deck) {
+        openPracticeModal(deck);
+    }
+}
+
+function deleteCustomDeck(id) {
+    if (!confirm("¿Estás seguro de que quieres eliminar este mazo de tu biblioteca? Se perderán las estadísticas del mazo.")) return;
+    
+    let customDecks = Storage.getCustomDecks();
+    
+    const index = customDecks.findIndex(d => d.id === id);
+    if (index !== -1) {
+        const deck = customDecks[index];
+        customDecks.splice(index, 1);
+        Storage.saveCustomDecks(customDecks);
+        
+        const packId = "csv_" + deck.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const srsData = Storage.getSrsData();
+        if (srsData[packId]) {
+            delete srsData[packId];
+            Storage.saveSrsData(srsData);
+        }
+        
+        renderCustomDecks();
+        updateStatsUI();
+    }
+}
+
+function initTtsControls() {
+    Speech.initTtsControls(
+        document.getElementById('modalVoiceSelect'),
+        document.getElementById('modalSpeedSlider'),
+        document.getElementById('modalSpeedVal')
+    );
+}
+
+function updateSpeedLabel(val) {
+    const label = document.getElementById('modalSpeedVal');
+    if (label) label.innerText = parseFloat(val).toFixed(1) + "x";
+}
+
+function saveTtsPreferences() {
+    Speech.saveTtsPreferences(
+        document.getElementById('modalVoiceSelect').value,
+        document.getElementById('modalSpeedSlider').value
+    );
 }

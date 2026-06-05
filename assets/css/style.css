@@ -345,12 +345,31 @@ footer {
     border-radius: 14px;
     overflow: hidden;
     display: none;
-    background: rgba(0,0,0,0.05);
+    background: var(--surface-variant);
+    position: relative;
+}
+.vocab-image-container.loading {
+    background: linear-gradient(90deg, 
+        var(--surface-variant) 25%, 
+        var(--outline) 50%, 
+        var(--surface-variant) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.5s infinite ease-in-out;
+}
+@keyframes loading-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 .vocab-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+.vocab-image.loaded {
+    opacity: 1;
 }
 
 .entry-text { font-size: 22px; font-weight: 600; color: var(--primary); margin: 0; line-height: 1.3; }
@@ -593,3 +612,203 @@ footer {
     background: #236127;
 }
 
+/* 3D Dice Roller Styles */
+.dice-container {
+    width: 60px;
+    height: 60px;
+    perspective: 300px;
+    margin: 0 auto 15px auto;
+    display: none;
+}
+.die {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+    transform: rotateX(-15deg) rotateY(45deg);
+}
+.die.rolling {
+    animation: spin-die 0.6s linear infinite;
+}
+.face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05), 0 2px 5px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+/* Face transforms */
+.face-1 { transform: rotateY(0deg) translateZ(30px); }
+.face-2 { transform: rotateY(90deg) translateZ(30px); }
+.face-3 { transform: rotateX(90deg) translateZ(30px); }
+.face-4 { transform: rotateX(-90deg) translateZ(30px); }
+.face-5 { transform: rotateY(-90deg) translateZ(30px); }
+.face-6 { transform: rotateY(180deg) translateZ(30px); }
+
+/* Rotations for landing on a face */
+.die[data-face="1"] { transform: rotateX(0deg) rotateY(0deg); }
+.die[data-face="2"] { transform: rotateX(0deg) rotateY(-90deg); }
+.die[data-face="3"] { transform: rotateX(-90deg) rotateY(0deg); }
+.die[data-face="4"] { transform: rotateX(90deg) rotateY(0deg); }
+.die[data-face="5"] { transform: rotateX(0deg) rotateY(90deg); }
+.die[data-face="6"] { transform: rotateX(0deg) rotateY(180deg); }
+
+@keyframes spin-die {
+    0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+    100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg); }
+}
+
+@media (prefers-color-scheme: dark) {
+    .face {
+        background: #25232A;
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+}
+
+/* TTS Voice & Speed Controls */
+.tts-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--surface-variant);
+    text-align: left;
+}
+.tts-controls label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--on-surface-variant);
+    margin-bottom: 2px;
+}
+.tts-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+}
+.tts-select {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--outline);
+    background: var(--container);
+    color: var(--on-surface);
+    font-size: 13px;
+}
+.tts-slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.tts-slider {
+    flex: 1;
+    height: 4px;
+    background: var(--surface-variant);
+    border-radius: 100px;
+    outline: none;
+    -webkit-appearance: none;
+}
+.tts-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+}
+.tts-val {
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Custom Decks Section */
+.custom-decks-section {
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+.custom-decks-section h2 {
+    font-size: 22px;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-align: left;
+    font-weight: 600;
+}
+.card-header-with-delete {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+.btn-delete {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    color: var(--error);
+}
+.btn-delete:hover {
+    background: rgba(179, 38, 30, 0.1);
+    transform: scale(1.1);
+}
+.btn-delete svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* Interoperabilidad Buttons */
+.interop-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+.btn-export {
+    background: var(--surface-variant);
+    color: var(--on-surface-variant);
+    border: 1px solid var(--outline);
+    padding: 10px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.btn-export:hover {
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    border-color: var(--primary);
+}
+.btn-export svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}

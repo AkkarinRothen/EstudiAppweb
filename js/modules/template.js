@@ -1,9 +1,18 @@
-<!DOCTYPE html>
+/**
+ * Generates the HTML content for a new pack using the modular runner.
+ * @param {string} title 
+ * @param {string} desc 
+ * @param {string} formula 
+ * @param {string} entriesArrayString 
+ * @returns {string}
+ */
+export function generateHtml(title, desc, formula, entriesArrayString) {
+    return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viajes: En el Aeropuerto - EstudiApp Interactive</title>
+    <title>${title} - EstudiApp Interactive</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -68,6 +77,7 @@
         .tts-slider { flex: 1; }
         .tts-val { font-size: 13px; font-weight: 600; color: var(--on-surface-variant); min-width: 35px; }
 
+        /* Dice 3D */
         .dice-container { perspective: 1000px; width: 60px; height: 60px; margin: 0 auto 20px auto; display: none; }
         .die { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
         .face { position: absolute; width: 60px; height: 60px; background: var(--primary); border: 2px solid var(--on-primary); color: var(--on-primary); line-height: 56px; font-size: 24px; font-weight: bold; border-radius: 10px; text-align: center; }
@@ -91,8 +101,8 @@
 </head>
 <body>
     <div class="card">
-        <h1>Viajes: En el Aeropuerto</h1>
-        <p class="desc">Navegar por la terminal, check-in y aduanas.</p>
+        <h1>${title}</h1>
+        <p class="desc">${desc}</p>
 
         <div class="image-toggle-container">
             <input type="checkbox" id="enableImages" checked onchange="toggleImages()">
@@ -165,9 +175,10 @@
 
     <script type="module">
         import { initPreset } from '../js/modules/preset-runner.js';
-        const entries = [{min:1, max:1, text:"Tarjeta de embarque -> Boarding pass"},{min:2, max:2, text:"Puerta de salida -> Departure gate"},{min:3, max:3, text:"Equipaje de mano -> Carry-on luggage"},{min:4, max:4, text:"Escala / Conexión -> Layover"},{min:5, max:5, text:"Mostrador de facturación -> Check-in counter"},{min:6, max:6, text:"Reclamación de equipaje -> Baggage claim"},{min:7, max:7, text:"Asiento de pasillo/ventana -> Aisle/Window seat"},{min:8, max:8, text:"Despegar / Aterrizar -> To take off / To land"}];
-        const formula = "1d8";
+        const entries = [${entriesArrayString}];
+        const formula = "${formula}";
         initPreset(entries, formula);
     </script>
 </body>
-</html>
+</html>`;
+}
