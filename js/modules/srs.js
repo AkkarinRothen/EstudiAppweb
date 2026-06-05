@@ -72,39 +72,69 @@ export function updateWordSrs(packId, wordKey, isCorrect, onUpdateStatsUI) {
 }
 
 /**
- * Logic to select the next entry using SRS weights
+ * Helper to select an entry randomly but weighted by the SRS box (lower box = higher weight)
+ * @param {Array} candidates 
+ * @param {Object} srsData 
+ * @returns {Object}
+ */
+function weightedRandomSelect(candidates, srsData) {
+    if (candidates.length === 0) return null;
+    
+    const weightedCandidates = candidates.map(entry => {
+        const wordKey = entry.text.split("->")[0].trim();
+        const srsInfo = srsData[wordKey];
+        const box = srsInfo ? srsInfo.box : 1; // Default to box 1 if never reviewed
+        const weight = 6 - box; // Box 1 = 5, Box 2 = 4, Box 3 = 3, Box 4 = 2, Box 5 = 1
+        return { entry, weight };
+    });
+    
+    const totalWeight = weightedCandidates.reduce((sum, item) => sum + item.weight, 0);
+    let randomVal = Math.random() * totalWeight;
+    
+    for (const item of weightedCandidates) {
+        randomVal -= item.weight;
+        if (randomVal <= 0) {
+            return item.entry;
+        }
+    }
+    return candidates[0]; // Fallback
+}
+
+/**
+ * Logic to select the next entry using SRS weights and avoiding consecutive repeats
  * @param {Object} tableData 
+ * @param {string} [excludeWordKey] Word key to avoid selecting consecutively
  * @returns {Object|null}
  */
-export function selectNextSrsEntry(tableData) {
+export function selectNextSrsEntry(tableData, excludeWordKey) {
     if (!tableData || tableData.entries.length === 0) return null;
     const packId = "csv_" + tableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const srsData = getSrsData()[packId] || {};
     
-    let dueEntries = [];
-    let neverReviewed = [];
-    let lowBoxEntries = [];
+    // 1. Filter out consecutive repeat if there are multiple entries
+    let filteredEntries = tableData.entries;
+    if (excludeWordKey && tableData.entries.length > 1) {
+        filteredEntries = tableData.entries.filter(entry => {
+            const wordKey = entry.text.split("->")[0].trim();
+            return wordKey !== excludeWordKey;
+        });
+    }
     
-    tableData.entries.forEach(entry => {
-        const parts = entry.text.split("->");
-        const wordKey = parts[0].trim();
+    // 2. Classify filtered entries
+    const dueOrUnseen = [];
+    filteredEntries.forEach(entry => {
+        const wordKey = entry.text.split("->")[0].trim();
         const srsInfo = srsData[wordKey];
         
-        if (!srsInfo) {
-            neverReviewed.push(entry);
-        } else if (srsInfo.nextReview <= Date.now()) {
-            dueEntries.push(entry);
-        } else {
-            lowBoxEntries.push({ entry, box: srsInfo.box });
+        if (!srsInfo || srsInfo.nextReview <= Date.now()) {
+            dueOrUnseen.push(entry);
         }
     });
     
-    if (dueEntries.length > 0) {
-        return dueEntries[Math.floor(Math.random() * dueEntries.length)];
-    } else if (neverReviewed.length > 0) {
-        return neverReviewed[Math.floor(Math.random() * neverReviewed.length)];
+    // 3. Selection
+    if (dueOrUnseen.length > 0) {
+        return weightedRandomSelect(dueOrUnseen, srsData);
     } else {
-        lowBoxEntries.sort((a, b) => a.box - b.box);
-        return lowBoxEntries.length > 0 ? lowBoxEntries[0].entry : tableData.entries[Math.floor(Math.random() * tableData.entries.length)];
+        return weightedRandomSelect(filteredEntries, srsData);
     }
 }

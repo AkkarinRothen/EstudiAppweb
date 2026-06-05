@@ -383,21 +383,29 @@ function setModalMode(mode) {
 
 // Selects next entry smart using Spaced Repetition (SRS)
 function selectNextModalEntry() {
-    modalCurrentEntry = Srs.selectNextSrsEntry(importedTableData);
+    modalCurrentEntry = Srs.selectNextSrsEntry(importedTableData, modalLastSpanishText);
     return modalCurrentEntry;
 }
 
 // Peeks next entry image URL for prefetching without mutating current entry
-function peekNextModalImageUrl() {
+function peekNextModalImageUrl(excludeWordKey) {
     if (!importedTableData || importedTableData.entries.length === 0) return "";
     const packId = "csv_" + importedTableData.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const srsData = Storage.getSrsData()[packId] || {};
+    
+    let filteredEntries = importedTableData.entries;
+    if (excludeWordKey && importedTableData.entries.length > 1) {
+        filteredEntries = importedTableData.entries.filter(entry => {
+            const wordKey = entry.text.split("->")[0].trim();
+            return wordKey !== excludeWordKey;
+        });
+    }
     
     let dueEntries = [];
     let neverReviewed = [];
     let lowBoxEntries = [];
     
-    importedTableData.entries.forEach(entry => {
+    filteredEntries.forEach(entry => {
         const parts = entry.text.split("->");
         const wordKey = parts[0].trim();
         const srsInfo = srsData[wordKey];
@@ -421,7 +429,7 @@ function peekNextModalImageUrl() {
         if (lowBoxEntries.length > 0) {
             candidate = lowBoxEntries[0].entry;
         } else {
-            candidate = importedTableData.entries[Math.floor(Math.random() * importedTableData.entries.length)];
+            candidate = filteredEntries[Math.floor(Math.random() * filteredEntries.length)];
         }
     }
     
@@ -513,7 +521,7 @@ function rollModal() {
 
         // Prefetch next image
         setTimeout(() => {
-            const nextImgUrl = peekNextModalImageUrl();
+            const nextImgUrl = peekNextModalImageUrl(modalLastSpanishText);
             if (nextImgUrl) {
                 const prefetchImg = new Image();
                 prefetchImg.src = nextImgUrl;

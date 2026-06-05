@@ -150,7 +150,7 @@ function roll() {
     if (entries.length === 0) return;
     
     // Use Srs module for selection
-    const entry = Srs.selectNextSrsEntry({ entries, title: packId });
+    const entry = Srs.selectNextSrsEntry({ entries, title: packId }, lastSpanishText);
     if (!entry) return;
 
     const val = Math.floor(Math.random() * (entry.max - entry.min + 1)) + entry.min;
@@ -326,7 +326,7 @@ function addHistory(val, main, sub) {
 
 // Write Mode
 function startWriteQuestion() {
-    const entry = Srs.selectNextSrsEntry({ entries, title: packId });
+    const entry = Srs.selectNextSrsEntry({ entries, title: packId }, lastSpanishText);
     if (!entry) return;
 
     document.getElementById('subContainer').style.display = 'none';
@@ -427,7 +427,7 @@ function startNewQuizQuestion() {
     document.getElementById('writeArea').style.display = 'none';
     document.getElementById('srsFeedback').style.display = 'none';
     
-    const entry = Srs.selectNextSrsEntry({ entries, title: packId });
+    const entry = Srs.selectNextSrsEntry({ entries, title: packId }, lastSpanishText);
     if (!entry) return;
     currentQuizEntry = entry;
     
