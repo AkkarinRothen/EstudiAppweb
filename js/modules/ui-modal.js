@@ -3,6 +3,7 @@ import * as Storage from './storage.js';
 import * as Srs from './srs.js';
 import * as Speech from './speech.js';
 import * as Utils from './utils.js';
+import { extractImageKeyword } from './utils.js';
 
 let importedTableData = null;
 let modalCurrentMode = 'direct';
@@ -188,7 +189,7 @@ export function rollModal() {
         }
     }
     if (!imageUrl && sub) {
-        const queryWord = sub.split('/')[0].split(';')[0].split(',')[0].trim().toLowerCase();
+        const queryWord = extractImageKeyword(sub);
         if (queryWord) {
             imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
         }
@@ -549,7 +550,7 @@ function peekNextModalImageUrl(excludeWordKey) {
     }
     if (!imageUrl && parts.length > 1) {
         const sub = parts[1].trim();
-        const queryWord = sub.split('/')[0].split(';')[0].split(',')[0].trim().toLowerCase();
+        const queryWord = extractImageKeyword(sub);
         if (queryWord) {
             imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
         }

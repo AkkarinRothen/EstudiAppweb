@@ -3,6 +3,14 @@ import * as Storage from './storage.js';
 
 let currentFilter = 'Todos';
 
+// Level configuration: order, label, accent color class
+const LEVEL_CONFIG = [
+    { key: 'A1', label: 'Nivel A1 — Principiante', colorClass: 'level-a1' },
+    { key: 'A2', label: 'Nivel A2 — Elemental',    colorClass: 'level-a2' },
+    { key: 'B1', label: 'Nivel B1 — Intermedio',   colorClass: 'level-b1' },
+    { key: 'B2', label: 'Nivel B2 — Avanzado',     colorClass: 'level-b2' },
+];
+
 export function setFilter(level, el, onFilter) {
     currentFilter = level;
     document.querySelectorAll('.filter-section .filter-chip').forEach(c => c.classList.remove('active'));
@@ -12,28 +20,40 @@ export function setFilter(level, el, onFilter) {
 
 export function filterPacks() {
     const query = document.getElementById('searchInput').value.toLowerCase();
-    const cards = document.querySelectorAll('#grid .card');
-    let visibleCount = 0;
 
+    // Show / hide individual cards
+    const cards = document.querySelectorAll('#grid .card');
     cards.forEach(card => {
-        const title = card.querySelector('h3').innerText.toLowerCase();
-        const desc = card.querySelector('p').innerText.toLowerCase();
+        const title = card.querySelector('h3')?.innerText.toLowerCase() || '';
+        const desc  = card.querySelector('.card-desc')?.innerText.toLowerCase() || '';
         const level = card.getAttribute('data-level');
 
         const matchesSearch = title.includes(query) || desc.includes(query);
         const matchesFilter = currentFilter === 'Todos' || level === currentFilter;
 
-        if (matchesSearch && matchesFilter) {
-            card.style.display = 'flex';
-            visibleCount++;
-        } else {
-            card.style.display = 'none';
-        }
+        card.style.display = (matchesSearch && matchesFilter) ? 'flex' : 'none';
     });
 
+    // Show / hide level sections based on whether they have visible cards
+    const sections = document.querySelectorAll('#grid .level-section');
+    sections.forEach(section => {
+        const sectionLevel = section.getAttribute('data-section-level');
+        const visibleInSection = section.querySelectorAll(
+            `.card[data-level="${sectionLevel}"]`
+        );
+        const anyVisible = [...visibleInSection].some(c => c.style.display !== 'none');
+
+        section.style.display = anyVisible ? 'block' : 'none';
+    });
+
+    // No-results message on the outer grid
     const grid = document.getElementById('grid');
-    const noRes = document.querySelector('.no-results');
-    if (visibleCount === 0) {
+    const noRes = document.querySelector('#grid > .no-results');
+    const allHidden = [...document.querySelectorAll('#grid .level-section')].every(
+        s => s.style.display === 'none'
+    );
+
+    if (allHidden) {
         if (!noRes) {
             const div = document.createElement('div');
             div.className = 'no-results';
@@ -45,51 +65,111 @@ export function filterPacks() {
     }
 }
 
+/**
+ * Renders all official packs grouped by level, each group in a collapsible section.
+ * Cards now include a cover image loaded from loremflickr using pack.coverKeyword.
+ */
 export function renderPacks(packs) {
     const grid = document.getElementById('grid');
     if (!grid) return;
     grid.innerHTML = '';
     const srsData = Storage.getSrsData();
 
+    // Group packs by level
+    const grouped = {};
+    LEVEL_CONFIG.forEach(lc => { grouped[lc.key] = []; });
     packs.forEach(pack => {
-        // Calculate mastery for this pack
-        let encountered = 0;
-        let mastered = 0;
-        if (srsData[pack.id]) {
-            Object.keys(srsData[pack.id]).forEach(key => {
-                encountered++;
-                if (srsData[pack.id][key].box === 5) {
-                    mastered++;
-                }
-            });
-        }
-        const percent = encountered > 0 ? Math.round((mastered / encountered) * 100) : 0;
+        if (grouped[pack.level]) grouped[pack.level].push(pack);
+    });
 
-        const card = document.createElement('a');
-        card.href = pack.file;
-        card.className = 'card';
-        card.setAttribute('data-level', pack.level);
-        card.innerHTML = `
-            <div class="card-header">
-                <h3>${pack.title}</h3>
-                <span class="level-badge level-${pack.level.toLowerCase()}">${pack.level}</span>
+    LEVEL_CONFIG.forEach(lc => {
+        const levelPacks = grouped[lc.key];
+        if (levelPacks.length === 0) return;
+
+        // ── Section wrapper ──────────────────────────────
+        const section = document.createElement('div');
+        section.className = 'level-section';
+        section.setAttribute('data-section-level', lc.key);
+
+        // ── Section header (clickable to collapse) ───────
+        const header = document.createElement('div');
+        header.className = 'level-section-header';
+        header.innerHTML = `
+            <div class="level-section-title">
+                <span class="level-badge ${lc.colorClass}">${lc.key}</span>
+                <span>${lc.label}</span>
+                <span class="level-count">${levelPacks.length} pack${levelPacks.length > 1 ? 's' : ''}</span>
             </div>
-            <p>${pack.desc}</p>
-            <div style="margin-top: auto; margin-bottom: 12px;">
-                <div style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant); display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>Dominio SRS</span>
-                    <span>${percent}%</span>
-                </div>
-                <div class="progress-container">
-                    <div class="progress-fill" style="width: ${percent}%;"></div>
-                </div>
-            </div>
-            <div class="card-footer">
-                <span class="category">${pack.category}</span>
-                <span class="btn-open">Practicar →</span>
-            </div>
+            <svg class="level-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
         `;
-        grid.appendChild(card);
+
+        // ── Cards grid for this level ────────────────────
+        const levelGrid = document.createElement('div');
+        levelGrid.className = 'level-grid';
+
+        levelPacks.forEach(pack => {
+            // Calculate mastery
+            let encountered = 0, mastered = 0;
+            if (srsData[pack.id]) {
+                Object.keys(srsData[pack.id]).forEach(key => {
+                    encountered++;
+                    if (srsData[pack.id][key].box === 5) mastered++;
+                });
+            }
+            const percent = encountered > 0 ? Math.round((mastered / encountered) * 100) : 0;
+
+            // Cover image URL
+            const keyword = pack.coverKeyword || pack.category || pack.id;
+            const coverUrl = `https://loremflickr.com/400/180/${encodeURIComponent(keyword)}`;
+
+            const card = document.createElement('a');
+            card.href = pack.file;
+            card.className = 'card';
+            card.setAttribute('data-level', pack.level);
+            card.innerHTML = `
+                <div class="card-cover">
+                    <img
+                        class="card-cover-img"
+                        src="${coverUrl}"
+                        alt="${pack.title}"
+                        loading="lazy"
+                        onload="this.classList.add('loaded'); this.parentElement.style.animation='none'; this.parentElement.style.background='none';"
+                        onerror="this.parentElement.classList.add('cover-error')"
+                    >
+                    <span class="level-badge ${lc.colorClass} card-cover-badge">${pack.level}</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-header">
+                        <h3>${pack.title}</h3>
+                    </div>
+                    <p class="card-desc">${pack.desc}</p>
+                    <div class="card-progress">
+                        <div class="card-progress-row">
+                            <span>Dominio SRS</span>
+                            <span>${percent}%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-fill" style="width: ${percent}%;"></div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="category">${pack.category}</span>
+                        <span class="btn-open">Practicar →</span>
+                    </div>
+                </div>
+            `;
+            levelGrid.appendChild(card);
+        });
+
+        section.appendChild(header);
+        section.appendChild(levelGrid);
+        grid.appendChild(section);
+
+        // Toggle collapse on header click
+        header.addEventListener('click', () => {
+            const isOpen = !section.classList.contains('collapsed');
+            section.classList.toggle('collapsed', isOpen);
+        });
     });
 }
 
@@ -119,9 +199,7 @@ export function renderCustomDecks(onOpen, onDelete) {
         if (srsData[packId]) {
             Object.keys(srsData[packId]).forEach(key => {
                 encountered++;
-                if (srsData[packId][key].box === 5) {
-                    mastered++;
-                }
+                if (srsData[packId][key].box === 5) mastered++;
             });
         }
         const percent = encountered > 0 ? Math.round((mastered / encountered) * 100) : 0;
@@ -129,27 +207,29 @@ export function renderCustomDecks(onOpen, onDelete) {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `
-            <div class="card-header-with-delete">
-                <div class="card-header" style="flex: 1; border: none; padding: 0; margin-bottom: 0;">
-                    <h3 style="cursor: pointer;" id="title_${deck.id}">${deck.title}</h3>
+            <div class="card-body">
+                <div class="card-header-with-delete">
+                    <div class="card-header" style="flex: 1; border: none; padding: 0; margin-bottom: 0;">
+                        <h3 style="cursor: pointer;" id="title_${deck.id}">${deck.title}</h3>
+                    </div>
+                    <button class="btn-delete" id="btnDelete_${deck.id}" title="Eliminar mazo">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
                 </div>
-                <button class="btn-delete" id="btnDelete_${deck.id}" title="Eliminar mazo">
-                    <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                </button>
-            </div>
-            <p id="desc_${deck.id}" style="cursor: pointer;">${deck.desc || 'Tabla personalizada guardada.'}</p>
-            <div id="stats_${deck.id}" style="margin-top: auto; margin-bottom: 12px; cursor: pointer;">
-                <div style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant); display: flex; justify-content: space-between; margin-bottom: 4px;">
-                    <span>Dominio SRS</span>
-                    <span>${percent}%</span>
+                <p id="desc_${deck.id}" class="card-desc" style="cursor: pointer;">${deck.desc || 'Tabla personalizada guardada.'}</p>
+                <div id="stats_${deck.id}" style="margin-top: auto; margin-bottom: 12px; cursor: pointer;">
+                    <div class="card-progress-row">
+                        <span>Dominio SRS</span>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-fill" style="width: ${percent}%;"></div>
+                    </div>
                 </div>
-                <div class="progress-container">
-                    <div class="progress-fill" style="width: ${percent}%;"></div>
+                <div class="card-footer" id="footer_${deck.id}" style="cursor: pointer;">
+                    <span class="category">Personalizado</span>
+                    <span class="btn-open">Practicar →</span>
                 </div>
-            </div>
-            <div class="card-footer" id="footer_${deck.id}" style="cursor: pointer;">
-                <span class="category">Personalizado</span>
-                <span class="btn-open">Practicar →</span>
             </div>
         `;
         customGrid.appendChild(card);

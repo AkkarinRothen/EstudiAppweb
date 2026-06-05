@@ -1,10 +1,5 @@
 /**
  * Generates the HTML content for a new pack using the modular runner.
- * @param {string} title 
- * @param {string} desc 
- * @param {string} formula 
- * @param {string} entriesArrayString 
- * @returns {string}
  */
 export function generateHtml(title, desc, formula, entriesArrayString) {
     return `<!DOCTYPE html>
@@ -14,89 +9,26 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title} - EstudiApp Interactive</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/theme.css">
+    <link rel="stylesheet" href="../assets/css/ui-modal.css">
     <style>
-        :root {
-            --primary: #6750A4; --on-primary: #FFFFFF; --primary-container: #EADDFF; --on-primary-container: #21005D;
-            --surface: #FEF7FF; --on-surface: #1D1B20; --surface-variant: #E7E0EC; --on-surface-variant: #49454F;
-            --outline: #79747E; --container: #FFFFFF; --error: #B3261E; --success: #2E7D32;
+        /* Presets are full-page cards */
+        body { padding: 20px; }
+        .card { 
+            background: var(--container); border-radius: 28px; padding: 32px 24px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08); max-width: 500px; width: 100%; 
+            text-align: center; border: 1px solid var(--surface-variant); position: relative; 
         }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --primary: #D0BCFF; --on-primary: #381E72; --primary-container: #4F378B; --on-primary-container: #EADDFF;
-                --surface: #141218; --on-surface: #E6E1E5; --surface-variant: #49454F; --on-surface-variant: #CAC4D0;
-                --outline: #938F99; --container: #1D1B20; --error: #F2B8B5; --success: #81C784;
-            }
-        }
-        body { font-family: 'Outfit', sans-serif; background-color: var(--surface); color: var(--on-surface); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; box-sizing: border-box; }
-        .card { background: var(--container); border-radius: 28px; padding: 32px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); max-width: 500px; width: 100%; text-align: center; border: 1px solid var(--surface-variant); position: relative; }
-        h1 { font-size: 28px; margin-bottom: 8px; color: var(--primary); font-weight: 600; }
-        p.desc { color: var(--on-surface-variant); font-size: 15px; margin-bottom: 20px; }
-        
-        .image-toggle-container { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); }
-        .mode-toggle { display: flex; justify-content: center; gap: 4px; margin-bottom: 24px; background: var(--surface-variant); padding: 4px; border-radius: 100px; }
-        .chip { padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--on-surface-variant); flex: 1; transition: 0.2s; }
-        .chip.active { background: var(--primary); color: var(--on-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-        
-        .result-area { min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 24px; margin-bottom: 24px; padding: 24px; position: relative; }
-        .roll-val { font-size: 12px; opacity: 0.8; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; }
-        
-        .vocab-image-container { width: 100%; height: 160px; margin-bottom: 16px; border-radius: 16px; overflow: hidden; display: none; background: var(--surface-variant); }
-        .vocab-image { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s; }
-        .vocab-image.loaded { opacity: 1; }
-        
-        .entry-text { font-size: 24px; font-weight: 600; color: var(--primary); margin: 0; }
-        .translation { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--outline); width: 100%; font-size: 19px; font-style: italic; color: var(--on-surface-variant); display: flex; justify-content: center; align-items: center; gap: 12px; }
-        .translation.hidden { opacity: 0; pointer-events: none; }
-        
-        .btn-reveal { background: var(--primary-container); color: var(--on-primary-container); padding: 10px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 16px; border: none; }
-        .speaker-btn { background: var(--primary-container); border: none; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .speaker-btn svg { fill: var(--on-primary-container); width: 22px; height: 22px; }
-        
-        .quiz-container { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-        .quiz-option { background: var(--container); border: 2px solid var(--surface-variant); border-radius: 16px; padding: 14px; font-size: 15px; font-weight: 500; cursor: pointer; color: var(--on-surface); text-align: left; }
-        .quiz-option.correct { background: var(--success); color: white; border-color: var(--success); }
-        .quiz-option.incorrect { background: var(--error); color: white; border-color: var(--error); }
-        
-        .write-container { width: 100%; display: flex; flex-direction: column; gap: 12px; align-items: center; }
-        .write-input { width: 100%; padding: 14px; border-radius: 16px; border: 2px solid var(--outline); text-align: center; font-size: 16px; }
-        .write-feedback { font-size: 14px; font-weight: 600; margin-top: 8px; }
-        .write-feedback.correct { color: var(--success); }
-        .write-feedback.incorrect { color: var(--error); }
-        
-        .srs-feedback-container { display: flex; gap: 10px; width: 100%; margin-top: 16px; }
-        .srs-btn { flex: 1; border: none; padding: 12px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; color: white; }
-        .srs-btn-again { background: var(--error); }
-        .srs-btn-good { background: var(--success); }
-        
-        .main-btn { background: var(--primary); color: var(--on-primary); border: none; padding: 16px; border-radius: 100px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3); }
-
-        .tts-controls { margin-top: 24px; padding: 16px; background: var(--surface-variant); border-radius: 20px; width: 100%; box-sizing: border-box; text-align: left; }
-        .tts-controls label { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 8px; display: block; text-transform: uppercase; }
-        .tts-select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--outline); margin-bottom: 12px; font-family: inherit; }
-        .tts-slider-wrapper { display: flex; align-items: center; gap: 10px; }
-        .tts-slider { flex: 1; }
-        .tts-val { font-size: 13px; font-weight: 600; color: var(--on-surface-variant); min-width: 35px; }
-
-        /* Dice 3D */
-        .dice-container { perspective: 1000px; width: 60px; height: 60px; margin: 0 auto 20px auto; display: none; }
-        .die { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-        .face { position: absolute; width: 60px; height: 60px; background: var(--primary); border: 2px solid var(--on-primary); color: var(--on-primary); line-height: 56px; font-size: 24px; font-weight: bold; border-radius: 10px; text-align: center; }
-        .face-1 { transform: rotateY(0deg) translateZ(30px); }
-        .face-2 { transform: rotateY(90deg) translateZ(30px); }
-        .face-3 { transform: rotateY(180deg) translateZ(30px); }
-        .face-4 { transform: rotateY(-90deg) translateZ(30px); }
-        .face-5 { transform: rotateX(90deg) translateZ(30px); }
-        .face-6 { transform: rotateX(-90deg) translateZ(30px); }
-        .die.rolling { animation: rolling 0.6s infinite linear; }
-        @keyframes rolling { from { transform: rotateX(0deg) rotateY(0deg); } to { transform: rotateX(360deg) rotateY(360deg); } }
-        .die[data-face="1"] { transform: rotateX(0deg) rotateY(0deg); }
-
         .history { margin-top: 32px; width: 100%; text-align: left; }
         .history h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
         .history-list { max-height: 200px; overflow-y: auto; border-radius: 16px; border: 1px solid var(--surface-variant); background: var(--container); }
         .history-item { font-size: 14px; padding: 12px 16px; border-bottom: 1px solid var(--surface-variant); display: flex; justify-content: space-between; align-items: center; }
-        
         .back-link { margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+
+        @media (max-width: 480px) {
+            body { padding: 0; }
+            .card { border-radius: 0; min-height: 100dvh; }
+        }
     </style>
 </head>
 <body>
@@ -105,18 +37,19 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
         <p class="desc">${desc}</p>
 
         <div class="image-toggle-container">
-            <input type="checkbox" id="enableImages" checked onchange="toggleImages()">
+            <input type="checkbox" id="enableImages" checked>
             <label for="enableImages">Mostrar Imágenes 🖼️</label>
         </div>
 
         <div class="mode-toggle">
-            <button id="modeDirect" class="chip active" onclick="setMode('direct')">Directo</button>
-            <button id="modeFlashcard" class="chip" onclick="setMode('flashcard')">Flashcard</button>
-            <button id="modeQuiz" class="chip" onclick="setMode('quiz')">Quiz</button>
-            <button id="modeWrite" class="chip" onclick="setMode('write')">Escritura</button>
+            <button id="modeDirect" class="chip-modal active">Directo</button>
+            <button id="modeFlashcard" class="chip-modal">Flashcard</button>
+            <button id="modeQuiz" class="chip-modal">Quiz</button>
+            <button id="modeWrite" class="chip-modal">Escritura</button>
         </div>
 
         <div class="result-area" id="resultArea">
+            <div id="srsBadge" class="srs-badge" style="display: none;">Caja 1</div>
             <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
             
             <div class="dice-container" id="diceContainer">
@@ -136,11 +69,11 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
 
             <div id="subContainer" class="translation">
                 <span id="subText"></span>
-                <button id="speaker" class="speaker-btn" onclick="speak()" title="Escuchar">
+                <button id="speaker" class="speaker-btn" title="Escuchar">
                     <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                 </button>
             </div>
-            <button id="btnReveal" class="btn-reveal" onclick="reveal()" style="display:none">MOSTRAR</button>
+            <button id="btnReveal" class="btn-reveal" style="display:none">MOSTRAR</button>
             
             <div id="writeArea" class="write-container" style="display:none">
                 <input type="text" id="writeInput" class="write-input" placeholder="Escribe la traducción..." autocomplete="off">
@@ -148,22 +81,22 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
             </div>
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
-                <button class="srs-btn srs-btn-again" onclick="rateSrs(false)">❌ Difícil</button>
-                <button class="srs-btn srs-btn-good" onclick="rateSrs(true)">✅ Fácil</button>
+                <button class="srs-btn srs-btn-again">❌ Difícil</button>
+                <button class="srs-btn srs-btn-good">✅ Fácil</button>
             </div>
         </div>
 
         <div class="tts-controls">
             <label>Voz (Inglés):</label>
-            <select id="voiceSelect" class="tts-select" onchange="saveTtsPreferences()"></select>
+            <select id="voiceSelect" class="tts-select"></select>
             <label>Velocidad:</label>
             <div class="tts-slider-wrapper">
-                <input type="range" id="speedSlider" class="tts-slider" min="0.5" max="1.5" step="0.1" value="1.0" oninput="updateSpeedLabel(this.value); saveTtsPreferences()">
+                <input type="range" id="speedSlider" class="tts-slider" min="0.5" max="1.5" step="0.1" value="1.0">
                 <span class="tts-val" id="speedVal">1.0x</span>
             </div>
         </div>
 
-        <button id="actionBtn" class="main-btn" onclick="roll()">Cargando...</button>
+        <button id="actionBtn" class="main-btn">Cargando...</button>
     </div>
 
     <div class="history" id="historySection">

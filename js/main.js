@@ -8,33 +8,117 @@ import * as Library from './modules/library.js';
 import * as UiPortal from './modules/ui-portal.js';
 import * as UiModal from './modules/ui-modal.js';
 
-// Expose global functions for HTML event handlers
-window.setFilter = (level, el) => UiPortal.setFilter(level, el, UiPortal.filterPacks);
-window.filterPacks = UiPortal.filterPacks;
-window.handleFileSelect = handleFileSelect;
-window.toggleModalImages = UiModal.toggleModalImages;
-window.setModalMode = UiModal.setModalMode;
-window.rollModal = UiModal.rollModal;
-window.revealModal = UiModal.revealModal;
-window.rateModalSrs = UiModal.rateModalSrs;
-window.speakModal = UiModal.speakModal;
-window.checkModalWriteAnswer = UiModal.checkModalWriteAnswer;
-window.startModalQuizQuestion = UiModal.startModalQuizQuestion;
-window.closeModal = () => UiModal.closeModal(loadPacks);
-window.saveActiveDeckToLibrary = saveActiveDeckToLibrary;
-window.exportActiveDeck = () => Library.exportDeck(UiModal.getImportedTableData());
-window.saveTtsPreferences = UiModal.saveTtsPreferences;
-window.updateSpeedLabel = UiModal.updateSpeedLabel;
-
-let packsData = [];
-
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     UiModal.init(updateStatsUI);
     loadPacks();
     setupDragAndDrop();
+    setupEventListeners();
     updateStatsUI();
 });
+
+function setupEventListeners() {
+    // Portal Search and Filters
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => UiPortal.filterPacks());
+    }
+
+    const filterChips = document.querySelectorAll('.filter-chip');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            const level = e.target.textContent.includes('A1') ? 'A1' :
+                          e.target.textContent.includes('A2') ? 'A2' :
+                          e.target.textContent.includes('B1') ? 'B1' :
+                          e.target.textContent.includes('B2') ? 'B2' : 'Todos';
+            UiPortal.setFilter(level, e.target, UiPortal.filterPacks);
+        });
+    });
+
+    // Import Actions
+    const dropZone = document.getElementById('dropZone');
+    const csvInput = document.getElementById('csvInput');
+    if (dropZone && csvInput) {
+        dropZone.addEventListener('click', () => csvInput.click());
+        csvInput.addEventListener('change', (e) => handleFileSelect(e));
+    }
+
+    // Modal Controls
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => UiModal.closeModal(loadPacks));
+    }
+
+    const modalEnableImages = document.getElementById('modalEnableImages');
+    if (modalEnableImages) {
+        modalEnableImages.addEventListener('change', () => UiModal.toggleModalImages());
+    }
+
+    // Modal Modes
+    const modeButtons = {
+        'modalModeDirect': 'direct',
+        'modalModeFlashcard': 'flashcard',
+        'modalModeQuiz': 'quiz',
+        'modalModeWrite': 'write'
+    };
+
+    Object.entries(modeButtons).forEach(([id, mode]) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => UiModal.setModalMode(mode));
+        }
+    });
+
+    // Modal Interactions
+    const speakerBtn = document.getElementById('modalSpeaker');
+    if (speakerBtn) {
+        speakerBtn.addEventListener('click', () => UiModal.speakModal());
+    }
+
+    const revealBtn = document.getElementById('modalBtnReveal');
+    if (revealBtn) {
+        revealBtn.addEventListener('click', () => UiModal.revealModal());
+    }
+
+    const srsAgainBtn = document.querySelector('.srs-btn-again');
+    if (srsAgainBtn) {
+        srsAgainBtn.addEventListener('click', () => UiModal.rateModalSrs(false));
+    }
+
+    const srsGoodBtn = document.querySelector('.srs-btn-good');
+    if (srsGoodBtn) {
+        srsGoodBtn.addEventListener('click', () => UiModal.rateModalSrs(true));
+    }
+
+    const saveLocalBtn = document.getElementById('modalBtnSaveLocal');
+    if (saveLocalBtn) {
+        saveLocalBtn.addEventListener('click', () => saveActiveDeckToLibrary());
+    }
+
+    const exportBtn = document.getElementById('modalBtnExport');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => Library.exportDeck(UiModal.getImportedTableData()));
+    }
+
+    // TTS Controls
+    const voiceSelect = document.getElementById('modalVoiceSelect');
+    if (voiceSelect) {
+        voiceSelect.addEventListener('change', () => UiModal.saveTtsPreferences());
+    }
+
+    const speedSlider = document.getElementById('modalSpeedSlider');
+    if (speedSlider) {
+        speedSlider.addEventListener('input', (e) => {
+            UiModal.updateSpeedLabel(e.target.value);
+            UiModal.saveTtsPreferences();
+        });
+    }
+
+    const actionBtn = document.getElementById('modalActionBtn');
+    if (actionBtn) {
+        actionBtn.addEventListener('click', () => UiModal.rollModal());
+    }
+}
 
 function updateStatsUI() {
     const stats = Storage.getStats();

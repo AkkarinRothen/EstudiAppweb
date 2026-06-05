@@ -4,100 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - EstudiApp Portal</title>
-    <style>
-        :root {
-            --primary: #6750A4;
-            --on-primary: #FFFFFF;
-            --surface: #FEF7FF;
-            --secondary: #625B71;
-            --outline: #79747E;
-            --surface-variant: #E7E0EC;
-            --container: #FFFFFF;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--surface);
-            color: #1C1B1F;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .card {
-            background: var(--container);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-width: 600px;
-            width: 100%;
-            border: 1px solid var(--surface-variant);
-            margin-bottom: 20px;
-        }
-        h1, h2 { color: var(--primary); margin-top: 0; }
-        .form-group {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        label { margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        input, select, textarea {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--outline);
-            font-family: inherit;
-        }
-        textarea { resize: vertical; min-height: 100px; }
-        button {
-            background: var(--primary);
-            color: var(--on-primary);
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
-        button:hover { opacity: 0.9; }
-        button:disabled { background: var(--outline); cursor: not-allowed; }
-        .info { font-size: 12px; color: var(--secondary); margin-top: 5px; }
-        
-        #statusBox {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
-            font-weight: bold;
-        }
-        .success { background: #E8F5E9; color: #2E7D32; }
-        .error { background: #FFEBEE; color: #C62828; }
-        .warning { background: #FFF3E0; color: #EF6C00; }
-        
-        .auth-section { margin-bottom: 30px; }
-
-        /* Login Overlay Styles */
-        #loginOverlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--surface);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #loginCard {
-            max-width: 350px;
-        }
-        #mainAdminContent {
-            display: none; /* Hidden until authenticated */
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/theme.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body>
 
@@ -112,9 +21,9 @@
         </div>
         <div class="form-group">
             <label>Contraseña:</label>
-            <input type="password" id="loginPass" autocomplete="current-password" onkeypress="if(event.key === 'Enter') checkLogin()">
+            <input type="password" id="loginPass" autocomplete="current-password">
         </div>
-        <button onclick="checkLogin()">Acceder</button>
+        <button>Acceder</button>
         <div id="loginError" class="info" style="color: #C62828; display: none; margin-top: 10px; text-align: center; font-weight: bold;">Credenciales incorrectas</div>
         <a href="index.html" style="display:block; text-align:center; margin-top: 20px; color:var(--primary); font-weight:bold; font-size: 14px; text-decoration: none;">Volver al Portal</a>
     </div>
@@ -123,7 +32,7 @@
 <!-- Main Admin Content (Hidden by default) -->
 <div id="mainAdminContent" style="display: none;">
     <div class="card auth-section">
-        <div class="collapsible-header" onclick="toggleGithubCollapse()">
+        <div class="collapsible-header">
             <h2>Conexión con GitHub</h2>
             <svg class="chevron-icon" id="ghChevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
         </div>
@@ -141,7 +50,7 @@
                 <label>Token (PAT):</label>
                 <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
             </div>
-            <button onclick="saveAuth()">Guardar Credenciales (Local)</button>
+            <button>Guardar Credenciales (Local)</button>
         </div>
     </div>
 
@@ -181,13 +90,13 @@
             <label style="color: var(--primary);">📷 Extraer Vocabulario desde Imagen (OCR)</label>
             <p class="info" style="margin-bottom: 10px;">Sube una imagen de una tabla de vocabulario, arrastra para recortar las palabras y haz clic en "Procesar OCR".</p>
             
-            <input type="file" id="ocrImageInput" accept="image/*" onchange="loadOcrImage(event)" style="margin-bottom: 10px; font-size: 13px;">
+            <input type="file" id="ocrImageInput" accept="image/*" style="margin-bottom: 10px; font-size: 13px;">
             
             <div id="cropperWrapper" style="display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
                 <div style="position: relative; max-width: 100%; overflow: auto; border: 2px solid var(--outline); border-radius: 8px; background: #000;">
                     <canvas id="ocrCanvas" style="display: block; cursor: crosshair; max-width: 100%;"></canvas>
                 </div>
-                <button type="button" id="btnRunOcr" onclick="runOcr()" style="background: var(--primary); margin-top: 5px;">🔍 Procesar Selección (OCR)</button>
+                <button type="button" id="btnRunOcr" style="background: var(--primary); margin-top: 5px;">🔍 Procesar Selección (OCR)</button>
                 <div id="ocrProgress" class="info" style="font-weight: bold; color: var(--primary); display: none;">Progreso: 0%</div>
             </div>
         </div>
@@ -212,12 +121,12 @@
             </div>
             
             <div class="vocab-table-actions">
-                <button type="button" onclick="addTableRow()" style="background: var(--secondary);">＋ Añadir Palabra</button>
-                <button type="button" onclick="clearTable()" style="background: var(--error);">🗑️ Limpiar Todo</button>
+                <button type="button" id="addTableRowBtn" style="background: var(--secondary);">＋ Añadir Palabra</button>
+                <button type="button" id="clearTableBtn" style="background: var(--error);">🗑️ Limpiar Todo</button>
             </div>
         </div>
         
-        <button id="btnPublish" onclick="publishPack()">Generar y Publicar en GitHub</button>
+        <button id="btnPublish">Generar y Publicar en GitHub</button>
         <div id="statusBox"></div>
     </div>
 

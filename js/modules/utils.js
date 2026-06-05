@@ -21,7 +21,7 @@ export function cleanText(txt) {
     if (!txt) return "";
     return txt.toLowerCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")      // remove punctuation
+        .replace(/[.,\/#!$%\^\&\*;:{}=\-_`~()]/g, "")      // remove punctuation
         .replace(/\s+/g, " ")                             // normalize spaces
         .trim();
 }
@@ -44,4 +44,66 @@ export function getDiffHighlight(typed, correct) {
         }
     }
     return html;
+}
+
+/**
+ * Extracts the most meaningful single keyword from a vocabulary phrase for image search.
+ * Removes common English and Spanish stopwords (articles, prepositions, auxiliary verbs, etc.)
+ * and returns the longest remaining word, which is most likely a content noun or verb.
+ *
+ * Examples:
+ *   "A table for two"     → "table"
+ *   "Still water"         → "water"
+ *   "To order food"       → "order"
+ *   "I am a vegetarian"   → "vegetarian"
+ *   "The check, please"   → "check"
+ *
+ * @param {string} phrase - The English (or Spanish) translation phrase
+ * @returns {string} A single lowercase keyword suitable for an image API query
+ */
+export function extractImageKeyword(phrase) {
+    if (!phrase) return "";
+
+    // Normalize: lowercase, remove punctuation, collapse spaces
+    const normalized = phrase
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    // Common English stopwords to strip
+    const EN_STOPWORDS = new Set([
+        "a","an","the","this","that","these","those",
+        "i","you","he","she","it","we","they","me","him","her","us","them",
+        "my","your","his","its","our","their",
+        "is","am","are","was","were","be","been","being",
+        "have","has","had","do","does","did","will","would","could","should","may","might","shall","can",
+        "to","of","in","on","at","by","for","with","about","from","into","through","during",
+        "before","after","above","below","between","out","off","over","under","again","further",
+        "then","once","here","there","where","why","how","all","both","each","few","more","most",
+        "other","some","such","no","nor","not","only","same","so","than","too","very","just",
+        "and","but","or","as","if","when","up","please","still","any","let","get","go","give","put"
+    ]);
+
+    // Common Spanish stopwords to strip
+    const ES_STOPWORDS = new Set([
+        "el","la","los","las","un","una","unos","unas",
+        "de","del","al","en","con","por","para","sin","sobre","entre","hasta","desde","hacia","como","que","si",
+        "yo","tu","él","ella","nosotros","ellos","me","te","se","nos","lo","le","les",
+        "es","son","era","fue","ser","estar","hay","he","has","ha","han",
+        "y","o","pero","sino","aunque","porque","cuando","donde","como","que","si","muy","mas","ya","no","ni",
+        "mi","tu","su","nuestro","vuestro","su","este","ese","aquel","esta","esa"
+    ]);
+
+    const words = normalized.split(" ").filter(w => w.length > 0);
+
+    // Filter out stopwords from both languages
+    const contentWords = words.filter(w => !EN_STOPWORDS.has(w) && !ES_STOPWORDS.has(w));
+
+    // Return the longest content word (most likely a meaningful noun or verb)
+    const candidates = contentWords.length > 0 ? contentWords : words;
+    candidates.sort((a, b) => b.length - a.length);
+
+    return candidates[0] || "";
 }

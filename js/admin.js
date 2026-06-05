@@ -4,10 +4,69 @@ import * as GitHub from './modules/github.js';
 import * as Template from './modules/template.js';
 
 // Seguridad / Login (Client-Side Hashing)
-// NOTA: En un sitio estático no hay seguridad real. El hashing evita la lectura en texto plano del HTML/JS.
 // Hashes para Usuario: AkkarinRothen | Pass: Mily2505
 const expectedUserHash = "a27b081436cabe3e7a2774b46e663a373d8fd769446d981c525155745879e557";
 const expectedPassHash = "b8fbc28f6a067474710ea06018665c0615999fa201bd2adc6236ee1db76e92f2";
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadAuth();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Login
+    const loginBtn = document.querySelector('#loginOverlay button');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => checkLogin());
+    }
+
+    const loginPass = document.getElementById('loginPass');
+    if (loginPass) {
+        loginPass.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkLogin();
+        });
+    }
+
+    // GitHub Config
+    const ghHeader = document.querySelector('.collapsible-header');
+    if (ghHeader) {
+        ghHeader.addEventListener('click', () => toggleGithubCollapse());
+    }
+
+    const ghSaveBtn = document.querySelector('#ghCollapsibleContent button');
+    if (ghSaveBtn) {
+        ghSaveBtn.addEventListener('click', () => saveAuth());
+    }
+
+    // OCR
+    const ocrInput = document.getElementById('ocrImageInput');
+    if (ocrInput) {
+        ocrInput.addEventListener('change', (e) => loadOcrImage(e));
+    }
+
+    const runOcrBtn = document.getElementById('btnRunOcr');
+    if (runOcrBtn) {
+        runOcrBtn.addEventListener('click', () => runOcr());
+    }
+
+    // Table Actions
+    const addRowBtn = document.getElementById('addTableRowBtn');
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', () => addTableRow());
+    }
+
+    const clearTableBtn = document.getElementById('clearTableBtn');
+    if (clearTableBtn) {
+        clearTableBtn.addEventListener('click', () => clearTable());
+    }
+
+    // Publish
+    const publishBtn = document.getElementById('btnPublish');
+    if (publishBtn) {
+        publishBtn.addEventListener('click', () => publishPack());
+    }
+}
 
 async function checkLogin() {
     const user = document.getElementById('loginUser').value.trim();
@@ -25,15 +84,13 @@ async function checkLogin() {
     if (userHash === expectedUserHash && passHash === expectedPassHash) {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainAdminContent').style.display = 'flex';
-        loadAuth(); // Cargar credenciales guardadas si las hay
+        loadAuth();
     } else {
         errDiv.style.display = 'block';
         document.getElementById('loginPass').value = '';
     }
 }
-window.checkLogin = checkLogin;
 
-// Gestión de credenciales GitHub
 function saveAuth() {
     const owner = document.getElementById('ghOwner').value;
     const repo = document.getElementById('ghRepo').value;
@@ -50,7 +107,6 @@ function saveAuth() {
     
     showStatus('Credenciales guardadas en tu navegador.', 'success');
 }
-window.saveAuth = saveAuth;
 
 function toggleGithubCollapse() {
     const content = document.getElementById('ghCollapsibleContent');
@@ -58,7 +114,6 @@ function toggleGithubCollapse() {
     content.classList.toggle('expanded');
     chevron.classList.toggle('rotated');
 }
-window.toggleGithubCollapse = toggleGithubCollapse;
 
 function addTableRow(es = '', en = '') {
     const tbody = document.getElementById('vocabTableBody');
@@ -66,15 +121,20 @@ function addTableRow(es = '', en = '') {
     tr.innerHTML = `
         <td><input type="text" class="vocab-es" value="${es.replace(/"/g, '&quot;')}" placeholder="ej: El perro"></td>
         <td><input type="text" class="vocab-en" value="${en.replace(/"/g, '&quot;')}" placeholder="ej: The dog"></td>
-        <td style="text-align: center;"><button type="button" class="btn-row-delete" onclick="this.closest('tr').remove(); updateDiceFormula();">×</button></td>
+        <td style="text-align: center;"><button type="button" class="btn-row-delete">×</button></td>
     `;
+    
+    tr.querySelector('.btn-row-delete').addEventListener('click', () => {
+        tr.remove();
+        updateDiceFormula();
+    });
+
     tr.querySelectorAll('input').forEach(input => {
         input.addEventListener('input', updateDiceFormula);
     });
     tbody.appendChild(tr);
     updateDiceFormula();
 }
-window.addTableRow = addTableRow;
 
 function clearTable() {
     if (confirm('¿Estás seguro de que quieres limpiar toda la tabla?')) {
@@ -82,7 +142,6 @@ function clearTable() {
         updateDiceFormula();
     }
 }
-window.clearTable = clearTable;
 
 function updateDiceFormula() {
     const tbody = document.getElementById('vocabTableBody');
@@ -92,7 +151,6 @@ function updateDiceFormula() {
         formulaInput.value = `1d${rowCount > 0 ? rowCount : 6}`;
     }
 }
-window.updateDiceFormula = updateDiceFormula;
 
 function loadAuth() {
     const owner = localStorage.getItem('gh_owner') || '';
@@ -113,14 +171,12 @@ function loadAuth() {
         chevron.classList.remove('rotated');
     }
     
-    // Add default row to make the editor intuitive if empty
     const tbody = document.getElementById('vocabTableBody');
     if (tbody && tbody.querySelectorAll('tr').length === 0) {
         addTableRow('', '');
     }
 }
 
-// UI Status
 function showStatus(msg, type) {
     const box = document.getElementById('statusBox');
     if (!box) return;
@@ -129,7 +185,6 @@ function showStatus(msg, type) {
     box.innerText = msg;
 }
 
-// Lógica Principal de Publicación
 async function publishPack() {
     const owner = localStorage.getItem('gh_owner');
     const repo = localStorage.getItem('gh_repo');
@@ -150,7 +205,6 @@ async function publishPack() {
     const tbody = document.getElementById('vocabTableBody');
     const rows = tbody.querySelectorAll('tr');
     
-    // Gather valid rows
     let validEntries = [];
     rows.forEach(row => {
         const esVal = row.querySelector('.vocab-es').value.trim();
@@ -170,7 +224,6 @@ async function publishPack() {
     btn.innerText = "Procesando...";
 
     try {
-        // 1. Parsear Entradas desde la Tabla
         let entriesJsonArray = [];
         let i = 1;
         for (const entry of validEntries) {
@@ -183,16 +236,13 @@ async function publishPack() {
         }
         const entriesString = entriesJsonArray.join(',');
 
-        // 2. Generar HTML
         const htmlContent = Template.generateHtml(title, desc, formula, entriesString);
-        const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent))); // Base64 safe
+        const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent)));
 
-        // 3. Subir archivo HTML a GitHub
         showStatus('Subiendo HTML a GitHub...', 'warning');
         const htmlPath = `presets/${id}.html`;
         await GitHub.githubPut(owner, repo, token, htmlPath, encodedHtml, `✨ Add new pack: ${id}`);
 
-        // 4. Actualizar packs.json
         showStatus('Actualizando catálogo packs.json...', 'warning');
         const jsonPath = `data/packs.json`;
         const currentJsonObj = await GitHub.githubGet(owner, repo, token, jsonPath);
@@ -205,7 +255,6 @@ async function publishPack() {
             jsonSha = currentJsonObj.sha;
         }
 
-        // Añadir el nuevo
         packs.push({
             id: id,
             title: title,
@@ -222,7 +271,6 @@ async function publishPack() {
 
         showStatus(`¡Éxito! El pack "${title}" se ha publicado correctamente.`, 'success');
         
-        // Limpiar formulario
         document.getElementById('packId').value = '';
         document.getElementById('packTitle').value = '';
         document.getElementById('packDesc').value = '';
@@ -238,11 +286,7 @@ async function publishPack() {
         btn.innerText = "Generar y Publicar en GitHub";
     }
 }
-window.publishPack = publishPack;
 
-// ==========================================
-// CLIENT-SIDE OCR & IMAGE CROPPING TOOL
-// ==========================================
 let ocrImage = null;
 let isDrawing = false;
 let startX = 0, startY = 0;
@@ -284,15 +328,10 @@ function loadOcrImage(event) {
     };
     reader.readAsDataURL(file);
 }
-window.loadOcrImage = loadOcrImage;
 
 function setupCanvasEvents() {
     const canvas = document.getElementById('ocrCanvas');
     if (!canvas) return;
-    
-    canvas.onmousedown = null;
-    canvas.onmousemove = null;
-    canvas.onmouseup = null;
     
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -391,7 +430,6 @@ async function runOcr() {
             }
         });
         
-        // Support Spanish and English vocab extraction
         const { data: { text } } = await worker.recognize(cropCanvas);
         await worker.terminate();
         
@@ -405,7 +443,6 @@ async function runOcr() {
             let overwrite = true;
             const tbody = document.getElementById('vocabTableBody');
             
-            // Check if table has rows other than a single blank row
             const rows = tbody.querySelectorAll('tr');
             let hasContent = false;
             if (rows.length > 1) {
@@ -440,7 +477,6 @@ async function runOcr() {
         }, 3000);
     }
 }
-window.runOcr = runOcr;
 
 function parseOcrResults(text) {
     const lines = text.split('\n');
@@ -463,6 +499,3 @@ function parseOcrResults(text) {
     }
     return outputLines.join('\n');
 }
-
-// Inicialización
-window.onload = loadAuth;
