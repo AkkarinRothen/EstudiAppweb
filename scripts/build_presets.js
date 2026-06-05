@@ -1,9 +1,15 @@
-<!DOCTYPE html>
+const fs = require('fs');
+const path = require('path');
+
+const presetsDir = path.join(__dirname, '..', 'presets');
+
+// Template for the interactive presets
+const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rutina: Mañana - EstudiApp Interactive</title>
+    <title>${title} - EstudiApp Interactive</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -237,8 +243,8 @@
 </head>
 <body>
     <div class="card">
-        <h1>Rutina: Mañana</h1>
-        <p class="desc">Acciones comunes desde el despertar hasta salir de casa.</p>
+        <h1>${title}</h1>
+        <p class="desc">${desc}</p>
 
         <div class="mode-toggle">
             <button id="modeDirect" class="chip active" onclick="setMode('direct')">Modo Directo</button>
@@ -263,7 +269,7 @@
         </div>
 
         <div class="actions">
-            <button id="actionBtn" class="main-btn" onclick="roll()">Tirar 1d8</button>
+            <button id="actionBtn" class="main-btn" onclick="roll()">Tirar ${formula}</button>
         </div>
     </div>
 
@@ -275,17 +281,8 @@
     <a href="../index.html" class="back-link">← Volver al Portal</a>
 
     <script>
-        const entries = [
-            {min:1, max:1, text:"Despertarse -> Wake up"},
-            {min:2, max:2, text:"Levantarse -> Get up"},
-            {min:3, max:3, text:"Ducharse -> Take a shower"},
-            {min:4, max:4, text:"Cepillarse los dientes -> Brush teeth"},
-            {min:5, max:5, text:"Vestirse -> Get dressed"},
-            {min:6, max:6, text:"Desayunar -> Have breakfast"},
-            {min:7, max:7, text:"Peinarse -> Brush hair / Comb hair"},
-            {min:8, max:8, text:"Hacer la cama -> Make the bed"}
-        ];
-        const formula = "1d8";
+        const entries = [${entriesJson}];
+        const formula = "${formula}";
         let currentMode = 'direct';
         let isRevealed = true;
         let lastEnglishText = "";
@@ -389,7 +386,7 @@
         }
 
         function parseRoll(f) {
-            const match = f.match(/(d+)d(d+)/);
+            const match = f.match(/(\d+)d(\d+)/);
             if (!match) return Math.floor(Math.random() * 8) + 1;
             const n = parseInt(match[1]);
             const d = parseInt(match[2]);
@@ -492,3 +489,47 @@
     </script>
 </body>
 </html>
+`;
+
+// Read all presets and rebuild them
+fs.readdir(presetsDir, (err, files) => {
+    if (err) {
+        console.error("Error reading presets directory:", err);
+        process.exit(1);
+    }
+
+    const htmlFiles = files.filter(f => f.endsWith('.html'));
+
+    htmlFiles.forEach(file => {
+        const filePath = path.join(presetsDir, file);
+        const content = fs.readFileSync(filePath, 'utf-8');
+
+        // Extract title
+        const titleMatch = content.match(/<h1>([^<]+)<\/h1>/) || content.match(/<title>([^<]+)<\/title>/);
+        const title = titleMatch ? titleMatch[1].replace(/^[AB]\d+:\s*/, '').trim() : path.basename(file, '.html');
+
+        // Extract description
+        const descMatch = content.match(/<p class="desc">([^<]+)<\/p>/);
+        const desc = descMatch ? descMatch[1].trim() : "Practica vocabulario con esta tabla interactiva.";
+
+        // Extract entries
+        const entriesMatch = content.match(/const entries\s*=\s*(\[[^\]]+\])/);
+        if (!entriesMatch) {
+            console.log(`Skipping ${file}: No entries list found.`);
+            return;
+        }
+        let entriesJson = entriesMatch[1];
+        // Clean JSON format slightly if needed, but since it's already a JS array representation, we can inject it
+        // Remove trailing commas if any
+        entriesJson = entriesJson.trim().replace(/^\[/, '').replace(/\]$/, '');
+
+        // Extract formula
+        const formulaMatch = content.match(/const formula\s*=\s*"([^"]+)"/);
+        const formula = formulaMatch ? formulaMatch[1] : "1d8";
+
+        // Generate and write updated preset
+        const updatedHtml = generateTemplate(title, desc, entriesJson, formula);
+        fs.writeFileSync(filePath, updatedHtml, 'utf-8');
+        console.log(`Successfully upgraded: ${file}`);
+    });
+});

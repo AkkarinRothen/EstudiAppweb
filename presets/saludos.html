@@ -3,41 +3,483 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A1: Saludos y Cortesía - EstudiApp Interactive</title>
+    <title>Saludos y Cortesía - EstudiApp Interactive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #6750A4; --on-primary: #FFFFFF; --surface: #FEF7FF; --outline: #79747E; --surface-variant: #E7E0EC; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--surface); color: #1C1B1F; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        .card { background: white; border-radius: 28px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; border: 1px solid var(--surface-variant); }
-        h1 { font-size: 24px; margin-bottom: 8px; color: var(--primary); }
-        p.desc { color: var(--outline); font-size: 14px; margin-bottom: 24px; }
-        .result-area { min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 16px; margin-bottom: 24px; padding: 16px; transition: all 0.3s ease; }
-        .roll-val { font-size: 12px; color: var(--outline); font-weight: bold; }
-        .entry-text { font-size: 20px; font-weight: 500; margin-top: 8px; }
-        button { background: var(--primary); color: var(--on-primary); border: none; padding: 12px 24px; border-radius: 100px; font-size: 16px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s; }
-        button:active { transform: scale(0.95); }
-        .history { margin-top: 32px; width: 100%; max-width: 500px; text-align: left; }
-        .history h2 { font-size: 18px; margin-bottom: 12px; }
-        .history-item { font-size: 14px; padding: 8px; border-bottom: 1px solid var(--surface-variant); }
-        .back-link { margin-top: 20px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold; }
+        :root {
+            --primary: #6750A4;
+            --on-primary: #FFFFFF;
+            --primary-container: #EADDFF;
+            --on-primary-container: #21005D;
+            --surface: #FEF7FF;
+            --on-surface: #1D1B20;
+            --surface-variant: #E7E0EC;
+            --on-surface-variant: #49454F;
+            --outline: #79747E;
+            --container: #FFFFFF;
+            --error: #B3261E;
+            --success: #2E7D32;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #D0BCFF;
+                --on-primary: #381E72;
+                --primary-container: #4F378B;
+                --on-primary-container: #EADDFF;
+                --surface: #141218;
+                --on-surface: #E6E1E5;
+                --surface-variant: #49454F;
+                --on-surface-variant: #CAC4D0;
+                --outline: #938F99;
+                --container: #1D1B20;
+                --error: #F2B8B5;
+                --success: #81C784;
+            }
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+        }
+        .card {
+            background: var(--container);
+            border-radius: 28px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid var(--surface-variant);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        h1 { font-size: 28px; margin: 0 0 8px 0; color: var(--primary); font-weight: 600; }
+        p.desc { color: var(--on-surface-variant); font-size: 15px; margin: 0 0 24px 0; line-height: 1.4; }
+
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--surface-variant);
+            padding: 4px;
+            border-radius: 100px;
+        }
+        .chip {
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--on-surface-variant);
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .chip.active {
+            background: var(--primary);
+            color: var(--on-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .result-area {
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--surface-variant);
+            border-radius: 24px;
+            margin-bottom: 24px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-sizing: border-box;
+        }
+        .roll-val { font-size: 12px; opacity: 0.8; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .entry-text { font-size: 24px; font-weight: 600; color: var(--primary); margin: 0; line-height: 1.3; }
+
+        .translation {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed var(--outline);
+            width: 100%;
+            font-size: 19px;
+            font-style: italic;
+            color: var(--on-surface-variant);
+            transition: opacity 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+        .translation.hidden { opacity: 0; pointer-events: none; }
+
+        .btn-reveal {
+            background: var(--primary-container);
+            color: var(--on-primary-container);
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .btn-reveal:hover { transform: scale(1.03); }
+
+        .speaker-btn {
+            background: var(--primary-container);
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .speaker-btn:hover { transform: scale(1.1); }
+        .speaker-btn svg { fill: var(--on-primary-container); width: 22px; height: 22px; }
+
+        /* Estilos de Quiz */
+        .quiz-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .quiz-option {
+            background: var(--container);
+            border: 2px solid var(--surface-variant);
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--on-surface);
+            outline: none;
+        }
+        .quiz-option:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: var(--surface-variant);
+        }
+        .quiz-option.correct {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        .quiz-option.incorrect {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+        .quiz-score {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        button.main-btn {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            padding: 16px 32px;
+            border-radius: 100px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(103, 80, 164, 0.3);
+            transition: all 0.2s;
+            width: 100%;
+        }
+        button.main-btn:hover {
+            box-shadow: 0 6px 16px rgba(103, 80, 164, 0.4);
+            transform: translateY(-2px);
+        }
+        button.main-btn:active { transform: translateY(0); }
+
+        .history {
+            margin-top: 32px;
+            width: 100%;
+            max-width: 500px;
+            text-align: left;
+        }
+        .history h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); font-weight: 600; }
+        .history-list { max-height: 200px; overflow-y: auto; border-radius: 16px; border: 1px solid var(--surface-variant); background: var(--container); }
+        .history-item {
+            font-size: 14px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--surface-variant);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .back-link { margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .back-link:hover { transform: translateX(-4px); }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>A1: Saludos y Cortesía</h1>
+        <h1>Saludos y Cortesía</h1>
         <p class="desc">Frases básicas para iniciar una conversación y mostrar cortesía.</p>
-        <div class="result-area" id="resultArea">
-            <div class="roll-val" id="rollVal">Tira el dado para empezar</div>
-            <div class="entry-text" id="entryText">---</div>
+
+        <div class="mode-toggle">
+            <button id="modeDirect" class="chip active" onclick="setMode('direct')">Modo Directo</button>
+            <button id="modeFlashcard" class="chip" onclick="setMode('flashcard')">Flashcard</button>
+            <button id="modeQuiz" class="chip" onclick="setMode('quiz')">Modo Quiz</button>
         </div>
-        <button onclick="roll()">Tirar 1d8</button>
+
+        <div class="result-area" id="resultArea">
+            <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
+            <div class="roll-val" id="rollVal">Tira el dado para empezar</div>
+            <div id="mainText" class="entry-text">---</div>
+
+            <div id="subContainer" class="translation">
+                <span id="subText"></span>
+                <button id="speaker" class="speaker-btn" onclick="speak()" title="Escuchar pronunciación">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                </button>
+            </div>
+            <button id="btnReveal" class="btn-reveal" onclick="reveal()" style="display:none">MOSTRAR TRADUCCIÓN</button>
+            
+            <div id="quizOptions" class="quiz-container" style="display:none"></div>
+        </div>
+
+        <div class="actions">
+            <button id="actionBtn" class="main-btn" onclick="roll()">Tirar 1d8</button>
+        </div>
     </div>
-    <div class="history"><h2>Historial</h2><div id="historyList"></div></div>
+
+    <div class="history" id="historySection">
+        <h2>Historial de hoy</h2>
+        <div id="historyList" class="history-list"></div>
+    </div>
+
     <a href="../index.html" class="back-link">← Volver al Portal</a>
+
     <script>
         const entries = [{min:1, max:1, text:"¡Hola! -> Hello! / Hi!"},{min:2, max:2, text:"¿Cómo estás? -> How are you?"},{min:3, max:3, text:"Mucho gusto -> Nice to meet you"},{min:4, max:4, text:"Por favor -> Please"},{min:5, max:5, text:"Gracias -> Thank you"},{min:6, max:6, text:"De nada -> You're welcome"},{min:7, max:7, text:"Lo siento -> I'm sorry"},{min:8, max:8, text:"¡Adiós! -> Goodbye!"}];
         const formula = "1d8";
-        function parseRoll(f) { const match = f.match(/(\d+)d(\d+)/); if (!match) return Math.floor(Math.random() * 8) + 1; const n = parseInt(match[1]); const d = parseInt(match[2]); let total = 0; for(let i=0; i<n; i++) total += Math.floor(Math.random() * d) + 1; return total; }
-        function roll() { const val = parseRoll(formula); const entry = entries.find(e => val >= e.min && val <= e.max); const text = entry ? entry.text : "Sin resultado"; document.getElementById('rollVal').innerText = "Tirada: " + val; document.getElementById('entryText').innerText = text; const area = document.getElementById('resultArea'); area.style.transform = "scale(1.02)"; setTimeout(() => area.style.transform = "scale(1)", 100); const hist = document.getElementById('historyList'); const item = document.createElement('div'); item.className = 'history-item'; item.innerText = "[" + val + "] " + text; hist.prepend(item); }
+        let currentMode = 'direct';
+        let isRevealed = true;
+        let lastEnglishText = "";
+        let currentQuizEntry = null;
+
+        // Quiz State
+        let quizAttempts = 0;
+        let quizCorrect = 0;
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeDirect').classList.toggle('active', mode === 'direct');
+            document.getElementById('modeFlashcard').classList.toggle('active', mode === 'flashcard');
+            document.getElementById('modeQuiz').classList.toggle('active', mode === 'quiz');
+            
+            const actionBtn = document.getElementById('actionBtn');
+            const historySec = document.getElementById('historySection');
+            const quizScore = document.getElementById('quizScore');
+
+            if (mode === 'quiz') {
+                actionBtn.innerText = 'Siguiente Pregunta';
+                actionBtn.onclick = startNewQuizQuestion;
+                historySec.style.display = 'none';
+                quizScore.style.display = 'block';
+                quizAttempts = 0;
+                quizCorrect = 0;
+                updateQuizScore();
+                startNewQuizQuestion();
+            } else {
+                actionBtn.innerText = 'Tirar ' + formula;
+                actionBtn.onclick = roll;
+                historySec.style.display = 'block';
+                quizScore.style.display = 'none';
+                document.getElementById('quizOptions').style.display = 'none';
+                document.getElementById('subContainer').style.display = 'flex';
+                document.getElementById('rollVal').style.display = 'block';
+                
+                // Reset to rolled or empty
+                if (lastEnglishText) {
+                    document.getElementById('subText').innerText = lastEnglishText;
+                    isRevealed = (mode === 'direct');
+                    updateVisibility();
+                } else {
+                    document.getElementById('mainText').innerText = '---';
+                    document.getElementById('rollVal').innerText = 'Tira el dado para empezar';
+                    document.getElementById('subContainer').classList.add('hidden');
+                    document.getElementById('btnReveal').style.display = 'none';
+                }
+            }
+        }
+
+        function roll() {
+            const val = parseRoll(formula);
+            const entry = entries.find(e => val >= e.min && val <= e.max);
+            const rawText = entry ? entry.text : "--- -> ---";
+
+            const parts = rawText.split("->");
+            const main = parts[0].trim();
+            const sub = parts.length > 1 ? parts[1].trim() : "";
+            lastEnglishText = sub;
+
+            document.getElementById('rollVal').innerText = "Tirada: " + val;
+            document.getElementById('mainText').innerText = main;
+            document.getElementById('subText').innerText = sub;
+
+            isRevealed = (currentMode === 'direct' || sub === "");
+            updateVisibility();
+
+            const area = document.getElementById('resultArea');
+            area.style.transform = "scale(1.02)";
+            setTimeout(() => area.style.transform = "scale(1)", 150);
+
+            addHistory(val, main, sub);
+        }
+
+        function updateVisibility() {
+            const subContainer = document.getElementById('subContainer');
+            const btnReveal = document.getElementById('btnReveal');
+
+            if (isRevealed) {
+                subContainer.classList.remove('hidden');
+                btnReveal.style.display = 'none';
+            } else {
+                subContainer.classList.add('hidden');
+                btnReveal.style.display = 'block';
+            }
+        }
+
+        function reveal() {
+            isRevealed = true;
+            updateVisibility();
+            speak();
+        }
+
+        function speak() {
+            if (!lastEnglishText) return;
+            const textToSpeak = lastEnglishText.split('/')[0].split(';')[0].trim();
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function parseRoll(f) {
+            const match = f.match(/(d+)d(d+)/);
+            if (!match) return Math.floor(Math.random() * 8) + 1;
+            const n = parseInt(match[1]);
+            const d = parseInt(match[2]);
+            let total = 0;
+            for(let i=0; i<n; i++) total += Math.floor(Math.random() * d) + 1;
+            return total;
+        }
+
+        function addHistory(val, main, sub) {
+            const hist = document.getElementById('historyList');
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = "<span><b>[" + val + "]</b> " + main + "</span><span style='color:var(--primary); font-weight: 500;'>" + sub + "</span>";
+            hist.prepend(item);
+        }
+
+        // Quiz Logic
+        function updateQuizScore() {
+            document.getElementById('quizScore').innerText = "Puntuación: " + quizCorrect + "/" + quizAttempts;
+        }
+
+        function startNewQuizQuestion() {
+            if (entries.length < 2) {
+                document.getElementById('mainText').innerText = "Se necesitan al menos 2 elementos para jugar.";
+                return;
+            }
+            
+            // Hide normal translation area
+            document.getElementById('subContainer').style.display = 'none';
+            document.getElementById('btnReveal').style.display = 'none';
+            document.getElementById('rollVal').style.display = 'none';
+            
+            // Select random entry
+            const correctEntry = entries[Math.floor(Math.random() * entries.length)];
+            currentQuizEntry = correctEntry;
+            
+            const parts = correctEntry.text.split("->");
+            const spanish = parts[0].trim();
+            const english = parts.length > 1 ? parts[1].trim() : "";
+            lastEnglishText = english;
+
+            document.getElementById('mainText').innerText = spanish;
+            
+            // Build options
+            const options = [english];
+            const otherEntries = entries.filter(e => e !== correctEntry);
+            
+            // Shuffle and get distractors
+            const distractors = otherEntries
+                .map(e => e.text.split("->")[1]?.trim() || "")
+                .filter(txt => txt !== "" && txt !== english);
+            
+            // Unique distractors
+            const uniqueDistractors = [...new Set(distractors)];
+            
+            while (options.length < Math.min(4, uniqueDistractors.length + 1)) {
+                const randomDist = uniqueDistractors[Math.floor(Math.random() * uniqueDistractors.length)];
+                if (!options.includes(randomDist)) {
+                    options.push(randomDist);
+                }
+            }
+            
+            // Shuffle options
+            options.sort(() => Math.random() - 0.5);
+            
+            // Render options
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            optionsContainer.style.display = 'flex';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option';
+                btn.innerText = opt;
+                btn.onclick = () => selectQuizOption(btn, opt, english);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizOption(btn, selected, correct) {
+            const buttons = document.querySelectorAll('.quiz-option');
+            buttons.forEach(b => b.disabled = true);
+            
+            quizAttempts++;
+            if (selected === correct) {
+                btn.classList.add('correct');
+                quizCorrect++;
+                speak();
+            } else {
+                btn.classList.add('incorrect');
+                // Highlight correct
+                buttons.forEach(b => {
+                    if (b.innerText === correct) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+            updateQuizScore();
+        }
     </script>
 </body>
 </html>
