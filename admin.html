@@ -23,6 +23,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         .card {
             background: var(--container);
@@ -75,70 +76,113 @@
         .warning { background: #FFF3E0; color: #EF6C00; }
         
         .auth-section { margin-bottom: 30px; }
+
+        /* Login Overlay Styles */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--surface);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #loginCard {
+            max-width: 350px;
+        }
+        #mainAdminContent {
+            display: none; /* Hidden until authenticated */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
 
-<div class="card auth-section">
-    <h2>Conexión con GitHub</h2>
-    <p class="info">Para subir packs directamente a la web, necesitas un Personal Access Token (classic) con permisos de "repo".</p>
-    <div class="form-group">
-        <label>Usuario (Owner):</label>
-        <input type="text" id="ghOwner" placeholder="Ej: AkkarinRothen">
+<!-- Login Overlay -->
+<div id="loginOverlay">
+    <div class="card" id="loginCard">
+        <h2>Acceso Restringido</h2>
+        <p class="info">Por favor, introduce tus credenciales para acceder al panel de administración.</p>
+        <div class="form-group">
+            <label>Usuario:</label>
+            <input type="text" id="loginUser" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Contraseña:</label>
+            <input type="password" id="loginPass" autocomplete="current-password" onkeypress="if(event.key === 'Enter') checkLogin()">
+        </div>
+        <button onclick="checkLogin()">Acceder</button>
+        <div id="loginError" class="info" style="color: #C62828; display: none; margin-top: 10px; text-align: center; font-weight: bold;">Credenciales incorrectas</div>
+        <a href="index.html" style="display:block; text-align:center; margin-top: 20px; color:var(--primary); font-weight:bold; font-size: 14px; text-decoration: none;">Volver al Portal</a>
     </div>
-    <div class="form-group">
-        <label>Repositorio:</label>
-        <input type="text" id="ghRepo" placeholder="Ej: EstudiAppweb">
-    </div>
-    <div class="form-group">
-        <label>Token (PAT):</label>
-        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-    </div>
-    <button onclick="saveAuth()">Guardar Credenciales (Local)</button>
 </div>
 
-<div class="card">
-    <h2>Crear Nuevo Pack</h2>
-    <div class="form-group">
-        <label>ID del Pack (sin espacios ni acentos):</label>
-        <input type="text" id="packId" placeholder="ej: animales_salvajes">
+<!-- Main Admin Content (Hidden by default) -->
+<div id="mainAdminContent" style="display: none;">
+    <div class="card auth-section">
+        <h2>Conexión con GitHub</h2>
+        <p class="info">Para subir packs directamente a la web, necesitas un Personal Access Token (classic) con permisos de "repo".</p>
+        <div class="form-group">
+            <label>Usuario (Owner):</label>
+            <input type="text" id="ghOwner" placeholder="Ej: AkkarinRothen">
+        </div>
+        <div class="form-group">
+            <label>Repositorio:</label>
+            <input type="text" id="ghRepo" placeholder="Ej: EstudiAppweb">
+        </div>
+        <div class="form-group">
+            <label>Token (PAT):</label>
+            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        </div>
+        <button onclick="saveAuth()">Guardar Credenciales (Local)</button>
     </div>
-    <div class="form-group">
-        <label>Título (Mostrado en la web):</label>
-        <input type="text" id="packTitle" placeholder="ej: A1: Animales Salvajes">
-    </div>
-    <div class="form-group">
-        <label>Nivel:</label>
-        <select id="packLevel">
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Categoría:</label>
-        <input type="text" id="packCategory" placeholder="ej: Naturaleza">
-    </div>
-    <div class="form-group">
-        <label>Descripción corta:</label>
-        <input type="text" id="packDesc" placeholder="Vocabulario sobre fauna de la selva y sabana.">
-    </div>
-    <div class="form-group">
-        <label>Fórmula del Dado:</label>
-        <input type="text" id="packFormula" value="1d8">
-    </div>
-    <div class="form-group">
-        <label>Entradas (Una por línea):</label>
-        <p class="info">Formato: Español -> Inglés</p>
-        <textarea id="packEntries" placeholder="El león -> The lion&#10;El tigre -> The tiger&#10;El elefante -> The elephant"></textarea>
-    </div>
-    
-    <button id="btnPublish" onclick="publishPack()">Generar y Publicar en GitHub</button>
-    <div id="statusBox"></div>
-</div>
 
-<a href="index.html" style="color:var(--primary); font-weight:bold;">Volver al Portal</a>
+    <div class="card">
+        <h2>Crear Nuevo Pack</h2>
+        <div class="form-group">
+            <label>ID del Pack (sin espacios ni acentos):</label>
+            <input type="text" id="packId" placeholder="ej: animales_salvajes">
+        </div>
+        <div class="form-group">
+            <label>Título (Mostrado en la web):</label>
+            <input type="text" id="packTitle" placeholder="ej: A1: Animales Salvajes">
+        </div>
+        <div class="form-group">
+            <label>Nivel:</label>
+            <select id="packLevel">
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Categoría:</label>
+            <input type="text" id="packCategory" placeholder="ej: Naturaleza">
+        </div>
+        <div class="form-group">
+            <label>Descripción corta:</label>
+            <input type="text" id="packDesc" placeholder="Vocabulario sobre fauna de la selva y sabana.">
+        </div>
+        <div class="form-group">
+            <label>Fórmula del Dado:</label>
+            <input type="text" id="packFormula" value="1d8">
+        </div>
+        <div class="form-group">
+            <label>Entradas (Una por línea):</label>
+            <p class="info">Formato: Español -> Inglés</p>
+            <textarea id="packEntries" placeholder="El león -> The lion&#10;El tigre -> The tiger&#10;El elefante -> The elephant"></textarea>
+        </div>
+        
+        <button id="btnPublish" onclick="publishPack()">Generar y Publicar en GitHub</button>
+        <div id="statusBox"></div>
+    </div>
+
+    <a href="index.html" style="color:var(--primary); font-weight:bold; margin-bottom: 40px;">Volver al Portal</a>
+</div>
 
 <script src="js/admin.js"></script>
 </body>

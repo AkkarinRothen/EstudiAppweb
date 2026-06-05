@@ -1,4 +1,40 @@
-// Gestión de credenciales
+// Seguridad / Login (Client-Side Hashing)
+// NOTA: En un sitio estático no hay seguridad real. El hashing evita la lectura en texto plano del HTML/JS.
+// Hashes para Usuario: AkkarinRothen | Pass: Mily2505
+const expectedUserHash = "a27b081436cabe3e7a2774b46e663a373d8fd769446d981c525155745879e557";
+const expectedPassHash = "b8fbc28f6a067474710ea06018665c0615999fa201bd2adc6236ee1db76e92f2";
+
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const errDiv = document.getElementById('loginError');
+
+    if (!user || !pass) {
+        errDiv.style.display = 'block';
+        return;
+    }
+
+    const userHash = await sha256(user);
+    const passHash = await sha256(pass);
+
+    if (userHash === expectedUserHash && passHash === expectedPassHash) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainAdminContent').style.display = 'flex';
+        loadAuth(); // Cargar credenciales guardadas si las hay
+    } else {
+        errDiv.style.display = 'block';
+        document.getElementById('loginPass').value = '';
+    }
+}
+
+// Gestión de credenciales GitHub
 function saveAuth() {
     const owner = document.getElementById('ghOwner').value;
     const repo = document.getElementById('ghRepo').value;
