@@ -3,7 +3,7 @@ const path = require('path');
 
 const presetsDir = path.join(__dirname, '..', 'presets');
 
-// Template for the interactive presets with images support
+// Template for the interactive presets with images, SRS, Write mode, and stats support
 const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -230,6 +230,94 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             color: var(--primary);
         }
 
+        /* Modo Escritura UI */
+        .write-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+        .write-input {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 16px;
+            border: 2px solid var(--outline);
+            background: var(--container);
+            color: var(--on-surface);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .write-input:focus {
+            border-color: var(--primary);
+        }
+        .write-feedback {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.4;
+        }
+        .write-feedback.correct {
+            color: var(--success);
+        }
+        .write-feedback.incorrect {
+            color: var(--error);
+        }
+        .diff-del {
+            text-decoration: line-through;
+            color: var(--error);
+            background: rgba(179, 38, 30, 0.1);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .diff-ins {
+            color: var(--success);
+            background: rgba(46, 125, 50, 0.1);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        /* Botones de Calificación SRS */
+        .srs-feedback-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 16px;
+        }
+        .srs-btn {
+            flex: 1;
+            border: none;
+            padding: 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .srs-btn-again {
+            background: var(--error);
+            color: white;
+        }
+        .srs-btn-again:hover {
+            background: #962019;
+        }
+        .srs-btn-good {
+            background: var(--success);
+            color: white;
+        }
+        .srs-btn-good:hover {
+            background: #236127;
+        }
+
         .actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         button.main-btn {
             background: var(--primary);
@@ -285,6 +373,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             <button id="modeDirect" class="chip active" onclick="setMode('direct')">Modo Directo</button>
             <button id="modeFlashcard" class="chip" onclick="setMode('flashcard')">Flashcard</button>
             <button id="modeQuiz" class="chip" onclick="setMode('quiz')">Modo Quiz</button>
+            <button id="modeWrite" class="chip" onclick="setMode('write')">Escritura</button>
         </div>
 
         <div class="result-area" id="resultArea">
@@ -305,7 +394,17 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             </div>
             <button id="btnReveal" class="btn-reveal" onclick="reveal()" style="display:none">MOSTRAR TRADUCCIÓN</button>
             
+            <div id="writeArea" class="write-container" style="display:none">
+                <input type="text" id="writeInput" class="write-input" placeholder="Escribe la traducción aquí..." autocomplete="off">
+                <div id="writeFeedback" class="write-feedback"></div>
+            </div>
+
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
+
+            <div id="srsFeedback" class="srs-feedback-container" style="display:none">
+                <button class="srs-btn srs-btn-again" onclick="rateSrs(false)">❌ Me costó</button>
+                <button class="srs-btn srs-btn-good" onclick="rateSrs(true)">✅ Fácil / Lo sé</button>
+            </div>
         </div>
 
         <div class="actions">
@@ -323,14 +422,121 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
     <script>
         const entries = [${entriesJson}];
         const formula = "${formula}";
+        const packId = window.location.pathname.split('/').pop().replace('.html', '') || 'unknown_pack';
+
         let currentMode = 'direct';
         let isRevealed = true;
         let lastEnglishText = "";
+        let lastSpanishText = "";
         let currentQuizEntry = null;
 
         // Quiz State
         let quizAttempts = 0;
         let quizCorrect = 0;
+
+        // SRS Helpers
+        function getSrsData() {
+            try {
+                return JSON.parse(localStorage.getItem('estudiapp_srs_data')) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveSrsData(data) {
+            localStorage.setItem('estudiapp_srs_data', JSON.stringify(data));
+        }
+
+        function getStats() {
+            try {
+                let stats = JSON.parse(localStorage.getItem('estudiapp_stats'));
+                if (!stats) stats = { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
+                return stats;
+            } catch (e) {
+                return { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
+            }
+        }
+
+        function saveStats(stats) {
+            localStorage.setItem('estudiapp_stats', JSON.stringify(stats));
+        }
+
+        function recordSrsAttempt(isCorrect) {
+            let stats = getStats();
+            stats.totalReviews++;
+            if (isCorrect) stats.totalCorrect++;
+
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            if (stats.lastStudyDate !== todayStr) {
+                if (stats.lastStudyDate) {
+                    const lastDate = new Date(stats.lastStudyDate);
+                    const today = new Date(todayStr);
+                    const diffTime = Math.abs(today - lastDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) stats.streak++;
+                    else if (diffDays > 1) stats.streak = 1;
+                } else {
+                    stats.streak = 1;
+                }
+                stats.lastStudyDate = todayStr;
+            }
+            saveStats(stats);
+        }
+
+        function updateWordSrs(wordKey, isCorrect) {
+            if (!packId || !wordKey) return;
+            let srsData = getSrsData();
+            if (!srsData[packId]) srsData[packId] = {};
+            if (!srsData[packId][wordKey]) {
+                srsData[packId][wordKey] = { box: 1, nextReview: 0, lastAttempt: 0 };
+            }
+            
+            let srsInfo = srsData[packId][wordKey];
+            srsInfo.lastAttempt = Date.now();
+            
+            if (isCorrect) {
+                srsInfo.box = Math.min(5, srsInfo.box + 1);
+            } else {
+                srsInfo.box = 1;
+            }
+            
+            let interval = 60 * 1000; // 1 min (box 1)
+            if (srsInfo.box === 2) interval = 10 * 60 * 1000;
+            else if (srsInfo.box === 3) interval = 60 * 60 * 1000;
+            else if (srsInfo.box === 4) interval = 24 * 60 * 60 * 1000;
+            else if (srsInfo.box === 5) interval = 4 * 24 * 60 * 60 * 1000;
+            
+            srsInfo.nextReview = Date.now() + interval;
+            saveSrsData(srsData);
+            recordSrsAttempt(isCorrect);
+        }
+
+        function selectNextEntry() {
+            if (entries.length === 0) return null;
+            const srsData = getSrsData()[packId] || {};
+            
+            let dueEntries = [];
+            let neverReviewed = [];
+            let lowBoxEntries = [];
+            
+            entries.forEach(entry => {
+                const parts = entry.text.split("->");
+                const wordKey = parts[0].trim();
+                const srsInfo = srsData[wordKey];
+                
+                if (!srsInfo) neverReviewed.push(entry);
+                else if (srsInfo.nextReview <= Date.now()) dueEntries.push(entry);
+                else lowBoxEntries.push({ entry, box: srsInfo.box });
+            });
+            
+            if (dueEntries.length > 0) return dueEntries[Math.floor(Math.random() * dueEntries.length)];
+            if (neverReviewed.length > 0) return neverReviewed[Math.floor(Math.random() * neverReviewed.length)];
+            
+            lowBoxEntries.sort((a, b) => a.box - b.box);
+            if (lowBoxEntries.length > 0) return lowBoxEntries[0].entry;
+            return entries[Math.floor(Math.random() * entries.length)];
+        }
 
         function toggleImages() {
             updateVisibility();
@@ -341,13 +547,20 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             document.getElementById('modeDirect').classList.toggle('active', mode === 'direct');
             document.getElementById('modeFlashcard').classList.toggle('active', mode === 'flashcard');
             document.getElementById('modeQuiz').classList.toggle('active', mode === 'quiz');
+            document.getElementById('modeWrite').classList.toggle('active', mode === 'write');
             
             const actionBtn = document.getElementById('actionBtn');
             const historySec = document.getElementById('historySection');
             const quizScore = document.getElementById('quizScore');
+            const writeArea = document.getElementById('writeArea');
+            const srsFeedback = document.getElementById('srsFeedback');
+
+            writeArea.style.display = 'none';
+            srsFeedback.style.display = 'none';
 
             if (mode === 'quiz') {
                 actionBtn.innerText = 'Siguiente Pregunta';
+                actionBtn.style.display = 'block';
                 actionBtn.onclick = startNewQuizQuestion;
                 historySec.style.display = 'none';
                 quizScore.style.display = 'block';
@@ -355,8 +568,19 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 quizCorrect = 0;
                 updateQuizScore();
                 startNewQuizQuestion();
+            } else if (mode === 'write') {
+                actionBtn.innerText = 'Comprobar';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = checkWriteAnswer;
+                historySec.style.display = 'none';
+                quizScore.style.display = 'none';
+                document.getElementById('quizOptions').style.display = 'none';
+                document.getElementById('subContainer').style.display = 'none';
+                document.getElementById('rollVal').style.display = 'none';
+                startWriteQuestion();
             } else {
                 actionBtn.innerText = 'Tirar ' + formula;
+                actionBtn.style.display = 'block';
                 actionBtn.onclick = roll;
                 historySec.style.display = 'block';
                 quizScore.style.display = 'none';
@@ -364,7 +588,6 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 document.getElementById('subContainer').style.display = 'flex';
                 document.getElementById('rollVal').style.display = 'block';
                 
-                // Reset to rolled or empty
                 if (lastEnglishText) {
                     document.getElementById('subText').innerText = lastEnglishText;
                     isRevealed = (mode === 'direct');
@@ -380,13 +603,18 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         }
 
         function roll() {
-            const val = parseRoll(formula);
-            const entry = entries.find(e => val >= e.min && val <= e.max);
-            const rawText = entry ? entry.text : "--- -> ---";
+            const entry = selectNextEntry();
+            if (!entry) return;
+
+            // Simulate roll value within entry range
+            const val = Math.floor(Math.random() * (entry.max - entry.min + 1)) + entry.min;
+            const rawText = entry.text;
 
             const parts = rawText.split("->");
             const main = parts[0].trim();
             const sub = parts.length > 1 ? parts[1].trim() : "";
+            
+            lastSpanishText = main;
             lastEnglishText = sub;
 
             // Resolve Image URL
@@ -404,7 +632,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 }
             }
 
-            document.getElementById('rollVal').innerText = "Tirada: " + val;
+            document.getElementById('rollVal').innerText = "Tirada (SRS): " + val;
             document.getElementById('mainText').innerText = main;
             document.getElementById('subText').innerText = sub;
             
@@ -417,6 +645,12 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 
             isRevealed = (currentMode === 'direct' || sub === "");
             updateVisibility();
+
+            if (currentMode === 'direct') {
+                document.getElementById('srsFeedback').style.display = 'flex';
+            } else {
+                document.getElementById('srsFeedback').style.display = 'none';
+            }
 
             const area = document.getElementById('resultArea');
             area.style.transform = "scale(1.02)";
@@ -435,7 +669,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             if (isRevealed) {
                 subContainer.classList.remove('hidden');
                 btnReveal.style.display = 'none';
-                if (showImages && hasImg && currentMode !== 'quiz') {
+                if (showImages && hasImg && currentMode !== 'quiz' && currentMode !== 'write') {
                     imgContainer.style.display = 'block';
                 } else {
                     imgContainer.style.display = 'none';
@@ -443,7 +677,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             } else {
                 subContainer.classList.add('hidden');
                 btnReveal.style.display = 'block';
-                imgContainer.style.display = 'none'; // Hide in flashcard until revealed
+                imgContainer.style.display = 'none';
             }
         }
 
@@ -451,9 +685,17 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             isRevealed = true;
             updateVisibility();
             speak();
+
+            if (currentMode === 'flashcard') {
+                document.getElementById('srsFeedback').style.display = 'flex';
+            }
         }
 
-        // Web Speech API
+        function rateSrs(isCorrect) {
+            updateWordSrs(lastSpanishText, isCorrect);
+            document.getElementById('srsFeedback').style.display = 'none';
+        }
+
         function speak() {
             if (!lastEnglishText) return;
             const textToSpeak = lastEnglishText.split('/')[0].split(';')[0].trim();
@@ -480,6 +722,100 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             hist.prepend(item);
         }
 
+        function cleanText(txt) {
+            if (!txt) return "";
+            return txt.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_~()]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function getDiffHighlight(typed, correct) {
+            let html = "";
+            const len = Math.max(typed.length, correct.length);
+            for (let i = 0; i < len; i++) {
+                if (typed[i] === correct[i]) html += typed[i];
+                else {
+                    if (typed[i]) html += '<span class="diff-del">' + typed[i] + '</span>';
+                    if (correct[i]) html += '<span class="diff-ins">' + correct[i] + '</span>';
+                }
+            }
+            return html;
+        }
+
+        // Write Mode
+        function startWriteQuestion() {
+            const entry = selectNextEntry();
+            if (!entry) return;
+
+            document.getElementById('subContainer').style.display = 'none';
+            document.getElementById('btnReveal').style.display = 'none';
+            document.getElementById('rollVal').style.display = 'none';
+            document.getElementById('imgContainer').style.display = 'none';
+            document.getElementById('quizOptions').style.display = 'none';
+            document.getElementById('srsFeedback').style.display = 'none';
+
+            const parts = entry.text.split("->");
+            const spanish = parts[0].trim();
+            const english = parts.length > 1 ? parts[1].trim() : "";
+            
+            lastSpanishText = spanish;
+            lastEnglishText = english;
+
+            document.getElementById('mainText').innerText = spanish;
+            
+            const writeArea = document.getElementById('writeArea');
+            writeArea.style.display = 'flex';
+
+            const input = document.getElementById('writeInput');
+            input.value = "";
+            input.disabled = false;
+            input.focus();
+
+            const feedback = document.getElementById('writeFeedback');
+            feedback.innerText = "";
+            feedback.className = "write-feedback";
+
+            const actionBtn = document.getElementById('actionBtn');
+            actionBtn.innerText = 'Comprobar';
+            actionBtn.onclick = checkWriteAnswer;
+
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') checkWriteAnswer();
+            };
+        }
+
+        function checkWriteAnswer() {
+            const input = document.getElementById('writeInput');
+            const feedback = document.getElementById('writeFeedback');
+            const actionBtn = document.getElementById('actionBtn');
+            
+            const typed = input.value.trim();
+            if (!typed) return;
+
+            input.disabled = true;
+
+            const correctOptions = lastEnglishText.split(/[/\;,]/).map(s => cleanText(s.trim()));
+            const typedClean = cleanText(typed);
+            const isCorrect = correctOptions.includes(typedClean);
+
+            updateWordSrs(lastSpanishText, isCorrect);
+
+            if (isCorrect) {
+                feedback.innerText = "¡Correcto! 🎉";
+                feedback.className = "write-feedback correct";
+                speak();
+            } else {
+                const diffMarkup = getDiffHighlight(typed, lastEnglishText.split(/[/\;,]/)[0].trim());
+                feedback.innerHTML = 'Incorrecto. <br>Tu intento: <span style="font-weight:normal;">' + diffMarkup + '</span><br>Correcto: <strong>' + lastEnglishText + '</strong>';
+                feedback.className = "write-feedback incorrect";
+            }
+
+            actionBtn.innerText = 'Siguiente Pregunta';
+            actionBtn.onclick = startWriteQuestion;
+        }
+
         // Quiz Logic
         function updateQuizScore() {
             document.getElementById('quizScore').innerText = "Puntuación: " + quizCorrect + "/" + quizAttempts;
@@ -495,19 +831,24 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             document.getElementById('btnReveal').style.display = 'none';
             document.getElementById('rollVal').style.display = 'none';
             document.getElementById('imgContainer').style.display = 'none';
+            document.getElementById('writeArea').style.display = 'none';
+            document.getElementById('srsFeedback').style.display = 'none';
             
-            const correctEntry = entries[Math.floor(Math.random() * entries.length)];
-            currentQuizEntry = correctEntry;
+            const entry = selectNextEntry();
+            if (!entry) return;
+            currentQuizEntry = entry;
             
-            const parts = correctEntry.text.split("->");
+            const parts = entry.text.split("->");
             const spanish = parts[0].trim();
             const english = parts.length > 1 ? parts[1].trim() : "";
+            
+            lastSpanishText = spanish;
             lastEnglishText = english;
 
             document.getElementById('mainText').innerText = spanish;
             
             const options = [english];
-            const otherEntries = entries.filter(e => e !== correctEntry);
+            const otherEntries = entries.filter(e => e.text.split("->")[0].trim() !== spanish);
             const distractors = otherEntries
                 .map(e => e.text.split("->")[1]?.trim() || "")
                 .filter(txt => txt !== "" && txt !== english);
@@ -541,7 +882,10 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             buttons.forEach(b => b.disabled = true);
             
             quizAttempts++;
-            if (selected === correct) {
+            const isCorrect = (selected === correct);
+            updateWordSrs(lastSpanishText, isCorrect);
+
+            if (isCorrect) {
                 btn.classList.add('correct');
                 quizCorrect++;
                 speak();
