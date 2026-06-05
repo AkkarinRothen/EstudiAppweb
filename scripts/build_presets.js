@@ -3,7 +3,7 @@ const path = require('path');
 
 const presetsDir = path.join(__dirname, '..', 'presets');
 
-// Template for the interactive presets
+// Template for the interactive presets with images support
 const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -68,7 +68,21 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             transition: all 0.3s ease;
         }
         h1 { font-size: 28px; margin: 0 0 8px 0; color: var(--primary); font-weight: 600; }
-        p.desc { color: var(--on-surface-variant); font-size: 15px; margin: 0 0 24px 0; line-height: 1.4; }
+        p.desc { color: var(--on-surface-variant); font-size: 15px; margin: 0 0 20px 0; line-height: 1.4; }
+
+        .image-toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--on-surface-variant);
+        }
+        .image-toggle-container input {
+            cursor: pointer;
+        }
 
         .mode-toggle {
             display: flex;
@@ -112,6 +126,22 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             box-sizing: border-box;
         }
         .roll-val { font-size: 12px; opacity: 0.8; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .vocab-image-container {
+            width: 100%;
+            height: 160px;
+            margin-bottom: 16px;
+            border-radius: 16px;
+            overflow: hidden;
+            display: none;
+            background: rgba(0,0,0,0.05);
+        }
+        .vocab-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .entry-text { font-size: 24px; font-weight: 600; color: var(--primary); margin: 0; line-height: 1.3; }
 
         .translation {
@@ -246,6 +276,11 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         <h1>${title}</h1>
         <p class="desc">${desc}</p>
 
+        <div class="image-toggle-container">
+            <input type="checkbox" id="enableImages" checked onchange="toggleImages()">
+            <label for="enableImages">Mostrar Imágenes 🖼️</label>
+        </div>
+
         <div class="mode-toggle">
             <button id="modeDirect" class="chip active" onclick="setMode('direct')">Modo Directo</button>
             <button id="modeFlashcard" class="chip" onclick="setMode('flashcard')">Flashcard</button>
@@ -255,6 +290,11 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         <div class="result-area" id="resultArea">
             <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
             <div class="roll-val" id="rollVal">Tira el dado para empezar</div>
+            
+            <div class="vocab-image-container" id="imgContainer">
+                <img id="vocabImg" class="vocab-image" src="" alt="Vocabulary Image">
+            </div>
+
             <div id="mainText" class="entry-text">---</div>
 
             <div id="subContainer" class="translation">
@@ -291,6 +331,10 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         // Quiz State
         let quizAttempts = 0;
         let quizCorrect = 0;
+
+        function toggleImages() {
+            updateVisibility();
+        }
 
         function setMode(mode) {
             currentMode = mode;
@@ -330,6 +374,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                     document.getElementById('rollVal').innerText = 'Tira el dado para empezar';
                     document.getElementById('subContainer').classList.add('hidden');
                     document.getElementById('btnReveal').style.display = 'none';
+                    document.getElementById('imgContainer').style.display = 'none';
                 }
             }
         }
@@ -344,9 +389,31 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             const sub = parts.length > 1 ? parts[1].trim() : "";
             lastEnglishText = sub;
 
+            // Resolve Image URL
+            let imageUrl = "";
+            if (parts.length > 2) {
+                const third = parts[2].trim();
+                if (third.startsWith("http://") || third.startsWith("https://")) {
+                    imageUrl = third;
+                }
+            }
+            if (!imageUrl && sub) {
+                const queryWord = sub.split('/')[0].split(';')[0].split(',')[0].trim().toLowerCase();
+                if (queryWord) {
+                    imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
+                }
+            }
+
             document.getElementById('rollVal').innerText = "Tirada: " + val;
             document.getElementById('mainText').innerText = main;
             document.getElementById('subText').innerText = sub;
+            
+            const vocabImg = document.getElementById('vocabImg');
+            if (imageUrl) {
+                vocabImg.src = imageUrl;
+            } else {
+                vocabImg.src = "";
+            }
 
             isRevealed = (currentMode === 'direct' || sub === "");
             updateVisibility();
@@ -361,13 +428,22 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
         function updateVisibility() {
             const subContainer = document.getElementById('subContainer');
             const btnReveal = document.getElementById('btnReveal');
+            const imgContainer = document.getElementById('imgContainer');
+            const showImages = document.getElementById('enableImages').checked;
+            const hasImg = document.getElementById('vocabImg').getAttribute('src') !== "";
 
             if (isRevealed) {
                 subContainer.classList.remove('hidden');
                 btnReveal.style.display = 'none';
+                if (showImages && hasImg && currentMode !== 'quiz') {
+                    imgContainer.style.display = 'block';
+                } else {
+                    imgContainer.style.display = 'none';
+                }
             } else {
                 subContainer.classList.add('hidden');
                 btnReveal.style.display = 'block';
+                imgContainer.style.display = 'none'; // Hide in flashcard until revealed
             }
         }
 
@@ -377,6 +453,7 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             speak();
         }
 
+        // Web Speech API
         function speak() {
             if (!lastEnglishText) return;
             const textToSpeak = lastEnglishText.split('/')[0].split(';')[0].trim();
@@ -414,12 +491,11 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 return;
             }
             
-            // Hide normal translation area
             document.getElementById('subContainer').style.display = 'none';
             document.getElementById('btnReveal').style.display = 'none';
             document.getElementById('rollVal').style.display = 'none';
+            document.getElementById('imgContainer').style.display = 'none';
             
-            // Select random entry
             const correctEntry = entries[Math.floor(Math.random() * entries.length)];
             currentQuizEntry = correctEntry;
             
@@ -430,16 +506,12 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
 
             document.getElementById('mainText').innerText = spanish;
             
-            // Build options
             const options = [english];
             const otherEntries = entries.filter(e => e !== correctEntry);
-            
-            // Shuffle and get distractors
             const distractors = otherEntries
                 .map(e => e.text.split("->")[1]?.trim() || "")
                 .filter(txt => txt !== "" && txt !== english);
             
-            // Unique distractors
             const uniqueDistractors = [...new Set(distractors)];
             
             while (options.length < Math.min(4, uniqueDistractors.length + 1)) {
@@ -449,10 +521,8 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 }
             }
             
-            // Shuffle options
             options.sort(() => Math.random() - 0.5);
             
-            // Render options
             const optionsContainer = document.getElementById('quizOptions');
             optionsContainer.innerHTML = '';
             optionsContainer.style.display = 'flex';
@@ -477,7 +547,6 @@ const generateTemplate = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
                 speak();
             } else {
                 btn.classList.add('incorrect');
-                // Highlight correct
                 buttons.forEach(b => {
                     if (b.innerText === correct) {
                         b.classList.add('correct');
@@ -519,8 +588,6 @@ fs.readdir(presetsDir, (err, files) => {
             return;
         }
         let entriesJson = entriesMatch[1];
-        // Clean JSON format slightly if needed, but since it's already a JS array representation, we can inject it
-        // Remove trailing commas if any
         entriesJson = entriesJson.trim().replace(/^\[/, '').replace(/\]$/, '');
 
         // Extract formula

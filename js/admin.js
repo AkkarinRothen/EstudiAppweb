@@ -100,7 +100,10 @@ async function publishPack() {
         let entriesJsonArray = [];
         let i = 1;
         for (const line of lines) {
-            entriesJsonArray.push(`{min:${i}, max:${i}, text:"${line.replace(/"/g, '\\"')}"}`);
+            let parts = line.split('||');
+            let mainText = parts[0].trim().replace(/"/g, '\\"');
+            let exampleText = parts.length > 1 ? parts[1].trim().replace(/"/g, '\\"') : '';
+            entriesJsonArray.push(`{min:${i}, max:${i}, text:"${mainText}", example:"${exampleText}"}`);
             i++;
         }
         const entriesString = entriesJsonArray.join(',');
@@ -108,6 +111,7 @@ async function publishPack() {
         // 2. Generar HTML
         const htmlContent = generateHtml(title, desc, formula, entriesString);
         const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent))); // Base64 safe
+
 
         // 3. Subir archivo HTML a GitHub
         showStatus('Subiendo HTML a GitHub...', 'warning');
@@ -206,31 +210,51 @@ function generateHtml(title, desc, formula, entriesArrayString) {
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>${title} - EstudiApp Interactive</title>
     <style>
-        :root { --primary: #6750A4; --on-primary: #FFFFFF; --surface: #FEF7FF; --outline: #79747E; --surface-variant: #E7E0EC; --tertiary: #7D5260; --container: #FFFFFF; }
-        @media (prefers-color-scheme: dark) { :root { --primary: #D0BCFF; --on-primary: #381E72; --surface: #1C1B1F; --outline: #938F99; --surface-variant: #49454F; --container: #25232A; } }
+        :root { --primary: #6750A4; --on-primary: #FFFFFF; --surface: #FEF7FF; --outline: #79747E; --surface-variant: #E7E0EC; --tertiary: #7D5260; --container: #FFFFFF; --success: #2E7D32; --error: #C62828; }
+        @media (prefers-color-scheme: dark) { :root { --primary: #D0BCFF; --on-primary: #381E72; --surface: #1C1B1F; --outline: #938F99; --surface-variant: #49454F; --container: #25232A; --success: #81C784; --error: #E57373; } }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--surface); color: var(--outline); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; transition: all 0.3s; }
         .card { background: var(--container); border-radius: 28px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; border: 1px solid var(--surface-variant); }
         h1 { font-size: 24px; margin-bottom: 8px; color: var(--primary); }
         p.desc { color: var(--outline); font-size: 14px; margin-bottom: 24px; }
-        .mode-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        
+        /* Tabs */
+        .mode-toggle { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .chip { padding: 8px 16px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; background: var(--surface-variant); border: 1px solid var(--outline); transition: 0.2s; }
         .chip.active { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
-        .result-area { min-height: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 20px; margin-bottom: 24px; padding: 20px; transition: all 0.3s ease; position: relative; }
+        
+        /* Study Area */
+        .result-area { min-height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 20px; margin-bottom: 24px; padding: 20px; transition: all 0.3s ease; position: relative; }
         .roll-val { font-size: 12px; opacity: 0.8; font-weight: bold; margin-bottom: 10px; }
         .entry-text { font-size: 24px; font-weight: 600; color: var(--primary); }
-        .translation { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--outline); width: 100%; font-size: 18px; font-style: italic; color: var(--tertiary); transition: opacity 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .translation.hidden { opacity: 0; }
-        .btn-reveal { background: var(--primary); color: var(--on-primary); padding: 4px 12px; border-radius: 100px; font-size: 11px; cursor: pointer; margin-top: 10px; }
-        .speaker-btn { background: none; border: none; cursor: pointer; padding: 5px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .translation { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--outline); width: 100%; font-size: 18px; font-style: italic; color: var(--tertiary); display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.2s; }
+        .translation.hidden { opacity: 0; pointer-events: none; }
+        .example-text { font-size: 14px; color: var(--outline); font-style: normal; margin-top: 5px; background: rgba(0,0,0,0.05); padding: 8px 12px; border-radius: 8px; width: 90%; }
+        
+        /* Buttons */
+        .btn-reveal { background: var(--primary); color: var(--on-primary); padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; border: none; }
+        .speaker-btn { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .speaker-btn:hover { background: rgba(0,0,0,0.1); }
-        .speaker-btn svg { fill: var(--tertiary); width: 20px; height: 20px; }
-        .actions { display: flex; flex-direction: column; gap: 12px; }
-        button.main-btn { background: var(--primary); color: var(--on-primary); border: none; padding: 16px 32px; border-radius: 100px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; }
-        button.main-btn:active { transform: scale(0.95); }
+        .speaker-btn svg { fill: var(--tertiary); width: 24px; height: 24px; }
+        .main-btn { background: var(--primary); color: var(--on-primary); border: none; padding: 16px 32px; border-radius: 100px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.1s; width: 100%; }
+        .main-btn:active { transform: scale(0.95); }
+        
+        /* Quiz Area */
+        #quizSection { display: none; flex-direction: column; width: 100%; }
+        .quiz-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
+        .quiz-question { font-size: 22px; font-weight: bold; color: var(--primary); margin-bottom: 20px; background: var(--surface-variant); padding: 20px; border-radius: 16px; }
+        .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+        .quiz-opt { background: var(--container); border: 2px solid var(--surface-variant); padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; color: var(--outline); }
+        .quiz-opt:hover { border-color: var(--primary); color: var(--primary); }
+        .quiz-opt.correct { background: var(--success); color: white; border-color: var(--success); }
+        .quiz-opt.wrong { background: var(--error); color: white; border-color: var(--error); }
+        
+        /* History & Misc */
         .history { margin-top: 32px; width: 100%; max-width: 500px; text-align: left; }
         .history h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
         .history-list { max-height: 250px; overflow-y: auto; }
-        .history-item { font-size: 14px; padding: 12px; border-bottom: 1px solid var(--surface-variant); display: flex; justify-content: space-between; align-items: center; }
+        .history-item { font-size: 14px; padding: 12px; border-bottom: 1px solid var(--surface-variant); display: flex; flex-direction: column; gap: 4px; }
+        .history-main { display: flex; justify-content: space-between; align-items: center; }
+        .history-example { font-size: 12px; opacity: 0.8; font-style: italic; }
         .back-link { margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold; }
     </style>
 </head>
@@ -238,48 +262,185 @@ function generateHtml(title, desc, formula, entriesArrayString) {
     <div class='card'>
         <h1>${title}</h1>
         <p class='desc'>${desc}</p>
+        
         <div class='mode-toggle'>
-            <div id='modeDirect' class='chip active' onclick='setMode("direct")'>Modo Directo</div>
-            <div id='modeFlashcard' class='chip' onclick='setMode("flashcard")'>Modo Flashcard</div>
+            <div id='modeDirect' class='chip active' onclick='setMode("direct")'>Directo</div>
+            <div id='modeFlashcard' class='chip' onclick='setMode("flashcard")'>Flashcard</div>
+            <div id='modeQuiz' class='chip' onclick='setMode("quiz")'>Minijuego (Quiz)</div>
         </div>
-        <div class='result-area' id='resultArea'>
-            <div class='roll-val' id='rollVal'>Tira el dado para empezar</div>
-            <div id='mainText' class='entry-text'>---</div>
-            <div id='subContainer' class='translation'>
-                <span id='subText'></span>
-                <button id='speaker' class='speaker-btn' onclick='speak()' title='Escuchar pronunciación'>
-                    <svg viewBox='0 0 24 24'><path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/></svg>
-                </button>
+
+        <!-- Study Section -->
+        <div id='studySection'>
+            <div class='result-area' id='resultArea'>
+                <div class='roll-val' id='rollVal'>Tira el dado para empezar</div>
+                <div id='mainText' class='entry-text'>---</div>
+                
+                <div id='subContainer' class='translation'>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span id='subText'></span>
+                        <button id='speaker' class='speaker-btn' onclick='speak()' title='Escuchar'>
+                            <svg viewBox='0 0 24 24'><path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z'/></svg>
+                        </button>
+                    </div>
+                    <div id='exampleText' class='example-text' style='display:none'></div>
+                </div>
+                <button id='btnReveal' class='btn-reveal' onclick='reveal()' style='display:none'>MOSTRAR</button>
             </div>
-            <div id='btnReveal' class='btn-reveal' onclick='reveal()' style='display:none'>MOSTRAR TRADUCCIÓN</div>
+            <button class='main-btn' onclick='roll()'>Tirar ${formula}</button>
+            
+            <div class='history'><h2>Historial</h2><div id='historyList' class='history-list'></div></div>
         </div>
-        <button class='main-btn' onclick='roll()'>Tirar ${formula}</button>
+
+        <!-- Quiz Section -->
+        <div id='quizSection'>
+            <div class='quiz-header'>
+                <span id='quizScore'>Aciertos: 0 / 0</span>
+                <span id='quizStreak'>🔥 Racha: 0</span>
+            </div>
+            <div class='quiz-question' id='quizQ'>Presiona Iniciar</div>
+            <div class='quiz-options' id='quizOpts'></div>
+            <button class='main-btn' id='btnNextQuiz' onclick='nextQuestion()' style='margin-top:20px'>Iniciar Quiz</button>
+        </div>
     </div>
-    <div class='history'><h2>Historial</h2><div id='historyList' class='history-list'></div></div>
+
     <a href='../index.html' class='back-link'>← Volver al Portal</a>
+
     <script>
         const entries = [${entriesArrayString}];
-        let currentMode = 'direct'; let isRevealed = true; let lastEng = '';
-        function setMode(m) { currentMode = m; document.getElementById('modeDirect').classList.toggle('active', m === 'direct'); document.getElementById('modeFlashcard').classList.toggle('active', m === 'flashcard'); updateVis(); }
+        let currentMode = 'direct'; let isRevealed = true; let lastEng = ''; let lastExample = '';
+        
+        // Quiz State
+        let quizScore = 0; let quizTotal = 0; let quizStreak = 0; let currentQ = null; let answered = false;
+
+        function setMode(m) { 
+            currentMode = m; 
+            document.getElementById('modeDirect').classList.toggle('active', m === 'direct'); 
+            document.getElementById('modeFlashcard').classList.toggle('active', m === 'flashcard'); 
+            document.getElementById('modeQuiz').classList.toggle('active', m === 'quiz'); 
+            
+            if(m === 'quiz') {
+                document.getElementById('studySection').style.display = 'none';
+                document.getElementById('quizSection').style.display = 'flex';
+                if(quizTotal === 0) nextQuestion();
+            } else {
+                document.getElementById('studySection').style.display = 'block';
+                document.getElementById('quizSection').style.display = 'none';
+                updateVis(); 
+            }
+        }
+        
+        function parseEntryText(raw) {
+            const pts = raw.split('->'); 
+            const m = pts[0].trim(); 
+            const s = pts.length > 1 ? pts[1].trim() : '';
+            return { es: m, en: s };
+        }
+
+        // --- STUDY MODE ---
         function roll() {
             const val = Math.floor(Math.random() * entries.length) + 1;
             const entry = entries.find(e => val >= e.min && val <= e.max);
             const raw = entry ? entry.text : '--- -> ---';
-            const pts = raw.split('->'); const m = pts[0].trim(); const s = pts.length > 1 ? pts[1].trim() : '';
-            lastEng = s; document.getElementById('rollVal').innerText = 'Tirada: ' + val;
-            document.getElementById('mainText').innerText = m; document.getElementById('subText').innerText = s;
-            isRevealed = (currentMode === 'direct' || s === ''); updateVis();
+            const { es, en } = parseEntryText(raw);
+            const ex = entry && entry.example ? entry.example : '';
+            
+            lastEng = en; lastExample = ex;
+            document.getElementById('rollVal').innerText = 'Tirada: ' + val;
+            document.getElementById('mainText').innerText = es; 
+            document.getElementById('subText').innerText = en;
+            
+            const exDiv = document.getElementById('exampleText');
+            if(ex) { exDiv.innerText = '"' + ex + '"'; exDiv.style.display = 'block'; } 
+            else { exDiv.style.display = 'none'; }
+
+            isRevealed = (currentMode === 'direct' || en === ''); 
+            updateVis();
+            
+            // Add to history
             const item = document.createElement('div'); item.className = 'history-item';
-            item.innerHTML = '<span><b>[' + val + ']</b> ' + m + '</span><span style="color:var(--tertiary)">' + s + '</span>';
+            let histHtml = '<div class="history-main"><span><b>[' + val + ']</b> ' + es + '</span><span style="color:var(--tertiary)">' + en + '</span></div>';
+            if(ex) histHtml += '<div class="history-example">Ej: ' + ex + '</div>';
+            item.innerHTML = histHtml;
             document.getElementById('historyList').prepend(item);
         }
+
         function updateVis() {
             const sub = document.getElementById('subContainer'); const btn = document.getElementById('btnReveal');
             if (isRevealed) { sub.classList.remove('hidden'); btn.style.display = 'none'; }
             else { sub.classList.add('hidden'); btn.style.display = 'block'; }
         }
         function reveal() { isRevealed = true; updateVis(); }
-        function speak() { if (!lastEng) return; const u = new SpeechSynthesisUtterance(lastEng); u.lang = 'en-US'; window.speechSynthesis.speak(u); }
+        
+        function speak() { 
+            if (!lastEng) return; 
+            let textToSpeak = lastEng;
+            if (lastExample) textToSpeak += ". " + lastExample;
+            const u = new SpeechSynthesisUtterance(textToSpeak); 
+            u.lang = 'en-US'; 
+            window.speechSynthesis.speak(u); 
+        }
+
+        // --- QUIZ MODE ---
+        function nextQuestion() {
+            answered = false;
+            document.getElementById('btnNextQuiz').style.display = 'none';
+            
+            // Pick random target
+            const targetEntry = entries[Math.floor(Math.random() * entries.length)];
+            currentQ = parseEntryText(targetEntry.text);
+            document.getElementById('quizQ').innerText = currentQ.es;
+            
+            // Pick 3 wrong options
+            let options = [currentQ.en];
+            let attempts = 0;
+            while(options.length < 4 && attempts < 50) {
+                let randomEntry = entries[Math.floor(Math.random() * entries.length)];
+                let randomEn = parseEntryText(randomEntry.text).en;
+                if(!options.includes(randomEn) && randomEn !== '') options.push(randomEn);
+                attempts++;
+            }
+            
+            // Shuffle
+            options.sort(() => Math.random() - 0.5);
+            
+            // Render
+            const optsContainer = document.getElementById('quizOpts');
+            optsContainer.innerHTML = '';
+            options.forEach(opt => {
+                let btn = document.createElement('div');
+                btn.className = 'quiz-opt';
+                btn.innerText = opt;
+                btn.onclick = () => answerQuiz(btn, opt === currentQ.en);
+                optsContainer.appendChild(btn);
+            });
+        }
+        
+        function answerQuiz(btn, isCorrect) {
+            if(answered) return;
+            answered = true;
+            quizTotal++;
+            
+            const optsContainer = document.getElementById('quizOpts');
+            Array.from(optsContainer.children).forEach(child => {
+                if(child.innerText === currentQ.en) child.classList.add('correct');
+                else child.style.opacity = '0.5';
+            });
+
+            if(isCorrect) {
+                quizScore++;
+                quizStreak++;
+            } else {
+                btn.classList.add('wrong');
+                quizStreak = 0;
+            }
+            
+            document.getElementById('quizScore').innerText = 'Aciertos: ' + quizScore + ' / ' + quizTotal;
+            document.getElementById('quizStreak').innerText = '🔥 Racha: ' + quizStreak;
+            
+            let nxtBtn = document.getElementById('btnNextQuiz');
+            nxtBtn.innerText = 'Siguiente Pregunta';
+            nxtBtn.style.display = 'block';
+        }
     </script>
 </body>
 </html>`;
