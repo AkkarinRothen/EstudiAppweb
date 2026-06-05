@@ -107,3 +107,35 @@ export function extractImageKeyword(phrase) {
 
     return candidates[0] || "";
 }
+
+/**
+ * Smoothly animates a numerical counter on an element
+ * @param {HTMLElement} element 
+ * @param {number} start 
+ * @param {number} end 
+ * @param {number} duration ms
+ * @param {string} prefix 
+ * @param {string} suffix 
+ */
+export function animateCounter(element, start, end, duration = 800, prefix = '', suffix = '') {
+    if (!element) return;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease out quad
+        const easeProgress = progress * (2 - progress);
+        const currentValue = Math.round(start + (end - start) * easeProgress);
+        
+        element.textContent = `${prefix}${currentValue}${suffix}`;
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+

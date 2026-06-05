@@ -38,6 +38,11 @@
 }
 
 /* ── Manager Layout ───────────────────────────────────────── */
+@keyframes tabSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 #adminManagerPanel {
     display: none;
     width: 100%;
@@ -46,6 +51,7 @@
 }
 #adminManagerPanel.visible {
     display: flex;
+    animation: tabSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .manager-toolbar {

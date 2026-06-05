@@ -20,6 +20,7 @@ Para el roadmap y el alcance funcional, consultar `planning/README.md`. Para la 
 5. **Validación de Build:** Al añadir o modificar packs de vocabulario en `data/packs.json`, ejecutar siempre `node scripts/build_presets.js` para actualizar los archivos físicos.
 6. **Sin Frameworks Pesados:** Mantener el proyecto ligero. No introducir React, Vue o similares a menos que sea estrictamente necesario y aprobado.
 7. **UI Reactiva y Limpia:** Los componentes de la interfaz (modales, portal) deben ser reactivos al estado y evitar la manipulación directa del DOM fuera de sus módulos correspondientes (`ui-portal.js`, `ui-modal.js`).
+8. **Servidor Local Obligatorio:** Debido al uso intensivo de módulos ES6 nativos, la aplicación **no funciona** abriéndola directamente como archivo (`file://`). Es imperativo iniciar un servidor local (ej: Live Server, `python -m http.server`, `npx serve`) para visualizar e interactuar con los cambios.
 
 ## Flujo de Trabajo Obligatorio
 

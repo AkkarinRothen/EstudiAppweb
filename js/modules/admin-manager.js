@@ -65,13 +65,25 @@ export function setPacks(packs) {
 // ── State Load / Save ─────────────────────────────────────────────────────────
 
 function loadState() {
-    // Folders
+    // Check if we need to migrate/reset the state in localStorage due to folder layout updates
     const savedFolders = localStorage.getItem(STORAGE_KEY_FOLDERS);
-    folders = savedFolders ? JSON.parse(savedFolders) : deepCopy(FOLDERS_CONFIG);
+    let loadedFolders = savedFolders ? JSON.parse(savedFolders) : null;
+
+    if (loadedFolders) {
+        const hasTablas = loadedFolders.some(f => f.id === 'tablas');
+        const hasDeleted = loadedFolders.some(f => f.id === 'viajes_aeropuerto');
+        if (!hasTablas || hasDeleted) {
+            loadedFolders = null; // force reload from FOLDERS_CONFIG
+            localStorage.removeItem(STORAGE_KEY_FOLDERS);
+            localStorage.removeItem(STORAGE_KEY_MAPPINGS);
+        }
+    }
+
+    folders = loadedFolders ? loadedFolders : deepCopy(FOLDERS_CONFIG);
 
     // Folder-pack mappings
     const savedMappings = localStorage.getItem(STORAGE_KEY_MAPPINGS);
-    folderMappings = savedMappings ? JSON.parse(savedMappings) : deepCopy(DECK_FOLDER_MAPPINGS);
+    folderMappings = (savedMappings && loadedFolders) ? JSON.parse(savedMappings) : deepCopy(DECK_FOLDER_MAPPINGS);
 
     // Resource order per folder
     const savedOrder = localStorage.getItem(STORAGE_KEY_ORDER);

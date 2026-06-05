@@ -11,6 +11,11 @@
     --container: #FFFFFF;
     --error: #B3261E;
     --success: #2E7D32;
+
+    /* Transition & Easing Tokens */
+    --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --transition-fade: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -74,6 +79,32 @@ footer {
 
 /* Animations & Shimmers */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pulseOutline {
+    0% {
+        outline-color: rgba(103, 80, 164, 0.2);
+        box-shadow: 0 0 0 0 rgba(103, 80, 164, 0.2);
+    }
+    50% {
+        outline-color: rgba(103, 80, 164, 0.6);
+        box-shadow: 0 0 0 6px rgba(103, 80, 164, 0.1);
+    }
+    100% {
+        outline-color: rgba(103, 80, 164, 0.2);
+        box-shadow: 0 0 0 0 rgba(103, 80, 164, 0.2);
+    }
+}
 
 @keyframes cover-shimmer {
     0%   { background-position: 200% 0; }

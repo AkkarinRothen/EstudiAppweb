@@ -129,10 +129,24 @@ function updateStatsUI() {
     const progressFillEl = document.getElementById('statProgressFill');
     const reviewsEl = document.getElementById('statRepasos');
     
-    if (streakEl) streakEl.innerText = `🔥 ${stats.streak} ${stats.streak === 1 ? 'día' : 'días'}`;
-    if (dominioEl) dominioEl.innerText = `${masteryPercent}%`;
-    if (progressFillEl) progressFillEl.style.width = `${masteryPercent}%`;
-    if (reviewsEl) reviewsEl.innerText = stats.totalReviews;
+    if (streakEl) {
+        const prev = parseInt(streakEl.dataset.value || "0", 10);
+        streakEl.dataset.value = stats.streak;
+        Utils.animateCounter(streakEl, prev, stats.streak, 800, "🔥 ", stats.streak === 1 ? ' día' : ' días');
+    }
+    if (dominioEl) {
+        const prev = parseInt(dominioEl.dataset.value || "0", 10);
+        dominioEl.dataset.value = masteryPercent;
+        Utils.animateCounter(dominioEl, prev, masteryPercent, 800, "", "%");
+    }
+    if (progressFillEl) {
+        progressFillEl.style.width = `${masteryPercent}%`;
+    }
+    if (reviewsEl) {
+        const prev = parseInt(reviewsEl.dataset.value || "0", 10);
+        reviewsEl.dataset.value = stats.totalReviews;
+        Utils.animateCounter(reviewsEl, prev, stats.totalReviews, 800, "", "");
+    }
 }
 
 // Drag and Drop implementation

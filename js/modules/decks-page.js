@@ -1,5 +1,6 @@
 // Decks Page Module — Unified deck management (official + custom) with folder explorer
 import * as Storage from './storage.js';
+import { animateCounter } from './utils.js';
 import { FOLDERS_CONFIG, DECK_FOLDER_MAPPINGS } from './folders-config.js';
 
 let allOfficialPacks = [];
@@ -137,11 +138,13 @@ function renderExplorer() {
     
     // 4. Render Folders
     currentFolders.forEach(folder => {
-        const deckCount = countDecksInFolder(folder.id);
+        const counts = getFolderContentsCount(folder.id);
+        const countLabel = formatFolderContentsLabel(counts);
         const folderWrapper = document.createElement('div');
-        folderWrapper.innerHTML = buildFolderCardHTML(folder, deckCount);
+        folderWrapper.innerHTML = buildFolderCardHTML(folder, countLabel);
         
         const element = folderWrapper.firstElementChild;
+        element.style.setProperty('--i', elementIndex);
         element.style.animationDelay = `${elementIndex * 30}ms`;
         grid.appendChild(element);
         
@@ -189,6 +192,7 @@ function renderExplorer() {
         card.href = pack.file;
         card.className = 'deck-card';
         card.setAttribute('data-level', pack.level);
+        card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildOfficialCardHTML(pack, percent, encountered);
         grid.appendChild(card);
@@ -203,6 +207,7 @@ function renderExplorer() {
         
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
+        card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount);
         grid.appendChild(card);
@@ -311,6 +316,7 @@ function renderFlattened() {
         card.href = pack.file;
         card.className = 'deck-card';
         card.setAttribute('data-level', pack.level);
+        card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildOfficialCardHTML(pack, percent, encountered);
         grid.appendChild(card);
@@ -325,6 +331,7 @@ function renderFlattened() {
         
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
+        card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount);
         grid.appendChild(card);
@@ -412,18 +419,48 @@ function renderBreadcrumbs(container) {
     });
 }
 
-function countDecksInFolder(folderId) {
+function getFolderContentsCount(folderId) {
     const subfolders = FOLDERS_CONFIG.filter(f => f.parentId === folderId);
-    let count = 0;
+    
+    let mazoCount = 0;
+    let tablaCount = 0;
+    let cartaCount = 0;
     
     const { officialList, customList } = getDecksForFolder(folderId);
-    count += officialList.length + customList.length;
     
-    subfolders.forEach(sub => {
-        count += countDecksInFolder(sub.id);
+    const allItems = [...officialList, ...customList];
+    allItems.forEach(item => {
+        const type = (item.type || 'tabla').toLowerCase();
+        if (type === 'mazo') mazoCount++;
+        else if (type === 'tabla') tablaCount++;
+        else if (type === 'carta') cartaCount++;
     });
     
-    return count;
+    subfolders.forEach(sub => {
+        const subCounts = getFolderContentsCount(sub.id);
+        mazoCount += subCounts.mazo;
+        tablaCount += subCounts.tabla;
+        cartaCount += subCounts.carta;
+    });
+    
+    return { mazo: mazoCount, tabla: tablaCount, carta: cartaCount };
+}
+
+function formatFolderContentsLabel(counts) {
+    const parts = [];
+    if (counts.mazo > 0) {
+        parts.push(counts.mazo === 1 ? '1 mazo' : `${counts.mazo} mazos`);
+    }
+    if (counts.tabla > 0) {
+        parts.push(counts.tabla === 1 ? '1 tabla' : `${counts.tabla} tablas`);
+    }
+    if (counts.carta > 0) {
+        parts.push(counts.carta === 1 ? '1 carta' : `${counts.carta} cartas`);
+    }
+    if (parts.length === 0) {
+        return 'Vacío';
+    }
+    return parts.join(', ');
 }
 
 function getDecksForFolder(folderId) {
@@ -432,7 +469,13 @@ function getDecksForFolder(folderId) {
     let customList = [];
     
     if (folderId === 'generales') {
-        officialList = allOfficialPacks;
+        officialList = allOfficialPacks.filter(pack => (pack.type || 'tabla').toLowerCase() === 'mazo');
+        customList = [];
+    } else if (folderId === 'tablas') {
+        officialList = allOfficialPacks.filter(pack => {
+            const type = (pack.type || 'tabla').toLowerCase();
+            return type === 'tabla' || type === 'carta';
+        });
         customList = customDecks;
     } else if (folderId === 'personalizados') {
         customList = customDecks;
@@ -496,21 +539,37 @@ function updateGlobalStats() {
     const repasoEl = document.getElementById('decksStatRepasos') || document.getElementById('statRepasos');
     const totalDecksEl = document.getElementById('decksStatTotal');
 
-    if (streakEl) streakEl.textContent = `🔥 ${stats.streak} ${stats.streak === 1 ? 'día' : 'días'}`;
-    if (dominioEl) dominioEl.textContent = `${masteryPercent}%`;
-    if (progressEl) progressEl.style.width = `${masteryPercent}%`;
-    if (repasoEl) repasoEl.textContent = stats.totalReviews;
+    if (streakEl) {
+        const prev = parseInt(streakEl.dataset.value || "0", 10);
+        streakEl.dataset.value = stats.streak;
+        animateCounter(streakEl, prev, stats.streak, 800, "🔥 ", stats.streak === 1 ? ' día' : ' días');
+    }
+    if (dominioEl) {
+        const prev = parseInt(dominioEl.dataset.value || "0", 10);
+        dominioEl.dataset.value = masteryPercent;
+        animateCounter(dominioEl, prev, masteryPercent, 800, "", "%");
+    }
+    if (progressEl) {
+        progressEl.style.width = `${masteryPercent}%`;
+    }
+    if (repasoEl) {
+        const prev = parseInt(repasoEl.dataset.value || "0", 10);
+        repasoEl.dataset.value = stats.totalReviews;
+        animateCounter(repasoEl, prev, stats.totalReviews, 800, "", "");
+    }
     if (totalDecksEl) {
         const customCount = Storage.getCustomDecks().length;
-        totalDecksEl.textContent = allOfficialPacks.length + customCount;
+        const totalVal = allOfficialPacks.length + customCount;
+        const prev = parseInt(totalDecksEl.dataset.value || "0", 10);
+        totalDecksEl.dataset.value = totalVal;
+        animateCounter(totalDecksEl, prev, totalVal, 800, "", "");
     }
 }
 
 // ─── HTML Builders ────────────────────────────────────────────────────────────
 
-function buildFolderCardHTML(folder, deckCount) {
+function buildFolderCardHTML(folder, countLabel) {
     const coverUrl = `https://loremflickr.com/400/180/${encodeURIComponent(folder.coverKeyword)}`;
-    const deckCountLabel = deckCount === 1 ? '1 mazo' : `${deckCount} mazos`;
     
     return `
         <div class="folder-card-wrapper folder-${folder.color}" data-folder-id="${folder.id}">
@@ -532,7 +591,7 @@ function buildFolderCardHTML(folder, deckCount) {
                     <p class="folder-desc">${folder.desc}</p>
                     <div class="folder-meta">
                         <span>Carpeta</span>
-                        <span>${deckCountLabel}</span>
+                        <span>${countLabel}</span>
                     </div>
                 </div>
             </div>

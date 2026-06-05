@@ -1,4 +1,3 @@
-﻿
 /* ============================================================
    DECKS PAGE — decks.html
    ============================================================ */
@@ -11,6 +10,7 @@
     padding: 40px 20px;
     box-sizing: border-box;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    animation: fadeIn 0.6s ease-out;
 }
 .decks-header-inner {
     max-width: 1200px;
@@ -63,10 +63,13 @@
     background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
     color: white;
     border-color: transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .filter-chip--custom:hover {
     background: linear-gradient(135deg, #6D28D9 0%, #4C1D95 100%);
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(124, 58, 237, 0.3);
 }
 .filter-chip--custom.active {
     background: linear-gradient(135deg, #5B21B6 0%, #3B0764 100%);
@@ -101,6 +104,12 @@
     gap: 24px;
 }
 
+/* Deck grid — staggered entrance animation */
+.deck-grid > * {
+    animation: cardSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+}
+
 /* Deck card base */
 .deck-card {
     background: var(--container);
@@ -109,16 +118,18 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
+                box-shadow 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
+                border-color 0.25s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     text-decoration: none;
     color: inherit;
-    animation: fadeIn 0.4s ease backwards;
     position: relative;
+    will-change: transform;
 }
 .deck-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 16px 36px rgba(103, 80, 164, 0.14), 0 4px 12px rgba(0,0,0,0.08);
     border-color: var(--primary);
 }
 
@@ -362,7 +373,7 @@
     .decks-section-subtitle { font-size: 12px; }
 }
 
-/* â”€â”€â”€ Breadcrumbs navigation trail â”€â”€â”€ */
+/* ─── Breadcrumbs navigation trail ─── */
 .breadcrumbs-trail {
     display: flex;
     align-items: center;
@@ -393,13 +404,15 @@
     opacity: 0.5;
 }
 
-/* â”€â”€â”€ Folder Card Physical Premium CSS Shape â”€â”€â”€ */
+/* ─── Folder Card Physical Premium CSS Shape ─── */
 .folder-card-wrapper {
     position: relative;
     padding-top: 16px; /* Space for the folder tab */
     display: flex;
     flex-direction: column;
-    animation: fadeIn 0.4s ease backwards;
+    animation: cardSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+    will-change: transform, opacity;
 }
 .folder-tab {
     position: absolute;
@@ -428,11 +441,12 @@
     color: #ffffff !important;
     position: relative;
     overflow: hidden;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1),
+                box-shadow 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .folder-card-wrapper:hover .folder-card {
-    transform: translateY(-5px);
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
 }
 .folder-card-wrapper:hover {
     transform: translateY(-2px);
@@ -529,7 +543,7 @@
     --folder-card-bg: #374151;
     --folder-tab-bg: #1f2937;
 }
-/* â”€â”€â”€ Badges layout and styling â”€â”€â”€ */
+/* ─── Badges layout and styling ─── */
 .deck-card-badges-row {
     display: flex;
     justify-content: space-between;

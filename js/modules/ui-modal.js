@@ -18,7 +18,7 @@ let onStatsUpdateCallback = null;
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         const modal = document.getElementById('practiceModal');
-        if (!modal || modal.style.display !== 'flex') return;
+        if (!modal || !modal.classList.contains('active')) return;
 
         // If focus is on writing input, do not block keyboard shortcuts
         if (document.activeElement && document.activeElement.id === 'modalWriteInput') return;
@@ -81,12 +81,12 @@ export function openPracticeModal(data) {
     importedTableData = data;
     document.getElementById('modalTitle').innerText = data.title;
     document.getElementById('modalDesc').innerText = data.desc;
-    document.getElementById('practiceModal').style.display = 'flex';
+    document.getElementById('practiceModal').classList.add('active');
     setModalMode('direct');
 }
 
 export function closeModal(onClose) {
-    document.getElementById('practiceModal').style.display = 'none';
+    document.getElementById('practiceModal').classList.remove('active');
     const badge = document.getElementById('modalSrsBadge');
     if (badge) badge.style.display = 'none';
     importedTableData = null;
@@ -114,10 +114,26 @@ export function setModalMode(mode) {
     const writeArea = document.getElementById('modalWriteArea');
     const srsFeedback = document.getElementById('modalSrsFeedback');
     const diceContainer = document.getElementById('modalDiceContainer');
+    const area = document.getElementById('modalResultArea');
 
     writeArea.style.display = 'none';
     srsFeedback.style.display = 'none';
     if (diceContainer) diceContainer.style.display = 'none';
+
+    // Toggle flashcard mode class
+    if (mode === 'flashcard') {
+        area.classList.add('flashcard-mode');
+        // Clear any old click listener to avoid duplicates, then set it
+        area.onclick = () => {
+            if (!modalIsRevealed) {
+                revealModal();
+            }
+        };
+    } else {
+        area.classList.remove('flashcard-mode');
+        area.classList.remove('flipped');
+        area.onclick = null;
+    }
 
     if (mode === 'quiz') {
         actionBtn.innerText = 'Siguiente Pregunta';
@@ -156,7 +172,7 @@ export function setModalMode(mode) {
         } else {
             document.getElementById('modalMainText').innerText = '---';
             document.getElementById('modalRollVal').innerText = 'Tira el dado para empezar';
-            document.getElementById('modalSubContainer').classList.add('hidden');
+            document.getElementById('modalSubContainer').style.display = 'flex';
             document.getElementById('modalBtnReveal').style.display = 'none';
             document.getElementById('modalImgContainer').style.display = 'none';
         }
@@ -320,6 +336,7 @@ function updateModalVisibility() {
     const imgContainer = document.getElementById('modalImgContainer');
     const showImages = document.getElementById('modalEnableImages').checked;
     const hasImg = document.getElementById('modalVocabImg').getAttribute('src') !== "";
+    const area = document.getElementById('modalResultArea');
 
     if (modalIsRevealed) {
         subContainer.classList.remove('hidden');
@@ -329,10 +346,16 @@ function updateModalVisibility() {
         } else {
             imgContainer.style.display = 'none';
         }
+        if (modalCurrentMode === 'flashcard') {
+            area.classList.add('flipped');
+        } else {
+            area.classList.remove('flipped');
+        }
     } else {
         subContainer.classList.add('hidden');
         btnReveal.style.display = 'block';
         imgContainer.style.display = 'none';
+        area.classList.remove('flipped');
     }
 }
 

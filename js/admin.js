@@ -513,7 +513,11 @@ function switchTab(tab) {
 
     const tabCreate = document.getElementById('tabCreate');
     if (tabCreate) {
-        tabCreate.style.display = tab === 'create' ? 'block' : 'none';
+        if (tab === 'create') {
+            tabCreate.classList.add('visible');
+        } else {
+            tabCreate.classList.remove('visible');
+        }
     }
 
     const mp = document.getElementById('adminManagerPanel');
