@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B1: Hotel y Alojamiento - EstudiApp Interactive</title>
+    <style>
+        :root { --primary: #6750A4; --on-primary: #FFFFFF; --surface: #FEF7FF; --outline: #79747E; --surface-variant: #E7E0EC; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--surface); color: #1C1B1F; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .card { background: white; border-radius: 28px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; border: 1px solid var(--surface-variant); }
+        h1 { font-size: 24px; margin-bottom: 8px; color: var(--primary); }
+        p.desc { color: var(--outline); font-size: 14px; margin-bottom: 24px; }
+        .result-area { min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--surface-variant); border-radius: 16px; margin-bottom: 24px; padding: 16px; transition: all 0.3s ease; }
+        .roll-val { font-size: 12px; color: var(--outline); font-weight: bold; }
+        .entry-text { font-size: 20px; font-weight: 500; margin-top: 8px; }
+        button { background: var(--primary); color: var(--on-primary); border: none; padding: 12px 24px; border-radius: 100px; font-size: 16px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        .history { margin-top: 32px; width: 100%; max-width: 500px; text-align: left; }
+        .history h2 { font-size: 18px; margin-bottom: 12px; }
+        .history-item { font-size: 14px; padding: 8px; border-bottom: 1px solid var(--surface-variant); }
+        .back-link { margin-top: 20px; color: var(--primary); text-decoration: none; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>B1: Hotel y Alojamiento</h1>
+        <p class="desc">Hacer reservas, pedir servicios y resolver problemas.</p>
+        <div class="result-area" id="resultArea">
+            <div class="roll-val" id="rollVal">Tira el dado para empezar</div>
+            <div class="entry-text" id="entryText">---</div>
+        </div>
+        <button onclick="roll()">Tirar 1d8</button>
+    </div>
+    <div class="history"><h2>Historial</h2><div id="historyList"></div></div>
+    <a href="../index.html" class="back-link">← Volver al Portal</a>
+    <script>
+        const entries = [{min:1, max:1, text:"Tengo una reserva -> I have a reservation"},{min:2, max:2, text:"Servicio de habitaciones -> Room service"},{min:3, max:3, text:"Aire acondicionado -> Air conditioning"},{min:4, max:4, text:"Desayuno incluido -> Breakfast included"},{min:5, max:5, text:"Gimnasio / Piscina -> Gym / Swimming pool"},{min:6, max:6, text:"Registrarse / Salir -> Check-in / Check-out"},{min:7, max:7, text:"Caja fuerte -> Safe box"},{min:8, max:8, text:"La habitación es ruidosa -> The room is noisy"}];
+        const formula = "1d8";
+        function parseRoll(f) { const match = f.match(/(\d+)d(\d+)/); if (!match) return Math.floor(Math.random() * 8) + 1; const n = parseInt(match[1]); const d = parseInt(match[2]); let total = 0; for(let i=0; i<n; i++) total += Math.floor(Math.random() * d) + 1; return total; }
+        function roll() { const val = parseRoll(formula); const entry = entries.find(e => val >= e.min && val <= e.max); const text = entry ? entry.text : "Sin resultado"; document.getElementById('rollVal').innerText = "Tirada: " + val; document.getElementById('entryText').innerText = text; const area = document.getElementById('resultArea'); area.style.transform = "scale(1.02)"; setTimeout(() => area.style.transform = "scale(1)", 100); const hist = document.getElementById('historyList'); const item = document.createElement('div'); item.className = 'history-item'; item.innerText = "[" + val + "] " + text; hist.prepend(item); }
+    </script>
+</body>
+</html>
