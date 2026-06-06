@@ -58,6 +58,28 @@ Para cualquier tarea relacionada con juegos y herramientas de estudio, puedes in
     - *Rol:* Asegurar el esquema de base de datos, escribir migraciones controladas, vigilar las políticas RLS y programar planes de respaldo (backups) y recuperación.
     - *Especialidad:* PostgreSQL, Supabase RLS, planes de Disaster Recovery e integridad de datos.
 
+## Protocolo de Comunicación entre Agentes (Handoff)
+
+Para asegurar que no se pierda información crítica entre tareas, cada agente debe finalizar su intervención con un **Informe de Handoff**:
+
+> **🔄 Informe de Handoff (EstudiApp)**
+> - **Agente Emisor:** [Nombre del Agente]
+> - **Tarea Realizada:** [Resumen breve]
+> - **Decisiones Críticas:** [Si aplica, referenciar a DECISIONS.md]
+> - **Pendientes para el Siguiente Agente:** [Instrucciones específicas]
+> - **Validación Exitosa:** [Lista de comandos ejecutados]
+
+## El Toolbox del Agente
+
+Cada agente tiene asignado un conjunto de herramientas (scripts/comandos) que DEBE ejecutar antes de marcar una tarea como terminada.
+
+| Agente | Herramienta de Validación | Propósito |
+| :--- | :--- | :--- |
+| **QA / Mecánicas** | `node scripts/validate_games.js` | Verificar estructura DoD de juegos. |
+| **DevOps / Contenido** | `node scripts/build_presets.js` | Sincronizar presets con packs.json. |
+| **Estética** | `F12 > Lighthouse / Console` | Verificar rendimiento y errores de carga. |
+| **DBA** | `supabase db lint` (o similar) | Verificar integridad de esquemas. |
+
 ---
 
 ## Cómo Utilizar Estos Agentes

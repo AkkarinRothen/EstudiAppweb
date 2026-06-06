@@ -1,4 +1,5 @@
 import * as Utils from '../utils.js';
+import * as Fx from '../fx.js';
 
 export class BubbleGame {
     constructor(engine) {
@@ -62,32 +63,9 @@ export class BubbleGame {
             bubble.style.width = `${size}px`;
             bubble.style.height = `${size}px`;
             
-            bubble.addEventListener('click', () => {
-                if (bubble.classList.contains('pop') || bubble.classList.contains('wrong')) return;
-
-                const targetParts = this.bubbleTargetEntry.en.split(/[/\;,]/).map(s => Utils.cleanText(s.trim()));
-                const cleanBubbleText = Utils.cleanText(text);
-                const matchCorrect = targetParts.includes(cleanBubbleText);
-
-                if (matchCorrect) {
-                    bubble.classList.add('pop');
-                    this.bubbleScore++;
-                    this.engine.speak();
-                    this.selectNextTarget();
-                    
-                    playground.querySelectorAll('.bubble-element').forEach(b => {
-                        if (targetParts.includes(Utils.cleanText(b.innerText))) {
-                            b.classList.add('pop');
-                            setTimeout(() => b.remove(), 350);
-                        }
-                    });
-                    
-                    setTimeout(() => bubble.remove(), 350);
-                } else {
-                    bubble.classList.add('wrong');
-                    setTimeout(() => bubble.classList.remove('wrong'), 500);
-                }
-            });
+            // Accesibilidad
+            bubble.setAttribute('role', 'button');
+            bubble.setAttribute('tabindex', '0');
 
             bubble.addEventListener('animationend', (e) => {
                 if (e.animationName === 'floatUp') {
@@ -97,6 +75,54 @@ export class BubbleGame {
 
             playground.appendChild(bubble);
         }, 1600);
+
+        // Usar delegación de eventos en el playground para evitar fugas de memoria
+        this.clickHandler = (e) => {
+            const bubble = e.target.closest('.bubble-element');
+            if (!bubble || bubble.classList.contains('pop') || bubble.classList.contains('wrong')) return;
+
+            const text = bubble.innerText;
+            const targetParts = this.bubbleTargetEntry.en.split(/[/\;,]/).map(s => Utils.cleanText(s.trim()));
+            const cleanBubbleText = Utils.cleanText(text);
+            const matchCorrect = targetParts.includes(cleanBubbleText);
+
+            if (matchCorrect) {
+                bubble.classList.add('pop');
+                this.bubbleScore++;
+                
+                // Efecto visual y de sonido
+                Fx.playSound('success');
+                Fx.animate(bubble, {
+                    scale: [1, 1.5],
+                    opacity: [1, 0],
+                    duration: 350,
+                    easing: 'easeOutExpo'
+                });
+
+                // Integración con SRS y TTS
+                this.engine.speak();
+                this.engine.rateSrs(true);
+                
+                this.selectNextTarget();
+                
+                playground.querySelectorAll('.bubble-element').forEach(b => {
+                    if (targetParts.includes(Utils.cleanText(b.innerText))) {
+                        b.classList.add('pop');
+                        setTimeout(() => b.remove(), 350);
+                    }
+                });
+                
+                setTimeout(() => bubble.remove(), 350);
+            } else {
+                bubble.classList.add('wrong');
+                this.engine.rateSrs(false);
+                Fx.playSound('error');
+                Fx.shake(bubble);
+                setTimeout(() => bubble.classList.remove('wrong'), 500);
+            }
+        };
+
+        playground.addEventListener('click', this.clickHandler);
     }
 
     selectNextTarget() {
@@ -121,6 +147,13 @@ export class BubbleGame {
             clearInterval(this.bubbleSpawnInterval);
             this.bubbleSpawnInterval = null;
         }
+
+        const bubbleArea = this.engine.elements.bubbleArea;
+        const playground = bubbleArea?.querySelector('#bubbleGamePlayground');
+        if (playground && this.clickHandler) {
+            playground.removeEventListener('click', this.clickHandler);
+        }
+
         this.bubbleTargetEntry = null;
     }
 }

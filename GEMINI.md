@@ -14,13 +14,15 @@ Para el roadmap y el alcance funcional, consultar `planning/README.md`. Para la 
 ## Mandamientos Técnicos
 
 1. **Modularidad ES6 Obligatoria:** No escribir lógica compleja en archivos HTML. Toda la funcionalidad debe residir en `js/modules/` y exportarse/importarse de forma explícita.
-2. **Presets "Thin Client":** Los archivos en `presets/` deben ser generados automáticamente y actuar como contenedores mínimos que invocan a `preset-runner.js`. No editar manualmente los presets si el cambio puede aplicarse globalmente.
-3. **Paridad de Funciones:** Cualquier cambio en el algoritmo SRS (`srs.js`) o en el sistema de TTS (`speech.js`) debe ser compatible con la visión del proyecto EstudiApp (Android).
-4. **Persistencia Centralizada:** Usar exclusivamente `storage.js` para interactuar con `localStorage`. Mantener una estructura de claves limpia y consistente.
-5. **Validación de Build:** Al añadir o modificar packs de vocabulario en `data/packs.json`, ejecutar siempre `node scripts/build_presets.js` para actualizar los archivos físicos.
-6. **Sin Frameworks Pesados:** Mantener el proyecto ligero. No introducir React, Vue o similares a menos que sea estrictamente necesario y aprobado.
-7. **UI Reactiva y Limpia:** Los componentes de la interfaz (modales, portal) deben ser reactivos al estado y evitar la manipulación directa del DOM fuera de sus módulos correspondientes (`ui-portal.js`, `ui-modal.js`).
-8. **Servidor Local Obligatorio:** Debido al uso intensivo de módulos ES6 nativos, la aplicación **no funciona** abriéndola directamente como archivo (`file://`). Es imperativo iniciar un servidor local (ej: Live Server, `python -m http.server`, `npx serve`) para visualizar e interactuar con los cambios.
+2. **Motores de Juego Aislados:** Cualquier nuevo modo de juego debe crearse como una clase independiente dentro de `js/modules/games/` (ej. `wordle.js`, `sniper.js`). Nunca añadir lógica de juegos directamente al `StudyEngine.js`.
+3. **Efectos Centralizados:** Las animaciones, sonidos y confeti deben usar exclusivamente el módulo `js/modules/fx.js`. No importar librerías externas directamente en los módulos de juego.
+4. **Presets "Thin Client":** Los archivos en `presets/` deben ser generados automáticamente y actuar como contenedores mínimos que invocan a `preset-runner.js`. No editar manualmente los presets si el cambio puede aplicarse globalmente.
+5. **Paridad de Funciones:** Cualquier cambio en el algoritmo SRS (`srs.js`) o en el sistema de TTS (`speech.js`) debe ser compatible con la visión del proyecto EstudiApp (Android).
+6. **Persistencia Centralizada:** Usar exclusivamente `storage.js` para interactuar con `localStorage`. Mantener una estructura de claves limpia y consistente.
+7. **Validación de Build:** Al añadir o modificar packs de vocabulario o plantillas globales, ejecutar siempre `node scripts/build_presets.js` para actualizar los archivos físicos.
+8. **Sin Frameworks Pesados:** Mantener el proyecto ligero. No introducir React, Vue o motores 2D pesados (Phaser/Pixi) a menos que sea estrictamente necesario y aprobado.
+9. **UI Reactiva y Limpia:** Los componentes de la interfaz (modales, portal, Launchpad) deben ser reactivos al estado y evitar la manipulación directa del DOM fuera de sus módulos correspondientes.
+10. **Servidor Local Obligatorio:** Debido al uso intensivo de módulos ES6 nativos, la aplicación **no funciona** abriéndola directamente como archivo (`file://`). Es imperativo iniciar un servidor local.
 
 ## Flujo de Trabajo Obligatorio
 

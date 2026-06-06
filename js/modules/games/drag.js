@@ -1,11 +1,14 @@
 export class DragGame {
     constructor(engine) {
         this.engine = engine;
+        this.activeTimers = [];
     }
 
     start() {
         const dragArea = this.engine.elements.dragArea;
         if (!dragArea) return;
+
+        this.stop();
 
         dragArea.innerHTML = '';
         dragArea.style.display = 'flex';
@@ -102,16 +105,17 @@ export class DragGame {
                     el.classList.add('matched');
 
                     // Draw permanent green line
-                    setTimeout(() => {
+                    const t1 = setTimeout(() => {
                         drawLine(selectedEs.el, el, 'var(--success, #4CAF50)');
                     }, 10);
+                    this.activeTimers.push(t1);
 
                     this.engine.rateSrs(true);
                     matchedCount++;
                     selectedEs = null;
 
                     if (matchedCount === gameSize) {
-                        setTimeout(() => {
+                        const t2 = setTimeout(() => {
                             dragArea.innerHTML = `
                                 <div class="match-win-screen">
                                     <h3 style="color:var(--success,#4CAF50);font-size:24px;margin:0;">¡Perfecto! 🎉</h3>
@@ -119,24 +123,33 @@ export class DragGame {
                                     <button class="srs-btn srs-btn-good" style="margin-top:10px;width:auto;padding:12px 24px;">Jugar de nuevo</button>
                                 </div>
                             `;
-                            dragArea.querySelector('button').onclick = () => this.start();
+                            const btn = dragArea.querySelector('button');
+                            if (btn) btn.onclick = () => this.start();
                         }, 600);
+                        this.activeTimers.push(t2);
                     }
                 } else {
                     // Flash wrong
                     el.classList.add('drag-wrong');
-                    selectedEs.el.classList.add('drag-wrong');
-                    setTimeout(() => {
+                    const targetEl = selectedEs.el;
+                    targetEl.classList.add('drag-wrong');
+                    const t3 = setTimeout(() => {
                         el.classList.remove('drag-wrong');
-                        selectedEs?.el.classList.remove('drag-wrong');
-                        selectedEs?.el.classList.remove('selected');
-                        selectedEs = null;
+                        targetEl.classList.remove('drag-wrong');
+                        targetEl.classList.remove('selected');
                     }, 700);
+                    this.activeTimers.push(t3);
+                    selectedEs = null;
                     this.engine.rateSrs(false);
                 }
             });
 
             colEn.appendChild(el);
         });
+    }
+
+    stop() {
+        this.activeTimers.forEach(timer => clearTimeout(timer));
+        this.activeTimers = [];
     }
 }

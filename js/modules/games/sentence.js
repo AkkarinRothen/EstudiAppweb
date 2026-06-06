@@ -7,11 +7,14 @@ export class SentenceGame {
         this.sentenceTargetWords = [];
         this.sentenceCurrentWords = [];
         this.sentenceGameOver = false;
+        this.timeoutId = null;
     }
 
     start() {
         const sentenceArea = this.engine.elements.sentenceArea;
         if (!sentenceArea) return;
+
+        this.stop();
 
         // Find an entry that HAS an example sentence
         const entriesWithExample = this.engine.entries.filter(e => {
@@ -127,7 +130,7 @@ export class SentenceGame {
             Fx.shake(this.engine.elements.sentenceArea.querySelector('.sentence-target-slots'));
         }
 
-        setTimeout(() => {
+        this.timeoutId = setTimeout(() => {
             const actionBtn = this.engine.elements.actionBtn;
             if (actionBtn) {
                 actionBtn.innerText = 'Siguiente Frase';
@@ -137,5 +140,12 @@ export class SentenceGame {
                 this.engine.elements.mainText.innerText = `${this.engine.lastSpanishText} -> ${this.sentenceTargetWords.join(' ')}`;
             }
         }, 1000);
+    }
+
+    stop() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
+        }
     }
 }

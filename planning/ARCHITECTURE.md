@@ -17,14 +17,17 @@ Este documento describe la arquitectura técnica del portal web de EstudiApp, ba
 - `storage.js`: Centraliza el acceso a `localStorage`.
 - `srs.js`: Algoritmo de Repetición Espaciada (Spaced Repetition System).
 - `speech.js`: Motor de Text-to-Speech (TTS).
+- `fx.js`: Gestor centralizado de efectos visuales (Anime.js, Confetti) y sonidos (Howler.js).
 - `utils.js`: Utilidades compartidas (limpieza de texto, hashes, comparaciones).
 - `github.js`: Integración con la API de GitHub para publicación.
 - `parser.js`: Procesamiento de datos CSV/TSV.
 - `library.js`: Gestión de la biblioteca de mazos locales/personalizados.
 - `template.js`: Generador de HTML para los presets.
-- `preset-runner.js`: Lógica unificada para el funcionamiento de cualquier pack de estudio.
+- `preset-runner.js`: Inicializador unificado para el funcionamiento de cualquier pack de estudio.
+- `study-engine.js`: Motor principal que orquesta el SRS, la UI de la tarjeta principal y el Launchpad de selección de modos.
 - `ui-portal.js`: Renderizado y filtrado del portal principal.
-- `ui-modal.js`: Lógica de la interfaz interactiva de práctica.
+- `ui-modal.js`: Inicialización del modal interactivo de práctica (Dashboard).
+- **`games/` (Subdirectorio):** Contiene la lógica aislada de cada modo de juego (ej. `wordle.js`, `match.js`, `sentence.js`). El `StudyEngine` instancia estas clases y llama a sus métodos `start()`.
 
 ### 2. Puntos de Entrada
 - `js/main.js`: Orquestador del portal (`index.html`).

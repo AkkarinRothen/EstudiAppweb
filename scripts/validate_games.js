@@ -41,6 +41,11 @@ files.forEach(file => {
         // 4. Verificar método stop()
         if (!content.includes('stop(')) {
             issues.push(`La clase ${className} no implementa el método stop()`);
+        } else {
+            // Verificar limpieza de listeners
+            if (content.includes('addEventListener') && !content.includes('removeEventListener')) {
+                issues.push(`Advertencia: Se detectó addEventListener pero no removeEventListener. Asegúrate de limpiar los eventos en stop().`);
+            }
         }
     }
 
@@ -49,6 +54,17 @@ files.forEach(file => {
     const colorMatches = content.match(rawColorsRegex);
     if (colorMatches) {
         issues.push(`Advertencia: Se detectó el uso potencial de colores básicos planos (${colorMatches.join(', ')}). Usa variables de tema o HSL.`);
+    }
+
+    // 6. Accesibilidad: Verificar si hay elementos clickables sin rol de botón o tabindex
+    if (content.includes('onclick') && !content.includes('role=') && !content.includes('tabindex=')) {
+        issues.push(`Accesibilidad: Se detectaron eventos onclick directos. Considera añadir role="button" y tabindex="0" para navegación por teclado.`);
+    }
+
+    // 7. Rendimiento: Verificar uso excesivo de timers
+    const timerCount = (content.match(/setInterval/g) || []).length;
+    if (timerCount > 2) {
+        issues.push(`Rendimiento: Se detectaron ${timerCount} setIntervals. Considera usar requestAnimationFrame para animaciones fluidas.`);
     }
 
     // Reportar resultados

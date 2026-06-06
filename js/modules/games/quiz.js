@@ -3,9 +3,12 @@ import * as Srs from '../srs.js';
 export class QuizGame {
     constructor(engine) {
         this.engine = engine;
+        this.timeoutId = null;
     }
 
     start() {
+        this.stop();
+
         if (this.engine.entries.length < 2) {
             if (this.engine.elements.mainText) this.engine.elements.mainText.innerText = "Se necesitan al menos 2 elementos para jugar.";
             return;
@@ -70,7 +73,7 @@ export class QuizGame {
                         this.engine.speak();
                         if (this.engine.isTimeAttackActive) {
                             this.engine.timeAttackScore++;
-                            setTimeout(() => this.engine.timeAttackGame.nextEntry(), 500);
+                            this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 500);
                         }
                     } else {
                         btn.classList.add('incorrect');
@@ -78,7 +81,7 @@ export class QuizGame {
                             if (b.innerText === english) b.classList.add('correct');
                         });
                         if (this.engine.isTimeAttackActive) {
-                            setTimeout(() => this.engine.timeAttackGame.nextEntry(), 800);
+                            this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 800);
                         }
                     }
 
@@ -89,6 +92,13 @@ export class QuizGame {
                 };
                 optionsContainer.appendChild(btn);
             });
+        }
+    }
+
+    stop() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
         }
     }
 }

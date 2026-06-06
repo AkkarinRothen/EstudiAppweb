@@ -5,9 +5,12 @@ import * as Fx from '../fx.js';
 export class ScrambledGame {
     constructor(engine) {
         this.engine = engine;
+        this.timeoutId = null;
     }
 
     start() {
+        this.stop();
+
         if (this.engine.entries.length === 0) return;
 
         if (this.engine.elements.subContainer) this.engine.elements.subContainer.style.display = 'none';
@@ -96,7 +99,7 @@ export class ScrambledGame {
                             }
                         } else {
                             slots.forEach(s => s.firstChild.classList.add('incorrect'));
-                            setTimeout(() => {
+                            this.timeoutId = setTimeout(() => {
                                 slots.forEach(s => {
                                     if (s.firstChild) s.removeChild(s.firstChild);
                                 });
@@ -119,6 +122,13 @@ export class ScrambledGame {
                 this.engine.rateSrs(false);
                 this.start();
             };
+        }
+    }
+
+    stop() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
         }
     }
 }

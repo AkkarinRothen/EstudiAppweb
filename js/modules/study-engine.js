@@ -3,6 +3,7 @@ import * as Srs from './srs.js';
 import * as Speech from './speech.js';
 import * as Utils from './utils.js';
 import * as Fx from './fx.js';
+import * as Gamification from './gamification.js';
 import { WordleGame } from './games/wordle.js';
 import { MatchGame } from './games/match.js';
 import { BubbleGame } from './games/bubble.js';
@@ -317,12 +318,24 @@ export class StudyEngine {
         );
     }
 
-    setMode(mode) {
-        this.currentMode = mode;
+    stop() {
         this.timeAttackGame.stop();
         this.bubbleGame.stop();
         this.sniperGame.stop();
         this.diagramGame.stop();
+        this.wordleGame.stop();
+        this.matchGame.stop();
+        this.dragGame.stop();
+        this.sentenceGame.stop();
+        this.quizGame.stop();
+        this.writeGame.stop();
+        this.scrambledGame.stop();
+        this.dictationGame.stop();
+    }
+
+    setMode(mode) {
+        this.currentMode = mode;
+        this.stop();
 
         Fx.playSound('click');
 
@@ -682,6 +695,10 @@ export class StudyEngine {
         if (isCorrect) {
             Fx.playSound('success');
             if (this.currentMode !== 'timeAttack') Fx.celebrate('simple');
+            
+            // Gamificación: Sumar XP y verificar logros
+            Gamification.addXp(10);
+            Gamification.checkAchievements({ gameId: this.currentMode });
         } else {
             Fx.playSound('error');
         }

@@ -14,12 +14,26 @@ function triggerSave() {
 export const STORAGE_KEYS = {
     SRS_DATA: 'estudiapp_srs_data',
     STATS: 'estudiapp_stats',
+    PROGRESSION: 'estudiapp_progression',
     CUSTOM_DECKS: 'estudiapp_custom_decks',
     TTS_PREF: 'estudiapp_tts_pref',
     GH_OWNER: 'gh_owner',
     GH_REPO: 'gh_repo',
     GH_TOKEN: 'gh_token'
 };
+
+export function getProgression() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.PROGRESSION)) || { xp: 0, level: 1, achievements: [] };
+    } catch (e) {
+        return { xp: 0, level: 1, achievements: [] };
+    }
+}
+
+export function saveProgression(data) {
+    localStorage.setItem(STORAGE_KEYS.PROGRESSION, JSON.stringify(data));
+    triggerSave();
+}
 
 export function getSrsData() {
     try {

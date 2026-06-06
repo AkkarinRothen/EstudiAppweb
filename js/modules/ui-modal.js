@@ -135,9 +135,7 @@ export function closeModal(onClose) {
     const badge = document.getElementById('modalSrsBadge');
     if (badge) badge.style.display = 'none';
     if (engine) {
-        engine.stopTimeAttack();
-        engine.bubbleGame.stop();
-        engine.sniperGame.stop();
+        engine.stop();
     }
     importedTableData = null;
     engine = null;

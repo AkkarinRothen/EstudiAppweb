@@ -8,6 +8,7 @@ import * as Library from './modules/library.js';
 import * as UiModal from './modules/ui-modal.js';
 import * as DecksPage from './modules/decks-page.js';
 import * as SupabaseSync from './modules/supabase-sync.js';
+import * as UiGamification from './modules/ui-gamification.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -94,6 +95,12 @@ function updateStatsUI() {
         const prev = parseInt(reviewsEl.dataset.value || "0", 10);
         reviewsEl.dataset.value = stats.totalReviews;
         Utils.animateCounter(reviewsEl, prev, stats.totalReviews, 800, "", "");
+    }
+
+    // Renderizar Gamificación
+    const gamificationContainer = document.getElementById('gamificationContainer');
+    if (gamificationContainer) {
+        UiGamification.renderLevelBadge(gamificationContainer);
     }
 }
 

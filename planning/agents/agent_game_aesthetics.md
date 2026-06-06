@@ -46,6 +46,17 @@ Al pulir o implementar la interfaz de un juego, asegúrate de:
 
 ---
 
+## 🛠️ Toolbox de Validación
+Antes de terminar, DEBES:
+1. Inspeccionar en el navegador que no haya errores de recursos (404) o de sintaxis CSS.
+2. Verificar que los colores HSL mantengan un contraste legible (mínimo 4.5:1 para texto).
+3. Asegurar que las animaciones no causen "Layout Thrashing" (usar `transform` y `opacity`).
+
+## 🔄 Protocolo de Handoff
+Al finalizar, entrega un informe siguiendo el formato de `planning/agents/README.md`, detallando especialmente qué clases CSS nuevas se crearon y si requieren que el **Agente de QA** verifique el rendimiento en dispositivos móviles.
+
+---
+
 ## 🎨 Paleta HSL y Estilos CSS Recomendados
 
 Utiliza estos fragmentos como base para dar estilos a la UI interactiva:

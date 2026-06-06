@@ -5,11 +5,14 @@ import * as Utils from '../utils.js';
 export class DictationGame {
     constructor(engine) {
         this.engine = engine;
+        this.speakTimeout = null;
     }
 
     start() {
         const dictationArea = this.engine.elements.dictationArea;
         if (!dictationArea) return;
+
+        this.stop();
 
         dictationArea.innerHTML = '';
         dictationArea.style.display = 'flex';
@@ -48,7 +51,7 @@ export class DictationGame {
         dictationArea.style.display = 'flex';
 
         // Auto-speak
-        setTimeout(() => {
+        this.speakTimeout = setTimeout(() => {
             Speech.speak(en,
                 this.engine.elements.voiceSelect?.value,
                 this.engine.elements.speedSlider?.value
@@ -104,5 +107,12 @@ export class DictationGame {
                 checkFn();
             }
         });
+    }
+
+    stop() {
+        if (this.speakTimeout) {
+            clearTimeout(this.speakTimeout);
+            this.speakTimeout = null;
+        }
     }
 }

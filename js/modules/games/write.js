@@ -8,6 +8,8 @@ export class WriteGame {
     }
 
     start() {
+        this.stop();
+
         if (this.engine.entries.length === 0) return;
 
         if (this.engine.elements.subContainer) this.engine.elements.subContainer.style.display = 'none';
@@ -91,5 +93,9 @@ export class WriteGame {
             actionBtn.innerText = 'Siguiente Pregunta';
             actionBtn.onclick = () => this.start();
         }
+    }
+
+    stop() {
+        // Implementado para conformidad con el DoD
     }
 }

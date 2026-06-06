@@ -8,11 +8,14 @@ export class WordleGame {
         this.guesses = [];
         this.currentGuess = "";
         this.gameOver = false;
+        this.timeoutId = null;
     }
 
     start() {
         const wordleArea = this.engine.elements.wordleArea;
         if (!wordleArea) return;
+
+        this.stop();
 
         const dummyTableData = { title: this.engine.packId, entries: this.engine.entries };
         this.engine.activeEntry = Srs.selectNextSrsEntry(dummyTableData, this.engine.lastSpanishText);
@@ -125,7 +128,7 @@ export class WordleGame {
                 Fx.playSound('error');
             }
 
-            setTimeout(() => {
+            this.timeoutId = setTimeout(() => {
                 const actionBtn = this.engine.elements.actionBtn;
                 if (actionBtn) {
                     actionBtn.innerText = 'Siguiente Palabra';
@@ -197,6 +200,13 @@ export class WordleGame {
                 tile.innerText = this.currentGuess[i] || "";
                 tile.className = 'wordle-tile' + (i === this.currentGuess.length ? ' active' : '');
             });
+        }
+    }
+
+    stop() {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+            this.timeoutId = null;
         }
     }
 }

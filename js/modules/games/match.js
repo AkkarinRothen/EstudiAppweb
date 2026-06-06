@@ -3,12 +3,15 @@ import * as Utils from '../utils.js';
 export class MatchGame {
     constructor(engine) {
         this.engine = engine;
+        this.activeTimers = [];
     }
 
     start() {
         const matchArea = this.engine.elements.matchArea;
         if (!matchArea) return;
         
+        this.stop();
+
         matchArea.innerHTML = '';
         matchArea.style.display = 'flex';
         
@@ -108,7 +111,7 @@ export class MatchGame {
                 if (activeCards.length === 2) {
                     const [card1, card2] = activeCards;
                     if (card1.dataset.pairId === card2.dataset.pairId) {
-                        setTimeout(() => {
+                        const t1 = setTimeout(() => {
                             card1.classList.add('matched');
                             card2.classList.add('matched');
                             activeCards = [];
@@ -118,12 +121,14 @@ export class MatchGame {
                                 showWinScreen();
                             }
                         }, 500);
+                        this.activeTimers.push(t1);
                     } else {
-                        setTimeout(() => {
+                        const t2 = setTimeout(() => {
                             card1.classList.remove('flipped');
                             card2.classList.remove('flipped');
                             activeCards = [];
                         }, 1200);
+                        this.activeTimers.push(t2);
                     }
                 }
             });
@@ -141,7 +146,13 @@ export class MatchGame {
                     <button class="srs-btn srs-btn-good" style="margin-top:10px; width:auto; padding:12px 24px;">Jugar de nuevo</button>
                 </div>
             `;
-            matchArea.querySelector('button').onclick = () => this.start();
+            const btn = matchArea.querySelector('button');
+            if (btn) btn.onclick = () => this.start();
         };
+    }
+
+    stop() {
+        this.activeTimers.forEach(timer => clearTimeout(timer));
+        this.activeTimers = [];
     }
 }
