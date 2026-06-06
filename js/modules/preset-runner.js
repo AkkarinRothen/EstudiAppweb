@@ -26,6 +26,9 @@ export function initPreset(entries, formula) {
     
     const actionBtn = document.getElementById('actionBtn');
     if (actionBtn) actionBtn.innerText = "Tirar Dado";
+
+    // Initial roll to display the first vocabulary item
+    roll();
 }
 
 function setupEventListeners() {
@@ -87,8 +90,9 @@ function setupEventListeners() {
 
 function setMode(mode) {
     currentMode = mode;
-    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-    document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+    document.querySelectorAll('.chip-modal').forEach(c => c.classList.remove('active'));
+    const modeBtn = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
+    if (modeBtn) modeBtn.classList.add('active');
     
     // Reset UI visibility
     document.getElementById('quizScore').style.display = 'none';
@@ -96,6 +100,13 @@ function setMode(mode) {
     document.getElementById('quizOptions').style.display = 'none';
     document.getElementById('subContainer').style.display = (mode === 'direct' || mode === 'write') ? 'flex' : 'none';
     
+    const actionBtn = document.getElementById('actionBtn');
+    if (mode === 'quiz' || mode === 'write') {
+        actionBtn.innerText = "Siguiente";
+    } else {
+        actionBtn.innerText = "Tirar Dado";
+    }
+
     if (activeEntry) updateEntryUI();
 }
 
@@ -135,12 +146,17 @@ function roll() {
     const diceContainer = document.getElementById('diceContainer');
     const resultArea = document.getElementById('resultArea');
 
-    diceContainer.style.display = 'block';
-    die.classList.add('rolling');
+    if (currentMode === 'direct' || currentMode === 'flashcard') {
+        diceContainer.style.display = 'block';
+        die.classList.add('rolling');
+    }
+    
     actionBtn.disabled = true;
 
     setTimeout(() => {
-        die.classList.remove('rolling');
+        if (currentMode === 'direct' || currentMode === 'flashcard') {
+            die.classList.remove('rolling');
+        }
         const rollResult = Utils.rollDice(currentFormula);
         die.setAttribute('data-face', (rollResult % 6) || 6);
         document.getElementById('rollVal').innerText = `Resultado: ${rollResult}`;
@@ -153,7 +169,7 @@ function roll() {
         }
         
         actionBtn.disabled = false;
-    }, 600);
+    }, (currentMode === 'direct' || currentMode === 'flashcard') ? 600 : 0);
 }
 
 function updateEntryUI() {
@@ -164,7 +180,7 @@ function updateEntryUI() {
     
     const parts = activeEntry.text.split('->');
     const es = parts[0].trim();
-    const en = parts[1].trim();
+    const en = parts.length > 1 ? parts[1].trim() : '';
     
     mainTextEl.innerText = es;
     subTextEl.innerText = en;
@@ -173,8 +189,18 @@ function updateEntryUI() {
     const showImages = document.getElementById('enableImages').checked;
     imgContainer.style.display = showImages ? 'block' : 'none';
     if (showImages) {
+        let imageUrl = "";
+        if (parts.length > 2) {
+            const third = parts[2].trim();
+            if (third.startsWith('http')) imageUrl = third;
+        }
+        if (!imageUrl) {
+            const keyword = Utils.extractImageKeyword(en) || Utils.extractImageKeyword(es);
+            if (keyword) imageUrl = `https://loremflickr.com/400/300/${encodeURIComponent(keyword)}`;
+        }
+        
         imgEl.classList.remove('loaded');
-        imgEl.src = `https://api.duckduckgo.com/t/i.js?q=${encodeURIComponent(en)}&o=json`; // Mock or Real API
+        imgEl.src = imageUrl;
         imgEl.onload = () => imgEl.classList.add('loaded');
     }
 

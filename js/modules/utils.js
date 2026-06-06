@@ -63,7 +63,7 @@ export function getDiffHighlight(typed, correct) {
  */
 export function extractImageKeyword(phrase) {
     if (!phrase) return "";
-
+    
     // Normalize: lowercase, remove punctuation, collapse spaces
     const normalized = phrase
         .toLowerCase()
@@ -109,7 +109,35 @@ export function extractImageKeyword(phrase) {
 }
 
 /**
+ * Parses a dice formula (e.g., "1d6") and returns a random roll result.
+ * @param {string} formula 
+ * @returns {number}
+ */
+export function rollDice(formula) {
+    if (!formula) return 1;
+    const parts = formula.toLowerCase().split('d');
+    const count = parseInt(parts[0]) || 1;
+    const faces = parseInt(parts[1]) || 6;
+    let total = 0;
+    for (let i = 0; i < count; i++) {
+        total += Math.floor(Math.random() * faces) + 1;
+    }
+    return total;
+}
+
+/**
+ * Compares two strings robustly by cleaning them first.
+ * @param {string} a 
+ * @param {string} b 
+ * @returns {boolean}
+ */
+export function compareText(a, b) {
+    return cleanText(a) === cleanText(b);
+}
+
+/**
  * Smoothly animates a numerical counter on an element
+
  * @param {HTMLElement} element 
  * @param {number} start 
  * @param {number} end 
