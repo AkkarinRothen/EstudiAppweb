@@ -708,3 +708,7 @@
     color: var(--on-surface);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
+
+/* Loading State */
+.decks-loading { grid-column: 1 / -1; text-align: center; padding: 100px 20px; font-size: 18px; font-weight: 600; color: var(--primary); animation: pulseLoading 1.5s infinite ease-in-out; }
+@keyframes pulseLoading { 0%, 100% { opacity: 0.6; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-5px); } }
