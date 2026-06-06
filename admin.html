@@ -54,6 +54,10 @@
                 <label>Token (PAT):</label>
                 <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
             </div>
+            <div class="form-group" style="margin-top: 15px; border-top: 1px dashed var(--outline); padding-top: 15px;">
+                <label>Clave API de Gemini (Opcional - para Ejemplos con IA):</label>
+                <input type="password" id="geminiApiKey" placeholder="AIzaSy...">
+            </div>
             <button id="ghSaveBtn">Guardar Credenciales (Local)</button>
         </div>
     </div>
@@ -121,6 +125,7 @@
                             <tr>
                                 <th>Español</th>
                                 <th>Inglés / Traducción</th>
+                                <th style="width: 80px; text-align: center;">Imagen</th>
                                 <th style="width: 50px; text-align: center;">Acciones</th>
                             </tr>
                         </thead>
@@ -131,6 +136,7 @@
                 </div>
                 <div class="vocab-table-actions">
                     <button type="button" id="addTableRowBtn" style="background: var(--secondary);">＋ Añadir Palabra</button>
+                    <button type="button" id="aiGenerateExamplesBtn" style="background: var(--primary);">🤖 Generar Ejemplos (Gemini IA)</button>
                     <button type="button" id="clearTableBtn" style="background: var(--error);">🗑️ Limpiar Todo</button>
                 </div>
             </div>
@@ -189,6 +195,23 @@
     <!-- /Tab System card -->
 
     <a href="index.html" style="color:var(--primary); font-weight:bold; margin-bottom: 40px;">Volver al Portal</a>
+</div>
+
+<!-- Image Search Popover (Modal) -->
+<div id="imageSearchPopover" class="image-search-popover" style="display: none;">
+    <div class="image-search-card">
+        <h3>🔍 Buscador de Imágenes</h3>
+        <p class="info" id="imageSearchQueryText">Buscando imágenes para: </p>
+        <div class="image-search-preview-box">
+            <div class="image-search-spinner" id="imageSearchSpinner">⏳ Cargando...</div>
+            <img id="imageSearchPreviewImg" src="" alt="Preview">
+        </div>
+        <div class="image-search-actions">
+            <button id="btnImageSearchNext" style="background: var(--secondary);">🔄 Ver otra</button>
+            <button id="btnImageSearchConfirm" style="background: var(--primary);">✅ Fijar Imagen</button>
+            <button id="btnImageSearchCancel" style="background: var(--error);">✕ Cancelar</button>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>

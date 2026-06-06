@@ -2,6 +2,35 @@
 import { getSrsData, saveSrsData, getStats, saveStats } from './storage.js';
 
 /**
+ * Validates and resets the study streak if the user missed a day (i.e., more than 1 day has passed since lastStudyDate).
+ * @returns {Object} Updated stats
+ */
+export function validateStreak() {
+    let stats = getStats();
+    if (!stats.lastStudyDate) {
+        if (stats.streak !== 0) {
+            stats.streak = 0;
+            saveStats(stats);
+        }
+        return stats;
+    }
+    
+    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    if (stats.lastStudyDate !== todayStr) {
+        const lastDate = new Date(stats.lastStudyDate + 'T00:00:00');
+        const today = new Date(todayStr + 'T00:00:00');
+        const diffTime = Math.abs(today - lastDate);
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1) {
+            stats.streak = 0;
+            saveStats(stats);
+        }
+    }
+    return stats;
+}
+
+/**
  * Records a study attempt and updates global statistics
  * @param {boolean} isCorrect 
  * @param {Function} onUpdateStatsUI Callback to refresh UI
@@ -15,10 +44,10 @@ export function recordSrsAttempt(isCorrect, onUpdateStatsUI) {
     const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
     if (stats.lastStudyDate !== todayStr) {
         if (stats.lastStudyDate) {
-            const lastDate = new Date(stats.lastStudyDate);
-            const today = new Date(todayStr);
+            const lastDate = new Date(stats.lastStudyDate + 'T00:00:00');
+            const today = new Date(todayStr + 'T00:00:00');
             const diffTime = Math.abs(today - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             
             if (diffDays === 1) {
                 stats.streak++;

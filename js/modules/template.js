@@ -48,6 +48,8 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
             <button id="modeWrite" class="chip-modal">Escritura</button>
             <button id="modeScrambled" class="chip-modal">Letras</button>
             <button id="modeTimeAttack" class="chip-modal">Reloj</button>
+            <button id="modeMatch" class="chip-modal">Memorama</button>
+            <button id="modeBubble" class="chip-modal">Burbujas</button>
         </div>
 
         <div class="result-area" id="resultArea">
@@ -87,6 +89,8 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
             </div>
             <div id="scrambledArea" class="scrambled-container" style="display:none"></div>
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
+            <div id="matchArea" class="match-container" style="display:none"></div>
+            <div id="bubbleArea" class="bubble-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
                 <button class="srs-btn srs-btn-again">❌ Difícil</button>
                 <button class="srs-btn srs-btn-good">✅ Fácil</button>

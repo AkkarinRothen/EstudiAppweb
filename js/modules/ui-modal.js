@@ -77,7 +77,12 @@ export function openPracticeModal(data) {
         rollVal: document.getElementById('modalRollVal'),
         resultArea: document.getElementById('modalResultArea'),
         timerContainer: document.getElementById('modalTimerContainer'),
-        timerVal: document.getElementById('modalTimerVal')
+        timerVal: document.getElementById('modalTimerVal'),
+        matchArea: document.getElementById('modalMatchArea'),
+        bubbleArea: document.getElementById('modalBubbleArea'),
+        sniperArea: document.getElementById('modalSniperArea'),
+        dragArea: document.getElementById('modalDragArea'),
+        dictationArea: document.getElementById('modalDictationArea')
     };
 
     const packId = "csv_" + data.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -97,6 +102,11 @@ export function openPracticeModal(data) {
     document.getElementById('modalModeQuiz').onclick = () => engine.setMode('quiz');
     document.getElementById('modalModeWrite').onclick = () => engine.setMode('write');
     document.getElementById('modalModeScrambled').onclick = () => engine.setMode('scrambled');
+    document.getElementById('modalModeMatch').onclick = () => engine.setMode('match');
+    document.getElementById('modalModeBubble').onclick = () => engine.setMode('bubble');
+    document.getElementById('modalModeSniper').onclick = () => engine.setMode('sniper');
+    document.getElementById('modalModeDrag').onclick = () => engine.setMode('drag');
+    document.getElementById('modalModeDictation').onclick = () => engine.setMode('dictation');
     
     const timeAttackBtn = document.getElementById('modalModeTimeAttack');
     if (timeAttackBtn) {
@@ -110,7 +120,11 @@ export function closeModal(onClose) {
     document.getElementById('practiceModal').classList.remove('active');
     const badge = document.getElementById('modalSrsBadge');
     if (badge) badge.style.display = 'none';
-    if (engine) engine.stopTimeAttack();
+    if (engine) {
+        engine.stopTimeAttack();
+        engine.stopBubbleGame();
+        engine.stopSniperGame();
+    }
     importedTableData = null;
     engine = null;
     if (onClose) onClose();

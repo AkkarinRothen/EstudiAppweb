@@ -82,6 +82,7 @@ export class StudyEngine {
     setMode(mode) {
         this.currentMode = mode;
         this.stopTimeAttack();
+        this.stopBubbleGame();
 
         // Reset elements style
         if (this.elements.quizScore) this.elements.quizScore.style.display = 'none';
@@ -89,10 +90,15 @@ export class StudyEngine {
         if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
         if (this.elements.quizOptions) this.elements.quizOptions.style.display = 'none';
         if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
+        if (this.elements.matchArea) this.elements.matchArea.style.display = 'none';
+        if (this.elements.bubbleArea) this.elements.bubbleArea.style.display = 'none';
+        if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
+        if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
+        if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
         if (this.elements.timerContainer) this.elements.timerContainer.style.display = (mode === 'timeAttack') ? 'flex' : 'none';
         
         if (this.elements.subContainer) {
-            this.elements.subContainer.style.display = (mode === 'direct' || mode === 'write') ? 'flex' : 'none';
+            this.elements.subContainer.style.display = (mode === 'direct' || mode === 'write' || mode === 'dictation') ? 'flex' : 'none';
         }
         if (this.elements.diceContainer) {
             this.elements.diceContainer.style.display = 'none';
@@ -127,6 +133,25 @@ export class StudyEngine {
                 actionBtn.onclick = () => this.startTimeAttack();
                 if (this.elements.mainText) this.elements.mainText.innerText = "Prepárate...";
                 if (this.elements.rollVal) this.elements.rollVal.innerText = "Modo Contrarreloj";
+            } else if (mode === 'match' || mode === 'bubble') {
+                actionBtn.innerText = 'Reiniciar Juego';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => {
+                    if (mode === 'match') this.startMatchGame();
+                    else this.startBubbleGame();
+                };
+            } else if (mode === 'sniper') {
+                actionBtn.innerText = 'Reiniciar Sniper';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.startSniperGame();
+            } else if (mode === 'drag') {
+                actionBtn.innerText = 'Reiniciar Conectar';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.startDragGame();
+            } else if (mode === 'dictation') {
+                actionBtn.innerText = 'Siguiente Dictado';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.startDictationQuestion();
             } else {
                 actionBtn.innerText = 'Tirar Dado';
                 actionBtn.style.display = 'block';
@@ -144,6 +169,16 @@ export class StudyEngine {
             this.startWriteQuestion();
         } else if (mode === 'scrambled') {
             this.startScrambledQuestion();
+        } else if (mode === 'match') {
+            this.startMatchGame();
+        } else if (mode === 'bubble') {
+            this.startBubbleGame();
+        } else if (mode === 'sniper') {
+            this.startSniperGame();
+        } else if (mode === 'drag') {
+            this.startDragGame();
+        } else if (mode === 'dictation') {
+            this.startDictationQuestion();
         } else if (mode !== 'timeAttack') {
             if (this.lastEnglishText) {
                 if (this.elements.subText) this.elements.subText.innerText = this.lastEnglishText;
@@ -184,14 +219,27 @@ export class StudyEngine {
         let imageUrl = "";
         if (parts.length > 2) {
             const third = parts[2].trim();
-            if (third.startsWith("http://") || third.startsWith("https://")) {
-                imageUrl = third;
-            }
+            imageUrl = third;
         }
         if (!imageUrl && sub) {
             const queryWord = Utils.extractImageKeyword(sub);
             if (queryWord) {
                 imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
+            }
+        }
+
+        // Normalize local image relative path
+        if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+            if (this.isModal) {
+                // Root context (index.html, admin.html) - path must be e.g. "assets/..."
+                if (imageUrl.startsWith('../')) {
+                    imageUrl = imageUrl.substring(3);
+                }
+            } else {
+                // Subdirectory context (presets/pack.html) - path must be e.g. "../assets/..."
+                if (!imageUrl.startsWith('../')) {
+                    imageUrl = '../' + imageUrl;
+                }
             }
         }
 
@@ -827,15 +875,26 @@ export class StudyEngine {
         let imageUrl = "";
         if (parts.length > 2) {
             const third = parts[2].trim();
-            if (third.startsWith("http://") || third.startsWith("https://")) {
-                imageUrl = third;
-            }
+            imageUrl = third;
         }
         if (!imageUrl && parts.length > 1) {
             const sub = parts[1].trim();
             const queryWord = Utils.extractImageKeyword(sub);
             if (queryWord) {
                 imageUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
+            }
+        }
+
+        // Normalize local image relative path for prefetch
+        if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://') && !imageUrl.startsWith('data:')) {
+            if (this.isModal) {
+                if (imageUrl.startsWith('../')) {
+                    imageUrl = imageUrl.substring(3);
+                }
+            } else {
+                if (!imageUrl.startsWith('../')) {
+                    imageUrl = '../' + imageUrl;
+                }
             }
         }
         return imageUrl;
@@ -855,5 +914,665 @@ export class StudyEngine {
         item.className = 'history-item';
         item.innerHTML = `<span>${es}</span><strong>${en}</strong>`;
         list.prepend(item);
+    }
+
+    startMatchGame() {
+        const matchArea = this.elements.matchArea;
+        if (!matchArea) return;
+        
+        matchArea.innerHTML = '';
+        matchArea.style.display = 'flex';
+        
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.mainText) this.elements.mainText.innerText = "Empareja las palabras";
+
+        if (this.entries.length < 3) {
+            matchArea.innerHTML = '<div class="info">Se necesitan al menos 3 vocablos para jugar al Memorama.</div>';
+            return;
+        }
+
+        const gameSize = Math.min(6, this.entries.length);
+        const shuffledEntries = [...this.entries].sort(() => Math.random() - 0.5);
+        const selected = shuffledEntries.slice(0, gameSize);
+
+        const cards = [];
+        selected.forEach((entry, idx) => {
+            const parts = entry.text.split("->");
+            const es = parts[0].trim();
+            const en = parts[1]?.trim() || "";
+            
+            let imgUrl = "";
+            if (parts.length > 2) {
+                const third = parts[2].trim();
+                imgUrl = third;
+            }
+            if (!imgUrl) {
+                const queryWord = Utils.extractImageKeyword(en);
+                if (queryWord && (this.elements.enableImages ? this.elements.enableImages.checked : true)) {
+                    imgUrl = "https://loremflickr.com/320/240/" + encodeURIComponent(queryWord);
+                }
+            }
+            if (imgUrl && !imgUrl.startsWith('http://') && !imgUrl.startsWith('https://') && !imgUrl.startsWith('data:')) {
+                if (this.isModal) {
+                    if (imgUrl.startsWith('../')) imgUrl = imgUrl.substring(3);
+                } else {
+                    if (!imgUrl.startsWith('../')) imgUrl = '../' + imgUrl;
+                }
+            }
+
+            // Card A (Spanish/Image)
+            cards.push({
+                id: `card_${idx}_es`,
+                pairId: idx,
+                type: 'es',
+                content: (imgUrl && (this.elements.enableImages ? this.elements.enableImages.checked : true)) 
+                    ? `<img src="${imgUrl}" alt="${es}">` 
+                    : `<span>${es}</span>`
+            });
+
+            // Card B (English translation)
+            cards.push({
+                id: `card_${idx}_en`,
+                pairId: idx,
+                type: 'en',
+                content: `<span>${en}</span>`
+            });
+        });
+
+        cards.sort(() => Math.random() - 0.5);
+
+        const grid = document.createElement('div');
+        grid.className = 'match-grid';
+        
+        let activeCards = [];
+        let matchedCount = 0;
+
+        cards.forEach(cardData => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'match-card';
+            cardEl.dataset.id = cardData.id;
+            cardEl.dataset.pairId = cardData.pairId;
+            cardEl.innerHTML = `
+                <div class="match-card-inner">
+                    <div class="match-card-front">❓</div>
+                    <div class="match-card-back">
+                        ${cardData.content}
+                    </div>
+                </div>
+            `;
+
+            cardEl.addEventListener('click', () => {
+                if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || activeCards.length >= 2) {
+                    return;
+                }
+
+                cardEl.classList.add('flipped');
+                activeCards.push(cardEl);
+
+                if (activeCards.length === 2) {
+                    const [card1, card2] = activeCards;
+                    if (card1.dataset.pairId === card2.dataset.pairId) {
+                        setTimeout(() => {
+                            card1.classList.add('matched');
+                            card2.classList.add('matched');
+                            activeCards = [];
+                            matchedCount++;
+
+                            if (matchedCount === gameSize) {
+                                showWinScreen();
+                            }
+                        }, 500);
+                    } else {
+                        setTimeout(() => {
+                            card1.classList.remove('flipped');
+                            card2.classList.remove('flipped');
+                            activeCards = [];
+                        }, 1200);
+                    }
+                }
+            });
+
+            grid.appendChild(cardEl);
+        });
+
+        matchArea.appendChild(grid);
+
+        const showWinScreen = () => {
+            matchArea.innerHTML = `
+                <div class="match-win-screen">
+                    <h3 style="color:var(--success); font-size:24px; margin:0;">¡Felicidades! 🎉</h3>
+                    <p class="info" style="font-size:14px;">Has emparejado todos los términos correctamente.</p>
+                    <button class="srs-btn srs-btn-good" style="margin-top:10px; width:auto; padding:12px 24px;">Jugar de nuevo</button>
+                </div>
+            `;
+            matchArea.querySelector('button').onclick = () => this.startMatchGame();
+        };
+    }
+
+    startBubbleGame() {
+        const bubbleArea = this.elements.bubbleArea;
+        if (!bubbleArea) return;
+
+        this.stopBubbleGame();
+        
+        bubbleArea.style.display = 'flex';
+        bubbleArea.innerHTML = `
+            <div class="bubble-target-box" id="bubbleTargetBox">Cargando vocablo...</div>
+            <div class="bubble-area" id="bubbleGamePlayground"></div>
+        `;
+
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.mainText) this.elements.mainText.innerText = "Estalla la traducción correcta";
+
+        if (this.entries.length < 2) {
+            bubbleArea.innerHTML = '<div class="info">Se necesitan al menos 2 vocablos para jugar a las Burbujas.</div>';
+            return;
+        }
+
+        this.bubbleScore = 0;
+        this.selectNextBubbleTarget();
+
+        const playground = bubbleArea.querySelector('#bubbleGamePlayground');
+        this.bubbleSpawnInterval = setInterval(() => {
+            if (!this.bubbleTargetEntry) return;
+
+            const isCorrect = Math.random() < 0.35;
+            let text = "";
+            let entry = null;
+
+            if (isCorrect) {
+                entry = this.bubbleTargetEntry;
+                text = entry.en;
+            } else {
+                const distractors = this.entries.filter(e => e.text.split("->")[0].trim() !== this.bubbleTargetEntry.es);
+                entry = distractors[Math.floor(Math.random() * distractors.length)];
+                text = entry ? entry.en : "";
+            }
+
+            if (!text) return;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble-element';
+            bubble.innerText = text;
+            bubble.style.left = `${5 + Math.random() * 75}%`;
+            
+            const size = 75 + Math.floor(Math.random() * 20);
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            
+            bubble.addEventListener('click', () => {
+                if (bubble.classList.contains('pop') || bubble.classList.contains('wrong')) return;
+
+                const targetParts = this.bubbleTargetEntry.en.split(/[/\;,]/).map(s => Utils.cleanText(s.trim()));
+                const cleanBubbleText = Utils.cleanText(text);
+                const matchCorrect = targetParts.includes(cleanBubbleText);
+
+                if (matchCorrect) {
+                    bubble.classList.add('pop');
+                    this.bubbleScore++;
+                    this.speak();
+                    this.selectNextBubbleTarget();
+                    
+                    playground.querySelectorAll('.bubble-element').forEach(b => {
+                        if (targetParts.includes(Utils.cleanText(b.innerText))) {
+                            b.classList.add('pop');
+                            setTimeout(() => b.remove(), 350);
+                        }
+                    });
+                    
+                    setTimeout(() => bubble.remove(), 350);
+                } else {
+                    bubble.classList.add('wrong');
+                    setTimeout(() => bubble.classList.remove('wrong'), 500);
+                }
+            });
+
+            bubble.addEventListener('animationend', (e) => {
+                if (e.animationName === 'floatUp') {
+                    bubble.remove();
+                }
+            });
+
+            playground.appendChild(bubble);
+        }, 1600);
+    }
+
+    selectNextBubbleTarget() {
+        if (this.entries.length === 0) return;
+        
+        const randEntry = this.entries[Math.floor(Math.random() * this.entries.length)];
+        const parts = randEntry.text.split("->");
+        const es = parts[0].trim();
+        const en = parts[1]?.trim() || "";
+
+        this.bubbleTargetEntry = { es, en };
+        this.lastEnglishText = en;
+
+        const box = this.elements.bubbleArea?.querySelector('#bubbleTargetBox');
+        if (box) {
+            box.innerText = `Encuentra la traducción de: ${es} (Puntos: ${this.bubbleScore})`;
+        }
+    }
+
+
+    stopBubbleGame() {
+        if (this.bubbleSpawnInterval) {
+            clearInterval(this.bubbleSpawnInterval);
+            this.bubbleSpawnInterval = null;
+        }
+        this.bubbleTargetEntry = null;
+    }
+
+    // ─── 🎯 SNIPER DE PALABRAS ────────────────────────────────────────────────
+
+    startSniperGame() {
+        const sniperArea = this.elements.sniperArea;
+        if (!sniperArea) return;
+
+        this.stopSniperGame();
+
+        if (this.entries.length < 2) {
+            sniperArea.innerHTML = '<div class="info">Se necesitan al menos 2 vocablos para jugar al Sniper.</div>';
+            sniperArea.style.display = 'flex';
+            return;
+        }
+
+        this.sniperLives = 3;
+        this.sniperScore = 0;
+
+        sniperArea.innerHTML = `
+            <div class="sniper-hud">
+                <span class="sniper-lives-display" id="sniperLives">❤️❤️❤️</span>
+                <span class="sniper-score-display" id="sniperScore">🎯 0 disparos</span>
+            </div>
+            <div class="sniper-target-box" id="sniperTarget">Cargando...</div>
+            <div class="sniper-lanes" id="sniperLanes"></div>
+            <div class="sniper-input-row">
+                <input type="text" class="sniper-input" id="sniperInput" placeholder="Escribe la traducción en español y pulsa Enter..." autocomplete="off">
+            </div>
+        `;
+        sniperArea.style.display = 'flex';
+
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.mainText) this.elements.mainText.innerText = '';
+
+        this._sniperPickNextTarget();
+
+        const input = sniperArea.querySelector('#sniperInput');
+        input.focus();
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = Utils.cleanText(input.value);
+                if (!val) return;
+                this._sniperCheckAnswer(val);
+                input.value = '';
+            }
+        });
+
+        this.sniperSpawnInterval = setInterval(() => {
+            this._sniperSpawnWord();
+        }, 2200);
+    }
+
+    _sniperPickNextTarget() {
+        if (!this.entries || this.entries.length === 0) return;
+        const rand = this.entries[Math.floor(Math.random() * this.entries.length)];
+        const parts = rand.text.split('->');
+        this._sniperTarget = {
+            es: parts[0].trim(),
+            en: parts[1]?.split('||')[0].trim() || ''
+        };
+        const box = document.getElementById('sniperTarget');
+        if (box) box.innerText = `Traduce al español: "${this._sniperTarget.en}"`;
+    }
+
+    _sniperSpawnWord() {
+        const lanes = document.getElementById('sniperLanes');
+        if (!lanes || !this._sniperTarget) return;
+
+        const isCorrect = Math.random() < 0.4;
+        let wordText = '';
+
+        if (isCorrect) {
+            wordText = this._sniperTarget.es;
+        } else {
+            const distractors = this.entries.filter(e => {
+                const p = e.text.split('->');
+                return p[0].trim() !== this._sniperTarget.es;
+            });
+            if (distractors.length === 0) wordText = this._sniperTarget.es;
+            else {
+                const d = distractors[Math.floor(Math.random() * distractors.length)];
+                wordText = d.text.split('->')[0].trim();
+            }
+        }
+
+        const word = document.createElement('div');
+        word.className = 'sniper-word';
+        word.innerText = wordText;
+        word.dataset.correct = isCorrect ? '1' : '0';
+        word.style.left = `${5 + Math.random() * 70}%`;
+
+        word.addEventListener('animationend', () => {
+            if (word.parentNode) {
+                word.remove();
+                if (word.dataset.correct === '1') {
+                    this._sniperLoseLife();
+                }
+            }
+        });
+
+        lanes.appendChild(word);
+    }
+
+    _sniperCheckAnswer(val) {
+        if (!this._sniperTarget) return;
+        const target = Utils.cleanText(this._sniperTarget.es);
+
+        if (Utils.compareText(val, target)) {
+            this.sniperScore++;
+            const scoreEl = document.getElementById('sniperScore');
+            if (scoreEl) scoreEl.innerText = `🎯 ${this.sniperScore} disparos`;
+
+            // Visual hit feedback on matching words
+            const lanes = document.getElementById('sniperLanes');
+            if (lanes) {
+                lanes.querySelectorAll('.sniper-word').forEach(w => {
+                    if (w.dataset.correct === '1') {
+                        w.classList.add('sniper-hit');
+                        setTimeout(() => w.remove(), 400);
+                    }
+                });
+            }
+            this.rateSrs(true);
+            this.speak();
+            this._sniperPickNextTarget();
+        } else {
+            const input = document.getElementById('sniperInput');
+            if (input) {
+                input.classList.add('sniper-wrong');
+                setTimeout(() => input.classList.remove('sniper-wrong'), 600);
+            }
+        }
+    }
+
+    _sniperLoseLife() {
+        if (!this.sniperLives) return;
+        this.sniperLives--;
+        const livesEl = document.getElementById('sniperLives');
+        if (livesEl) {
+            livesEl.innerText = '❤️'.repeat(this.sniperLives) + '🖤'.repeat(3 - this.sniperLives);
+        }
+        if (this.sniperLives <= 0) {
+            this.stopSniperGame();
+            const sniperArea = this.elements.sniperArea;
+            if (sniperArea) {
+                sniperArea.innerHTML = `
+                    <div class="sniper-gameover">
+                        <div style="font-size:48px;">💀</div>
+                        <h3>Game Over</h3>
+                        <p class="info">Disparos acertados: <strong>${this.sniperScore}</strong></p>
+                        <button class="srs-btn srs-btn-good" style="width:auto;padding:12px 24px;margin-top:10px;">Jugar de nuevo</button>
+                    </div>
+                `;
+                sniperArea.querySelector('button').onclick = () => this.startSniperGame();
+            }
+        }
+    }
+
+    stopSniperGame() {
+        if (this.sniperSpawnInterval) {
+            clearInterval(this.sniperSpawnInterval);
+            this.sniperSpawnInterval = null;
+        }
+        this._sniperTarget = null;
+    }
+
+    // ─── 🔗 ARRASTRAR Y CONECTAR ─────────────────────────────────────────────
+
+    startDragGame() {
+        const dragArea = this.elements.dragArea;
+        if (!dragArea) return;
+
+        dragArea.innerHTML = '';
+        dragArea.style.display = 'flex';
+
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.mainText) this.elements.mainText.innerText = 'Conecta cada palabra con su traducción';
+
+        if (this.entries.length < 2) {
+            dragArea.innerHTML = '<div class="info">Se necesitan al menos 2 vocablos para jugar a Conectar.</div>';
+            return;
+        }
+
+        const gameSize = Math.min(6, this.entries.length);
+        const selected = [...this.entries].sort(() => Math.random() - 0.5).slice(0, gameSize);
+
+        const esWords = selected.map((e, i) => ({ id: i, text: e.text.split('->')[0].trim() }));
+        const enWords = selected.map((e, i) => ({ id: i, text: e.text.split('->')[1]?.split('||')[0].trim() || '' }));
+        const shuffledEn = [...enWords].sort(() => Math.random() - 0.5);
+
+        let connections = []; // { fromId, toId, line }
+        let selectedEs = null;
+        let matchedCount = 0;
+
+        // Build layout
+        dragArea.innerHTML = `
+            <div class="drag-wrapper">
+                <svg class="drag-svg" id="dragSvg"></svg>
+                <div class="drag-col" id="dragColEs"></div>
+                <div class="drag-col" id="dragColEn"></div>
+            </div>
+        `;
+
+        const svg = dragArea.querySelector('#dragSvg');
+        const colEs = dragArea.querySelector('#dragColEs');
+        const colEn = dragArea.querySelector('#dragColEn');
+
+        const drawLine = (el1, el2, color = 'var(--primary)') => {
+            const r1 = el1.getBoundingClientRect();
+            const r2 = el2.getBoundingClientRect();
+            const svgR = svg.getBoundingClientRect();
+
+            const x1 = r1.right - svgR.left;
+            const y1 = r1.top + r1.height / 2 - svgR.top;
+            const x2 = r2.left - svgR.left;
+            const y2 = r2.top + r2.height / 2 - svgR.top;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const cx = (x1 + x2) / 2;
+            line.setAttribute('d', `M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}`);
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('fill', 'none');
+            line.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(line);
+            return line;
+        };
+
+        esWords.forEach(word => {
+            const el = document.createElement('div');
+            el.className = 'drag-word';
+            el.innerText = word.text;
+            el.dataset.id = word.id;
+
+            el.addEventListener('click', () => {
+                if (el.classList.contains('matched')) return;
+                dragArea.querySelectorAll('.drag-word.selected').forEach(w => w.classList.remove('selected'));
+                if (selectedEs?.id === word.id) {
+                    selectedEs = null;
+                } else {
+                    selectedEs = { id: word.id, el };
+                    el.classList.add('selected');
+                }
+            });
+
+            colEs.appendChild(el);
+        });
+
+        shuffledEn.forEach(word => {
+            const el = document.createElement('div');
+            el.className = 'drag-word';
+            el.innerText = word.text;
+            el.dataset.id = word.id;
+
+            el.addEventListener('click', () => {
+                if (el.classList.contains('matched') || !selectedEs) return;
+
+                const isCorrect = selectedEs.id === word.id;
+
+                if (isCorrect) {
+                    selectedEs.el.classList.remove('selected');
+                    selectedEs.el.classList.add('matched');
+                    el.classList.add('matched');
+
+                    // Draw permanent green line
+                    setTimeout(() => {
+                        drawLine(selectedEs.el, el, 'var(--success, #4CAF50)');
+                    }, 10);
+
+                    this.rateSrs(true);
+                    matchedCount++;
+                    selectedEs = null;
+
+                    if (matchedCount === gameSize) {
+                        setTimeout(() => {
+                            dragArea.innerHTML = `
+                                <div class="match-win-screen">
+                                    <h3 style="color:var(--success,#4CAF50);font-size:24px;margin:0;">¡Perfecto! 🎉</h3>
+                                    <p class="info">Has conectado todos los pares correctamente.</p>
+                                    <button class="srs-btn srs-btn-good" style="margin-top:10px;width:auto;padding:12px 24px;">Jugar de nuevo</button>
+                                </div>
+                            `;
+                            dragArea.querySelector('button').onclick = () => this.startDragGame();
+                        }, 600);
+                    }
+                } else {
+                    // Flash wrong
+                    el.classList.add('drag-wrong');
+                    selectedEs.el.classList.add('drag-wrong');
+                    setTimeout(() => {
+                        el.classList.remove('drag-wrong');
+                        selectedEs?.el.classList.remove('drag-wrong');
+                        selectedEs?.el.classList.remove('selected');
+                        selectedEs = null;
+                    }, 700);
+                    this.rateSrs(false);
+                }
+            });
+
+            colEn.appendChild(el);
+        });
+    }
+
+    // ─── 🎵 DICTADO DE AUDIO ─────────────────────────────────────────────────
+
+    startDictationQuestion() {
+        const dictationArea = this.elements.dictationArea;
+        if (!dictationArea) return;
+
+        dictationArea.innerHTML = '';
+        dictationArea.style.display = 'flex';
+
+        if (this.entries.length === 0) {
+            dictationArea.innerHTML = '<div class="info">No hay vocablos disponibles.</div>';
+            return;
+        }
+
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+
+        // Select entry using SRS
+        const dummyTableData = { title: this.packId, entries: this.entries };
+        const entry = Srs.selectNextSrsEntry(dummyTableData, this.lastSpanishText);
+        if (!entry) return;
+
+        const parts = entry.text.split('->');
+        const es = parts[0].trim();
+        const en = parts[1]?.split('||')[0].trim() || '';
+        this.lastSpanishText = es;
+        this.lastEnglishText = en;
+
+        if (this.elements.mainText) this.elements.mainText.innerText = '🎵 Escucha y escribe en español';
+
+        dictationArea.innerHTML = `
+            <div class="dictation-instructions">Escucha la pronunciación en inglés y escribe la traducción al español</div>
+            <button class="dictation-replay-btn" id="dictationReplayBtn">🔊 Escuchar de nuevo</button>
+            <input type="text" class="dictation-input" id="dictationInput" placeholder="Escribe la traducción en español..." autocomplete="off">
+            <div class="dictation-feedback" id="dictationFeedback"></div>
+            <button class="srs-btn srs-btn-good" id="dictationCheckBtn" style="width:auto;padding:10px 24px;margin-top:8px;">✅ Verificar</button>
+        `;
+
+        dictationArea.style.display = 'flex';
+
+        // Auto-speak
+        setTimeout(() => {
+            Speech.speak(en,
+                this.elements.voiceSelect?.value,
+                this.elements.speedSlider?.value
+            );
+        }, 400);
+
+        const replayBtn = dictationArea.querySelector('#dictationReplayBtn');
+        replayBtn.addEventListener('click', () => {
+            Speech.speak(en,
+                this.elements.voiceSelect?.value,
+                this.elements.speedSlider?.value
+            );
+        });
+
+        const checkFn = () => {
+            const inputEl = dictationArea.querySelector('#dictationInput');
+            const feedbackEl = dictationArea.querySelector('#dictationFeedback');
+            const val = Utils.cleanText(inputEl?.value || '');
+            const target = Utils.cleanText(es);
+
+            if (!val) return;
+
+            const isCorrect = Utils.compareText(val, target);
+
+            if (isCorrect) {
+                feedbackEl.innerHTML = `<span class="dictation-correct">✅ ¡Correcto! La traducción es <strong>${es}</strong></span>`;
+                inputEl.classList.add('dictation-input-correct');
+                inputEl.disabled = true;
+                this.rateSrs(true);
+                this.speak();
+            } else {
+                feedbackEl.innerHTML = `<span class="dictation-incorrect">❌ Era: <strong>${es}</strong></span>`;
+                inputEl.classList.add('dictation-input-wrong');
+                inputEl.disabled = true;
+                this.rateSrs(false);
+            }
+
+            // Show next button
+            const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
+            if (checkBtn) {
+                checkBtn.innerText = '➡️ Siguiente';
+                checkBtn.onclick = () => this.startDictationQuestion();
+            }
+        };
+
+        const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
+        checkBtn.addEventListener('click', checkFn);
+
+        const inputEl = dictationArea.querySelector('#dictationInput');
+        inputEl.focus();
+        inputEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkFn();
+        });
     }
 }

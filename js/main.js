@@ -47,6 +47,7 @@ function setupEventListeners() {
 }
 
 function updateStatsUI() {
+    Srs.validateStreak();
     const stats = Storage.getStats();
     const srsData = Storage.getSrsData();
     

@@ -101,11 +101,9 @@ export function extractImageKeyword(phrase) {
     // Filter out stopwords from both languages
     const contentWords = words.filter(w => !EN_STOPWORDS.has(w) && !ES_STOPWORDS.has(w));
 
-    // Return the longest content word (most likely a meaningful noun or verb)
+    // Return up to 3 content words joined by commas, or fallback to original words if none remain
     const candidates = contentWords.length > 0 ? contentWords : words;
-    candidates.sort((a, b) => b.length - a.length);
-
-    return candidates[0] || "";
+    return candidates.slice(0, 3).join(",");
 }
 
 /**
