@@ -135,8 +135,8 @@ export function closeModal(onClose) {
     if (badge) badge.style.display = 'none';
     if (engine) {
         engine.stopTimeAttack();
-        engine.stopBubbleGame();
-        engine.stopSniperGame();
+        engine.bubbleGame.stop();
+        engine.sniperGame.stop();
     }
     importedTableData = null;
     engine = null;
