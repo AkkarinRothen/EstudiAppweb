@@ -66,6 +66,110 @@ export class StudyEngine {
         if (this.elements.btnSaveEdit) {
             this.elements.btnSaveEdit.onclick = () => this.saveEdit();
         }
+        if (this.elements.btnLaunchpad) {
+            this.elements.btnLaunchpad.onclick = () => this.toggleLaunchpad();
+        }
+    }
+
+    toggleLaunchpad() {
+        const area = this.elements.launchpadArea;
+        if (!area) return;
+
+        const isVisible = area.style.display === 'flex';
+        if (isVisible) {
+            area.style.display = 'none';
+            this.updateVisibility();
+        } else {
+            this._renderLaunchpad();
+            area.style.display = 'flex';
+            
+            // Hide other areas
+            if (this.elements.resultArea) this.elements.resultArea.style.display = 'none';
+            if (this.elements.writeArea) this.elements.writeArea.style.display = 'none';
+            if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
+            if (this.elements.quizOptions) this.elements.quizOptions.style.display = 'none';
+            if (this.elements.matchArea) this.elements.matchArea.style.display = 'none';
+            if (this.elements.bubbleArea) this.elements.bubbleArea.style.display = 'none';
+            if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
+            if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
+            if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
+            if (this.elements.wordleArea) this.elements.wordleArea.style.display = 'none';
+            
+            Fx.animateEntrance(area);
+        }
+    }
+
+    _renderLaunchpad() {
+        const area = this.elements.launchpadArea;
+        area.innerHTML = '';
+
+        const groups = [
+            {
+                title: '📖 Repaso inicial',
+                icon: '📚',
+                modes: [
+                    { id: 'direct', title: 'Modo Directo', desc: 'Estudio libre con dados.', icon: '🎲' },
+                    { id: 'flashcard', title: 'Flashcards', desc: 'Sistema clásico de tarjetas.', icon: '🎴' }
+                ]
+            },
+            {
+                title: '📝 Producción y Escritura',
+                icon: '✍️',
+                modes: [
+                    { id: 'write', title: 'Escritura', desc: 'Escribe la traducción exacta.', icon: '⌨️' },
+                    { id: 'scrambled', title: 'Letras', desc: 'Ordena las letras mezcladas.', icon: '🧩' },
+                    { id: 'dictation', title: 'Dictado', desc: 'Escucha y escribe lo que oyes.', icon: '🎧' },
+                    { id: 'wordle', title: 'Wordle', desc: 'Adivina la palabra en 6 intentos.', icon: '🧩' }
+                ]
+            },
+            {
+                title: '🧩 Conexión y Lógica',
+                icon: '🔗',
+                modes: [
+                    { id: 'quiz', title: 'Modo Quiz', desc: 'Elige la opción correcta.', icon: '✅' },
+                    { id: 'match', title: 'Memorama', desc: 'Empareja conceptos (Esp vs Ing).', icon: '🧠' },
+                    { id: 'drag', title: 'Conectar', desc: 'Une palabras con líneas.', icon: '🔗' }
+                ]
+            },
+            {
+                title: '🎮 Desafío y Velocidad',
+                icon: '⚡',
+                modes: [
+                    { id: 'timeAttack', title: 'Contrarreloj', desc: 'Acierta todo lo que puedas en 60s.', icon: '⏱️' },
+                    { id: 'bubble', title: 'Burbujas', desc: 'Estalla las pompas correctas.', icon: '🫧' },
+                    { id: 'sniper', title: '🎯 Sniper', desc: 'Dispara a las palabras que caen.', icon: '🎯' }
+                ]
+            }
+        ];
+
+        groups.forEach(group => {
+            const groupEl = document.createElement('div');
+            groupEl.className = 'launchpad-group';
+            groupEl.innerHTML = `<div class="launchpad-group-title">${group.title}</div>`;
+
+            const grid = document.createElement('div');
+            grid.className = 'launchpad-grid';
+
+            group.modes.forEach(mode => {
+                const card = document.createElement('div');
+                card.className = 'mode-card' + (this.currentMode === mode.id ? ' active' : '');
+                card.innerHTML = `
+                    <div class="mode-card-header">
+                        <div class="mode-card-icon">${mode.icon}</div>
+                        <div class="mode-card-title">${mode.title}</div>
+                    </div>
+                    <div class="mode-card-desc">${mode.desc}</div>
+                `;
+                card.onclick = () => {
+                    this.setMode(mode.id);
+                    this.toggleLaunchpad();
+                };
+                grid.appendChild(card);
+            });
+
+            groupEl.appendChild(grid);
+            area.appendChild(groupEl);
+        });
     }
 
     toggleEdit() {
@@ -172,6 +276,9 @@ export class StudyEngine {
         Fx.playSound('click');
 
         // Reset elements style
+        if (this.elements.launchpadArea) this.elements.launchpadArea.style.display = 'none';
+        if (this.elements.resultArea) this.elements.resultArea.style.display = 'flex';
+
         if (this.elements.quizScore) this.elements.quizScore.style.display = 'none';
         if (this.elements.writeArea) this.elements.writeArea.style.display = 'none';
         if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
@@ -522,6 +629,8 @@ export class StudyEngine {
     }
 
     updateVisibility() {
+        if (this.elements.launchpadArea && this.elements.launchpadArea.style.display === 'flex') return;
+
         const subContainer = this.elements.subContainer;
         const btnReveal = this.elements.btnReveal;
         const imgContainer = this.elements.imgContainer;

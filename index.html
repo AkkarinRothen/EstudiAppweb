@@ -85,20 +85,12 @@
             <label for="modalEnableImages">Mostrar Imágenes 🖼️</label>
         </div>
 
-        <div class="mode-toggle">
-            <button id="modalModeDirect" class="chip-modal active">Modo Directo</button>
-            <button id="modalModeFlashcard" class="chip-modal">Flashcard</button>
-            <button id="modalModeQuiz" class="chip-modal">Modo Quiz</button>
-            <button id="modalModeWrite" class="chip-modal">Escritura</button>
-            <button id="modalModeScrambled" class="chip-modal">Letras</button>
-            <button id="modalModeTimeAttack" class="chip-modal">Reloj</button>
-            <button id="modalModeMatch" class="chip-modal">Memorama</button>
-            <button id="modalModeBubble" class="chip-modal">Burbujas</button>
-            <button id="modalModeSniper" class="chip-modal">🎯 Sniper</button>
-            <button id="modalModeDrag" class="chip-modal">🔗 Conectar</button>
-            <button id="modalModeDictation" class="chip-modal">🎧 Dictado</button>
-            <button id="modalModeWordle" class="chip-modal">🧩 Wordle</button>
-        </div>
+        <button id="modalBtnLaunchpad" class="btn-change-mode">
+            <span>🎯 Cambiar Modo de Estudio</span>
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+        </button>
+
+        <div id="modalLaunchpadArea" class="launchpad-container"></div>
 
         <div class="result-area" id="modalResultArea">
             <div id="modalSrsBadge" class="srs-badge" style="display: none;">Caja 1</div>

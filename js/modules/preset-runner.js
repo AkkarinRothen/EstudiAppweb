@@ -39,7 +39,9 @@ export function initPreset(entries, formula) {
         historyList: document.getElementById('historyList'),
         matchArea: document.getElementById('matchArea'),
         bubbleArea: document.getElementById('bubbleArea'),
-        wordleArea: document.getElementById('wordleArea')
+        wordleArea: document.getElementById('wordleArea'),
+        btnLaunchpad: document.getElementById('btnLaunchpad'),
+        launchpadArea: document.getElementById('launchpadArea')
     };
 
     engine = new StudyEngine({
@@ -59,14 +61,7 @@ export function initPreset(entries, formula) {
 }
 
 function setupEventListeners() {
-    // Mode Toggles
-    const modes = ['direct', 'flashcard', 'quiz', 'write', 'scrambled', 'timeAttack', 'match', 'bubble', 'wordle'];
-    modes.forEach(mode => {
-        const btn = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
-        if (btn) {
-            btn.onclick = () => engine.setMode(mode);
-        }
-    });
+    // Mode Switching is now handled within StudyEngine's Launchpad
 
     // Reveal Button
     const revealBtn = document.getElementById('btnReveal');

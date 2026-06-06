@@ -85,6 +85,8 @@ export function openPracticeModal(data) {
         dragArea: document.getElementById('modalDragArea'),
         dictationArea: document.getElementById('modalDictationArea'),
         wordleArea: document.getElementById('modalWordleArea'),
+        btnLaunchpad: document.getElementById('modalBtnLaunchpad'),
+        launchpadArea: document.getElementById('modalLaunchpadArea'),
         btnEdit: document.getElementById('modalBtnEdit'),
         editArea: document.getElementById('modalEditArea'),
         editEs: document.getElementById('modalEditEs'),

@@ -37,16 +37,12 @@
             <label for="enableImages">Mostrar Imágenes 🖼️</label>
         </div>
 
-        <div class="mode-toggle">
-            <button id="modeDirect" class="chip-modal active">Directo</button>
-            <button id="modeFlashcard" class="chip-modal">Flashcard</button>
-            <button id="modeQuiz" class="chip-modal">Quiz</button>
-            <button id="modeWrite" class="chip-modal">Escritura</button>
-            <button id="modeScrambled" class="chip-modal">Letras</button>
-            <button id="modeTimeAttack" class="chip-modal">Reloj</button>
-            <button id="modeMatch" class="chip-modal">Memorama</button>
-            <button id="modeWordle" class="chip-modal">Wordle</button>
-        </div>
+        <button id="btnLaunchpad" class="btn-change-mode">
+            <span>🎯 Cambiar Modo de Estudio</span>
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+        </button>
+
+        <div id="launchpadArea" class="launchpad-container"></div>
 
         <div class="result-area" id="resultArea">
             <div id="srsBadge" class="srs-badge" style="display: none;">Caja 1</div>
