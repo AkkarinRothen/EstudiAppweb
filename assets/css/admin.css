@@ -239,3 +239,32 @@ button:disabled { background: var(--outline); cursor: not-allowed; }
 .btn-img-search:hover {
     transform: scale(1.1);
 }
+
+/* Tab Switching and Task Validator Styles */
+#tabCreate, #tabValidator {
+    display: none;
+    width: 100%;
+}
+
+#tabCreate.visible, #tabValidator.visible {
+    display: block;
+    animation: tabSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#validationResult h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#validationResult p {
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+#validationResult strong {
+    color: var(--on-surface);
+}

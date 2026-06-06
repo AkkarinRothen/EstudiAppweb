@@ -243,11 +243,77 @@ export class SniperGame {
                         <div style="font-size:48px;">${newRecord ? '🏆' : '💀'}</div>
                         <h3>${newRecord ? '¡Nuevo Récord!' : 'Game Over'}</h3>
                         <p class="info">Disparos acertados: <strong>${this.sniperScore}</strong></p>
-                        <p class="info" style="font-size:12px;opacity:0.8;">Récord actual: <strong>${best}</strong></p>
-                        <button class="srs-btn srs-btn-good" style="width:auto;padding:12px 24px;margin-top:10px;">Jugar de nuevo</button>
+                        <p class="info" style="font-size:12px;opacity:0.8;margin-bottom:12px;">Récord actual: <strong>${best}</strong></p>
+                        
+                        <div class="form-group" style="margin-top:10px;width:100%;text-align:left;border-top:1px dashed var(--outline);padding-top:12px;">
+                            <label style="font-size:12px;font-family:'Outfit',sans-serif;">¿Deseas código de tarea para tu profesor?</label>
+                            <div style="display:flex;gap:8px;margin-top:6px;">
+                                <input type="text" id="studentNameInput" class="write-input" style="padding:8px;font-size:13px;font-family:'Outfit',sans-serif;" placeholder="Apellido_Nombre (ej: Perez_Juan)" />
+                                <button id="btnGenTaskCode" class="srs-btn srs-btn-good" style="padding:8px;font-size:13px;width:auto;font-family:'Outfit',sans-serif;margin-top:0;">Generar</button>
+                            </div>
+                            <div id="taskCodeResult" style="display:none;margin-top:10px;">
+                                <textarea id="taskCodeTextarea" readonly style="width:100%;height:60px;font-family:monospace;font-size:11px;padding:6px;border-radius:6px;border:1px solid var(--outline);background:var(--surface-variant);color:var(--on-surface-variant);box-sizing:border-box;resize:none;"></textarea>
+                                <button id="btnCopyTaskCode" class="srs-btn" style="padding:6px;font-size:11px;width:100%;margin-top:4px;background:var(--secondary-container);color:var(--on-secondary-container);">📋 Copiar Código</button>
+                            </div>
+                        </div>
+
+                        <button id="btnRetrySniper" class="srs-btn srs-btn-good" style="width:auto;padding:12px 24px;margin-top:15px;">Jugar de nuevo</button>
                     </div>
                 `;
-                sniperArea.querySelector('button').onclick = () => this.start();
+                
+                // Play again action
+                sniperArea.querySelector('#btnRetrySniper').onclick = () => this.start();
+
+                // Code generation action
+                const btnGen = sniperArea.querySelector('#btnGenTaskCode');
+                if (btnGen) {
+                    btnGen.onclick = async () => {
+                        const nameInput = sniperArea.querySelector('#studentNameInput');
+                        const nameVal = nameInput ? nameInput.value.trim() : "";
+
+                        // Validation format: Apellido_Nombre with initial upper-case letter
+                        const regexNombre = /^[A-ZÁÉÍÓÚ][a-zñáéíóú]+_[A-ZÁÉÍÓÚ][a-zñáéíóú]+$/;
+                        if (!regexNombre.test(nameVal)) {
+                            alert("Por favor, introduce tu nombre en el formato: Apellido_Nombre (ej: Perez_Juan) con mayúscula inicial.");
+                            return;
+                        }
+
+                        // Basic profanity list filter
+                        const badWords = ["mierda", "puto", "puta", "joder", "cabron", "pendejo", "concha", "culiao", "fuck", "shit"];
+                        const lowerName = nameVal.toLowerCase();
+                        const hasBadWord = badWords.some(w => lowerName.includes(w));
+                        if (hasBadWord) {
+                            alert("El nombre contiene palabras no permitidas. Por favor utiliza tu nombre real.");
+                            return;
+                        }
+
+                        // Generate verification code: studentName-gameId-packId-score-hash
+                        const rawData = `${nameVal}|sniper|${this.engine.packId}|${this.sniperScore}`;
+                        const hash = await Utils.sha256(rawData + "|estudiapp_secret_salt_2026");
+                        const verifCode = `${nameVal}-sniper-${this.engine.packId}-${this.sniperScore}-${hash.substring(0, 16)}`;
+
+                        const resultDiv = sniperArea.querySelector('#taskCodeResult');
+                        const textCode = sniperArea.querySelector('#taskCodeTextarea');
+                        if (resultDiv && textCode) {
+                            textCode.value = verifCode;
+                            resultDiv.style.display = 'block';
+                        }
+                    };
+                }
+
+                // Copy code action
+                const btnCopy = sniperArea.querySelector('#btnCopyTaskCode');
+                if (btnCopy) {
+                    btnCopy.onclick = () => {
+                        const textCode = sniperArea.querySelector('#taskCodeTextarea');
+                        if (textCode) {
+                            textCode.select();
+                            document.execCommand('copy');
+                            btnCopy.innerText = "¡Copiado! ✓";
+                            setTimeout(() => btnCopy.innerText = "📋 Copiar Código", 2000);
+                        }
+                    };
+                }
             }
         }
     }

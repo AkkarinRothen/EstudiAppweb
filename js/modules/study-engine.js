@@ -324,6 +324,7 @@ export class StudyEngine {
 
         // Reset elements style
         if (this.elements.launchpadArea) this.elements.launchpadArea.style.display = 'none';
+        if (this.elements.btnLaunchpad) this.elements.btnLaunchpad.style.display = 'flex';
         if (this.elements.resultArea) this.elements.resultArea.style.display = 'flex';
 
         if (this.elements.quizScore) this.elements.quizScore.style.display = 'none';

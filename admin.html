@@ -67,6 +67,7 @@
         <div class="admin-tabs">
             <button class="admin-tab-btn active" id="tabBtnCreate" data-tab="create">✨ Crear Pack</button>
             <button class="admin-tab-btn" id="tabBtnManager" data-tab="manager">📁 Gestionar Recursos</button>
+            <button class="admin-tab-btn" id="tabBtnValidator" data-tab="validator">🎓 Validar Tareas</button>
         </div>
 
         <!-- ─── Tab: Crear Pack ──────────────────────────────────────────────── -->
@@ -143,6 +144,19 @@
 
             <button id="btnPublish">Generar y Publicar en GitHub</button>
             <div id="statusBox"></div>
+        </div>
+
+        <!-- ─── Tab: Validar Tareas ─────────────────────────────────────────── -->
+        <div id="tabValidator">
+            <h2>Validar Tareas de Estudiantes</h2>
+            <p class="info" style="margin-bottom:15px;">Pega aquí el código que te envió el estudiante para verificar su legitimidad, nombre y puntuación.</p>
+            <div class="form-group">
+                <label>Código de Verificación:</label>
+                <textarea id="verificationCodeInput" placeholder="Ejemplo: Garcia_Juan-sniper-saludos-12-a4f6d89b3c7e..." style="height: 80px; font-family: monospace;"></textarea>
+            </div>
+            <button id="btnVerifyCode" style="background: var(--primary); margin-top: 10px;">🔍 Verificar Código</button>
+            
+            <div id="validationResult" style="display: none; margin-top: 20px; padding: 15px; border-radius: 8px;"></div>
         </div>
 
         <!-- ─── Tab: Gestionar Recursos ─────────────────────────────────────── -->

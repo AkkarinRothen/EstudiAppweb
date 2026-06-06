@@ -123,6 +123,12 @@ function setupEventListeners() {
     if (publishBtn) {
         publishBtn.addEventListener('click', () => publishPack());
     }
+
+    // Task Validator
+    const verifyBtn = document.getElementById('btnVerifyCode');
+    if (verifyBtn) {
+        verifyBtn.addEventListener('click', () => verifyStudentCode());
+    }
 }
 
 async function checkLogin() {
@@ -989,6 +995,15 @@ function switchTab(tab) {
         }
     }
 
+    const tabValidator = document.getElementById('tabValidator');
+    if (tabValidator) {
+        if (tab === 'validator') {
+            tabValidator.classList.add('visible');
+        } else {
+            tabValidator.classList.remove('visible');
+        }
+    }
+
     const mp = document.getElementById('adminManagerPanel');
     if (mp) {
         if (tab === 'manager') {
@@ -1032,4 +1047,67 @@ async function loadAllPacksForManager() {
         console.error('Error loading packs for manager:', e);
         return [];
     }
+}
+
+async function verifyStudentCode() {
+    const input = document.getElementById('verificationCodeInput').value.trim();
+    const resultBox = document.getElementById('validationResult');
+    if (!resultBox) return;
+
+    if (!input) {
+        alert("Por favor introduce un código de verificación.");
+        return;
+    }
+
+    // Code format: Name-Game-Pack-Score-Hash
+    const parts = input.split('-');
+    if (parts.length !== 5) {
+        showValidationResult("Código inválido", "El formato del código no es correcto. Asegúrate de copiarlo completo.", "error");
+        return;
+    }
+
+    const [name, game, pack, score, clientHash] = parts;
+
+    // Reconstruct raw data string and recompute SHA-256 hash using the same salt
+    const rawData = `${name}|${game}|${pack}|${score}`;
+    const salt = "estudiapp_secret_salt_2026";
+    
+    try {
+        const computedHash = await Utils.sha256(rawData + "|" + salt);
+        const expectedHashPart = computedHash.substring(0, 16);
+
+        if (clientHash === expectedHashPart) {
+            // Clean presentation: format student name (replace underscore with space)
+            const formattedName = name.replace('_', ' ');
+            showValidationResult(
+                "✅ Código Legítimo (Verificado)",
+                `<p><strong>Estudiante:</strong> ${formattedName}</p>
+                 <p><strong>Juego:</strong> ${game.toUpperCase()}</p>
+                 <p><strong>Vocabulario (Pack):</strong> ${pack}</p>
+                 <p><strong>Puntuación Alcanzada:</strong> ${score} aciertos</p>`,
+                "success"
+            );
+        } else {
+            showValidationResult(
+                "❌ Código Falsificado / Inválido",
+                "La firma digital no coincide. La puntuación o el nombre han sido alterados o el código es erróneo.",
+                "error"
+            );
+        }
+    } catch (e) {
+        console.error(e);
+        showValidationResult("Error", "Ocurrió un error al procesar el código: " + e.message, "error");
+    }
+}
+
+function showValidationResult(title, htmlContent, type) {
+    const resultBox = document.getElementById('validationResult');
+    if (!resultBox) return;
+
+    resultBox.style.display = 'block';
+    resultBox.className = type; // success or error background
+    resultBox.innerHTML = `
+        <h3>${title}</h3>
+        <div>${htmlContent}</div>
+    `;
 }
