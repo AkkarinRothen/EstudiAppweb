@@ -168,18 +168,24 @@ export class SniperGame {
             const scoreEl = document.getElementById('sniperScore');
             if (scoreEl) scoreEl.innerText = `🎯 ${this.sniperScore} disparos`;
 
-            // Draw laser beam
+            // Draw laser beam and flash
             const input = document.getElementById('sniperInput');
             const targetWordEl = Array.from(document.querySelectorAll('.sniper-word')).find(w => w.dataset.correct === '1');
+            const lanes = document.getElementById('sniperLanes');
+
             if (input && targetWordEl) {
                 this._drawLaserBeam(input, targetWordEl);
+                
+                // Efecto de impacto Premium
+                const rect = targetWordEl.getBoundingClientRect();
+                Fx.createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 'var(--primary)', 15);
+                Fx.impactFlash(lanes);
             }
 
             // Play laser sound effect
             Fx.playSound('laser');
 
             // Visual hit feedback on matching words
-            const lanes = document.getElementById('sniperLanes');
             if (lanes) {
                 lanes.querySelectorAll('.sniper-word').forEach(w => {
                     if (w.dataset.correct === '1') {
@@ -195,6 +201,7 @@ export class SniperGame {
             const input = document.getElementById('sniperInput');
             if (input) {
                 input.classList.add('sniper-wrong');
+                Fx.shake(input);
                 setTimeout(() => input.classList.remove('sniper-wrong'), 600);
             }
         }

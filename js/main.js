@@ -9,6 +9,7 @@ import * as UiModal from './modules/ui-modal.js';
 import * as DecksPage from './modules/decks-page.js';
 import * as SupabaseSync from './modules/supabase-sync.js';
 import * as UiGamification from './modules/ui-gamification.js';
+import './modules/ui-streak.js';
 import * as Difficulty from './modules/difficulty-manager.js';
 import { AppStore } from './modules/state.js';
 
@@ -83,11 +84,6 @@ function updateStatsUI() {
     const progressFillEl = document.getElementById('statProgressFill');
     const reviewsEl = document.getElementById('statRepasos');
     
-    if (streakEl) {
-        const prev = parseInt(streakEl.dataset.value || "0", 10);
-        streakEl.dataset.value = stats.streak;
-        Utils.animateCounter(streakEl, prev, stats.streak, 800, "🔥 ", stats.streak === 1 ? ' día' : ' días');
-    }
     if (dominioEl) {
         const prev = parseInt(dominioEl.dataset.value || "0", 10);
         dominioEl.dataset.value = masteryPercent;

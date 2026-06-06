@@ -53,8 +53,15 @@ export class BubbleGame {
                 bubble.classList.add('pop');
                 this.bubbleScore++;
                 
-                // Efecto visual y de sonido
+                // Efecto visual y de sonido Premium
+                const rect = bubble.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
                 Fx.playSound('success');
+                Fx.createParticles(centerX, centerY, getComputedStyle(bubble).backgroundColor, 12);
+                Fx.successRipple(centerX, centerY, 150);
+                
                 Fx.animate(bubble, {
                     scale: [1, 1.5],
                     opacity: [1, 0],

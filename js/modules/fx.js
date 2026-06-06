@@ -138,6 +138,60 @@ export async function shake(target) {
 }
 
 /**
+ * Creates high-fidelity CSS particles at a specific position.
+ */
+export function createParticles(x, y, color = '#6750A4', count = 8) {
+    const container = document.body;
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'fx-particle';
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.backgroundColor = color;
+        
+        const size = Math.random() * 8 + 4;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        
+        const destinationX = (Math.random() - 0.5) * 200;
+        const destinationY = (Math.random() - 0.5) * 200;
+        
+        particle.style.setProperty('--dx', `${destinationX}px`);
+        particle.style.setProperty('--dy', `${destinationY}px`);
+        
+        container.appendChild(particle);
+        particle.addEventListener('animationend', () => particle.remove());
+    }
+}
+
+/**
+ * Triggers a visual flash effect on an area or element.
+ */
+export function impactFlash(container) {
+    if (!container) return;
+    const flash = document.createElement('div');
+    flash.className = 'fx-impact-flash';
+    container.appendChild(flash);
+    flash.addEventListener('animationend', () => flash.remove());
+}
+
+/**
+ * Creates a expanding success ripple at a specific position.
+ */
+export function successRipple(x, y, size = 100) {
+    const container = document.body;
+    const ripple = document.createElement('div');
+    ripple.className = 'fx-success-ripple';
+    ripple.style.left = `${x - size / 2}px`;
+    ripple.style.top = `${y - size / 2}px`;
+    ripple.style.width = `${size}px`;
+    ripple.style.height = `${size}px`;
+    
+    container.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+}
+
+/**
  * Shows a full-screen level up splash
  * @param {number} level 
  */
