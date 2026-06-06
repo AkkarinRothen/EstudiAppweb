@@ -1,25 +1,50 @@
 // Effects and Animations Module
 // Centralizes the use of external lightweight libraries for FX
 
-// CDN Imports for ES6 compatibility
-import confetti from 'https://cdn.skypack.dev/canvas-confetti';
-import { Howl } from 'https://cdn.skypack.dev/howler';
-import anime from 'https://cdn.skypack.dev/animejs@3.2.1';
+let confetti = null;
+let Howl = null;
+let anime = null;
 
-// Sound Manager
-const sounds = {
-    success: new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'], volume: 0.5 }),
-    error: new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3'], volume: 0.3 }),
-    click: new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'], volume: 0.2 }),
-    transition: new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2571/2568-preview.mp3'], volume: 0.2 }),
-    victory: new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'], volume: 0.6 })
-};
+// Sound instances cache
+const sounds = {};
+
+/**
+ * Initializes the FX module by pre-loading external libraries.
+ */
+async function ensureInit() {
+    try {
+        if (!confetti) {
+            const module = await import('https://cdn.skypack.dev/canvas-confetti');
+            confetti = module.default;
+        }
+        if (!Howl) {
+            const module = await import('https://cdn.skypack.dev/howler');
+            Howl = module.Howl;
+            
+            // Initialize sounds if Howl is now available
+            if (Howl && Object.keys(sounds).length === 0) {
+                sounds.success = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'], volume: 0.5 });
+                sounds.error = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3'], volume: 0.3 });
+                sounds.click = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'], volume: 0.2 });
+                sounds.transition = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2571/2568-preview.mp3'], volume: 0.2 });
+                sounds.victory = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'], volume: 0.6 });
+            }
+        }
+        if (!anime) {
+            const module = await import('https://cdn.skypack.dev/animejs@3.2.1');
+            anime = module.default;
+        }
+    } catch (e) {
+        console.warn('Fx Module: Failed to load external libraries. FX will be disabled.', e);
+    }
+}
 
 /**
  * Plays a predefined sound effect
  * @param {string} key - 'success', 'error', 'click', 'transition', 'victory'
  */
-export function playSound(key) {
+export async function playSound(key) {
+    await ensureInit();
     if (sounds[key]) sounds[key].play();
 }
 
@@ -27,7 +52,10 @@ export function playSound(key) {
  * Triggers a confetti celebration
  * @param {string} mode - 'simple', 'burst', 'side'
  */
-export function celebrate(mode = 'simple') {
+export async function celebrate(mode = 'simple') {
+    await ensureInit();
+    if (!confetti) return;
+
     if (mode === 'simple') {
         confetti({
             particleCount: 100,
@@ -60,41 +88,50 @@ export function celebrate(mode = 'simple') {
  * @param {string|HTMLElement} target 
  * @param {object} params - Anime.js parameters
  */
-export function animate(target, params) {
-    return anime({
-        targets: target,
-        ...params
-    });
+export async function animate(target, params) {
+    await ensureInit();
+    if (anime) {
+        return anime({
+            targets: target,
+            ...params
+        });
+    }
 }
 
 /**
  * Standard entrance animation for cards/modals
  * @param {string|HTMLElement} target 
  */
-export function animateEntrance(target) {
-    return anime({
-        targets: target,
-        translateY: [20, 0],
-        opacity: [0, 1],
-        duration: 800,
-        easing: 'easeOutElastic(1, .8)'
-    });
+export async function animateEntrance(target) {
+    await ensureInit();
+    if (anime) {
+        return anime({
+            targets: target,
+            translateY: [20, 0],
+            opacity: [0, 1],
+            duration: 800,
+            easing: 'easeOutElastic(1, .8)'
+        });
+    }
 }
 
 /**
  * Shake animation for errors
  * @param {string|HTMLElement} target 
  */
-export function shake(target) {
-    return anime({
-        targets: target,
-        translateX: [
-            { value: -10, duration: 100 },
-            { value: 10, duration: 100 },
-            { value: -10, duration: 100 },
-            { value: 10, duration: 100 },
-            { value: 0, duration: 100 }
-        ],
-        easing: 'easeInOutSine'
-    });
+export async function shake(target) {
+    await ensureInit();
+    if (anime) {
+        return anime({
+            targets: target,
+            translateX: [
+                { value: -10, duration: 100 },
+                { value: 10, duration: 100 },
+                { value: -10, duration: 100 },
+                { value: 10, duration: 100 },
+                { value: 0, duration: 100 }
+            ],
+            easing: 'easeInOutSine'
+        });
+    }
 }

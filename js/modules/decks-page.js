@@ -479,7 +479,19 @@ function getDecksForFolder(folderId) {
         customList = customDecks;
     } else if (folderId === 'personalizados') {
         customList = customDecks;
-    } else if (folderId !== null) {
+    } else if (folderId === null) {
+        // Root Level: Show decks that ARE NOT in any folder
+        officialList = allOfficialPacks.filter(pack => {
+            const folders = DECK_FOLDER_MAPPINGS[pack.id] || [];
+            return folders.length === 0;
+        });
+        
+        customList = customDecks.filter(deck => {
+            const folders = deck.folders || [];
+            return folders.length === 0;
+        });
+    } else {
+        // Inside a specific folder
         officialList = allOfficialPacks.filter(pack => {
             const folders = DECK_FOLDER_MAPPINGS[pack.id] || [];
             return folders.includes(folderId);
