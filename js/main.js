@@ -7,6 +7,7 @@ import * as Parser from './modules/parser.js';
 import * as Library from './modules/library.js';
 import * as UiModal from './modules/ui-modal.js';
 import * as DecksPage from './modules/decks-page.js';
+import * as SupabaseSync from './modules/supabase-sync.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     setupEventListeners();
     updateStatsUI();
+    initAuth();
+});
+
+// Registrar callback de sincronización al guardar datos locales
+Storage.registerOnSave(() => {
+    SupabaseSync.queueAutoSync();
 });
 
 function setupEventListeners() {
@@ -193,4 +200,121 @@ function deleteCustomDeck(id) {
         DecksPage.refresh();
         updateStatsUI();
     });
+}
+
+function initAuth() {
+    const btnAuthModal = document.getElementById('btnAuthModal');
+    const authModal = document.getElementById('authModal');
+    const btnAuthClose = document.getElementById('btnAuthClose');
+    const authForm = document.getElementById('authForm');
+    const authEmail = document.getElementById('authEmail');
+    const authPassword = document.getElementById('authPassword');
+    const authErrorMessage = document.getElementById('authErrorMessage');
+    const btnSubmitSignUp = document.getElementById('btnSubmitSignUp');
+    const authLoggedInState = document.getElementById('authLoggedInState');
+    const loggedInUserEmail = document.getElementById('loggedInUserEmail');
+    const btnSubmitSignOut = document.getElementById('btnSubmitSignOut');
+
+    if (!btnAuthModal) return;
+
+    // Open Modal
+    btnAuthModal.addEventListener('click', () => {
+        authModal.style.display = 'flex';
+    });
+
+    // Close Modal
+    const closeModal = () => {
+        authModal.style.display = 'none';
+        if (authErrorMessage) {
+            authErrorMessage.style.display = 'none';
+            authErrorMessage.innerText = '';
+        }
+    };
+    if (btnAuthClose) btnAuthClose.addEventListener('click', closeModal);
+    authModal.addEventListener('click', (e) => {
+        if (e.target === authModal) closeModal();
+    });
+
+    // Listen to Auth State Changes
+    SupabaseSync.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+            // Logged In State UI
+            btnAuthModal.innerText = `☁️ Sincronizado`;
+            btnAuthModal.classList.add('logged-in');
+            
+            if (authForm) authForm.style.display = 'none';
+            if (authLoggedInState) authLoggedInState.style.display = 'flex';
+            if (loggedInUserEmail) loggedInUserEmail.innerText = session.user.email;
+
+            // Download progress from cloud to overwrite local storage if exists
+            const downloaded = await SupabaseSync.syncCloudToLocal();
+            if (downloaded) {
+                DecksPage.refresh();
+                updateStatsUI();
+            } else {
+                // If first time login, push current local data to cloud
+                await SupabaseSync.syncLocalToCloud();
+            }
+        } else {
+            // Logged Out State UI
+            btnAuthModal.innerText = `☁️ Conectar Nube`;
+            btnAuthModal.classList.remove('logged-in');
+
+            if (authForm) {
+                authForm.style.display = 'flex';
+                authForm.reset();
+            }
+            if (authLoggedInState) authLoggedInState.style.display = 'none';
+            if (loggedInUserEmail) loggedInUserEmail.innerText = '';
+        }
+    });
+
+    // Form Submissions
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (authErrorMessage) authErrorMessage.style.display = 'none';
+            try {
+                await SupabaseSync.signIn(authEmail.value, authPassword.value);
+                closeModal();
+            } catch (error) {
+                if (authErrorMessage) {
+                    authErrorMessage.innerText = `Error: ${error.message}`;
+                    authErrorMessage.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Sign Up Button
+    if (btnSubmitSignUp) {
+        btnSubmitSignUp.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (authForm && !authForm.reportValidity()) return;
+            if (authErrorMessage) authErrorMessage.style.display = 'none';
+            try {
+                await SupabaseSync.signUp(authEmail.value, authPassword.value);
+                alert('¡Registro exitoso! Por favor, verifica tu correo e inicia sesión.');
+            } catch (error) {
+                if (authErrorMessage) {
+                    authErrorMessage.innerText = `Error al registrarse: ${error.message}`;
+                    authErrorMessage.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Sign Out
+    if (btnSubmitSignOut) {
+        btnSubmitSignOut.addEventListener('click', async () => {
+            try {
+                await SupabaseSync.signOut();
+                closeModal();
+                DecksPage.refresh();
+                updateStatsUI();
+            } catch (error) {
+                alert(`Error al cerrar sesión: ${error.message}`);
+            }
+        });
+    }
 }

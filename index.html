@@ -14,8 +14,15 @@
 <body>
 
 <header>
-    <h1>EstudiApp - Portal Didáctico</h1>
-    <p>Aprende vocabulario de forma interactiva y profesional</p>
+    <div class="header-container" style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:1200px; margin:0 auto; box-sizing:border-box;">
+        <div class="header-titles">
+            <h1>EstudiApp - Portal Didáctico</h1>
+            <p>Aprende vocabulario de forma interactiva y profesional</p>
+        </div>
+        <div id="authHeaderContainer">
+            <button id="btnAuthModal" class="btn-sync-status" title="Conectar con Supabase">☁️ Conectar Nube</button>
+        </div>
+    </div>
 </header>
 
 <div class="container">
@@ -216,6 +223,43 @@
     Generado con EstudiApp &copy; 2026 | Recursos Didácticos de Práctica Libre<br>
     <a href="admin.html" style="color: var(--primary); text-decoration: none; font-weight: 600; display: inline-block; margin-top: 10px;">⚙️ Acceso Administración</a>
 </footer>
+
+<!-- Modal de Autenticación Supabase -->
+<div class="modal-overlay" id="authModal" style="display:none;">
+    <div class="modal-card auth-card" style="max-width:400px; padding:25px;">
+        <button class="close-btn" id="btnAuthClose">×</button>
+        <h2 style="font-family:'Orbitron',sans-serif; margin-bottom:8px;">Sincronización</h2>
+        <p class="desc" style="font-size:13px; opacity:0.8; margin-bottom:15px;">Guarda tu racha, SRS y récords automáticamente en la nube.</p>
+        
+        <form id="authForm" style="display:flex; flex-direction:column; gap:12px; width:100%;">
+            <div class="form-group" style="text-align:left; width:100%;">
+                <label style="font-size:12px; margin-bottom:4px; display:block; font-family:'Outfit',sans-serif;">Correo Electrónico</label>
+                <input type="email" id="authEmail" class="write-input" style="padding:10px; width:100%; box-sizing:border-box; font-family:'Outfit',sans-serif;" placeholder="ejemplo@correo.com" required>
+            </div>
+            
+            <div class="form-group" style="text-align:left; width:100%;">
+                <label style="font-size:12px; margin-bottom:4px; display:block; font-family:'Outfit',sans-serif;">Contraseña</label>
+                <input type="password" id="authPassword" class="write-input" style="padding:10px; width:100%; box-sizing:border-box; font-family:'Outfit',sans-serif;" placeholder="••••••••" required>
+            </div>
+            
+            <div id="authErrorMessage" style="color:var(--error); font-size:12px; text-align:left; display:none; font-family:'Outfit',sans-serif; margin-top:4px;"></div>
+            
+            <div style="display:flex; gap:10px; margin-top:10px; width:100%;">
+                <button type="submit" id="btnSubmitSignIn" class="srs-btn srs-btn-good" style="padding:12px; width:100%; margin:0; font-family:'Outfit',sans-serif;">Iniciar Sesión</button>
+                <button type="button" id="btnSubmitSignUp" class="srs-btn" style="padding:12px; width:100%; margin:0; background:var(--secondary-container); color:var(--on-secondary-container); font-family:'Outfit',sans-serif;">Registrarse</button>
+            </div>
+        </form>
+        
+        <div id="authLoggedInState" style="display:none; flex-direction:column; gap:15px; width:100%;">
+            <p style="font-size:14px; margin:0; font-family:'Outfit',sans-serif;">Sesión iniciada como: <strong id="loggedInUserEmail"></strong></p>
+            <div class="sync-info-box" style="padding:12px; background:var(--surface-variant); border-radius:8px; font-size:12px; color:var(--on-surface-variant); text-align:left; font-family:'Outfit',sans-serif; line-height:1.5; border:1px solid var(--outline);">
+                ✓ Progreso sincronizado automáticamente con la nube.<br>
+                ✓ Tus récords, SRS y estadísticas están a salvo.
+            </div>
+            <button id="btnSubmitSignOut" class="srs-btn" style="padding:12px; width:100%; background:var(--error); color:var(--on-error); margin:0; font-family:'Outfit',sans-serif;">Cerrar Sesión</button>
+        </div>
+    </div>
+</div>
 
 <script type="module" src="js/main.js"></script>
 

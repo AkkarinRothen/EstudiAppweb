@@ -42,6 +42,22 @@ Para cualquier tarea relacionada con juegos y herramientas de estudio, puedes in
    - *Rol:* Evaluar la estructura del vocabulario y asignar qué juegos son aptos para jugarse (ej. deshabilitar Wordle para oraciones o Sniper para textos largos).
    - *Especialidad:* Análisis estático de datos, taxonomía y ludificación.
 
+9. **[Agente de Telemetría Cognitiva y Análisis de Errores](agent_telemetry.md):**
+   - *Rol:* Analizar los datos y estadísticas de uso de los alumnos (tiempos de respuesta, tasas de error de vocablos) para refinar el contenido y mejorar la curva del SRS.
+   - *Especialidad:* Analítica de aprendizaje (learning analytics) y modelado cognitivo.
+
+10. **[Agente Explorador de Recursos y Librerías](agent_resource_explorer.md):**
+    - *Rol:* Investigar, descargar y recomendar assets de diseño (SVGs, sonidos) y micro-librerías JS de alto rendimiento compatibles con la directriz offline y liviana de EstudiApp.
+    - *Especialidad:* Investigación técnica de software libre, optimización multimedia y licenciamiento.
+
+11. **[Agente de Gamificación y Progresión](agent_gamification.md):**
+    - *Rol:* Diseñar y calibrar mecánicas de progresión (XP, niveles, rachas diarias, logros/insignias) para enganchar a los estudiantes respetando la estética Calm UI.
+    - *Especialidad:* Diseño de juegos (game design), psicología conductual y gamificación educativa.
+
+12. **[Agente de Seguridad y Mantenimiento de Base de Datos (DBA)](agent_dba.md):**
+    - *Rol:* Asegurar el esquema de base de datos, escribir migraciones controladas, vigilar las políticas RLS y programar planes de respaldo (backups) y recuperación.
+    - *Especialidad:* PostgreSQL, Supabase RLS, planes de Disaster Recovery e integridad de datos.
+
 ---
 
 ## Cómo Utilizar Estos Agentes
@@ -60,17 +76,23 @@ Al crear o actualizar packs, juegos y plataformas en EstudiApp, el flujo complet
 graph TD
     A[1. Curación Didáctica: Agente de Contenido] --> H[2. Clasificación de Modos: Agente Clasificador]
     H --> B[3. Mecánicas de Juego: Agente de Mecánicas]
-    B --> C[4. SRS, TTS e Integración: Agente de Datos y Audio]
-    C --> D[5. Estilización y UX: Agente de Estética y CSS]
-    D --> E[6. Optimización y QA: Agente de QA y Balance]
-    E --> F[7. Paridad Multiplataforma: Agente de Paridad]
-    E --> G[8. Compilación y Despliegue: Agente DevOps]
+    B --> J[4. Selección de Assets: Agente Explorador]
+    J --> K[5. Progresión y Logros: Agente de Gamificación]
+    K --> C[6. SRS, TTS e Integración: Agente de Datos y Audio]
+    C --> D[7. Estilización y UX: Agente de Estética y CSS]
+    D --> E[8. Optimización y QA: Agente de QA y Balance]
+    E --> F[9. Paridad Multiplataforma: Agente de Paridad]
+    E --> L[10. Seguridad y Esquema: Agente DBA]
+    L --> G[11. Compilación y Despliegue: Agente DevOps]
+    E -.-> I[12. Análisis de Uso: Agente de Telemetría]
+    I -.-> A
 ```
 
 - **Fases 1-2:** Aseguran la calidad del vocabulario y definen qué juegos tienen sentido pedagógico y jugable.
-- **Fases 3-4:** Crean la base lógica y de contenido del pack o minijuego.
-- **Fase 5-6:** Pulen la experiencia interactiva, garantizan que funcione sin problemas y sea fluida.
-- **Fases 7-8:** Despliegan los cambios a la web y aseguran la paridad con la versión nativa de Android.
+- **Fase 3-6:** Crean la base lógica del juego, integran assets de diseño, configuran las reglas de XP/logros y conectan la interactividad.
+- **Fase 7-8:** Pulen la experiencia interactiva, garantizan que funcione sin problemas y sea fluida.
+- **Fases 9-11:** Despliegan los cambios a la web, aseguran la paridad con Android y aplican las migraciones/auditorías de base de datos seguras.
+- **Fase 12 (Bucle Continuo):** Recolecta métricas reales de los repasos de los estudiantes para retroalimentar la fase de curación didáctica original.
 
 ---
 

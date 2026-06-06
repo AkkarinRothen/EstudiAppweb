@@ -1,5 +1,16 @@
 // Storage and Statistics Management Module
 
+let onSaveCallback = null;
+
+export function registerOnSave(callback) {
+    onSaveCallback = callback;
+}
+
+function triggerSave() {
+    if (onSaveCallback) onSaveCallback();
+}
+
+
 export const STORAGE_KEYS = {
     SRS_DATA: 'estudiapp_srs_data',
     STATS: 'estudiapp_stats',
@@ -21,6 +32,7 @@ export function getSrsData() {
 
 export function saveSrsData(data) {
     localStorage.setItem(STORAGE_KEYS.SRS_DATA, JSON.stringify(data));
+    triggerSave();
 }
 
 export function getStats() {
@@ -37,6 +49,7 @@ export function getStats() {
 
 export function saveStats(stats) {
     localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats));
+    triggerSave();
 }
 
 export function getCustomDecks() {
@@ -49,6 +62,7 @@ export function getCustomDecks() {
 
 export function saveCustomDecks(decks) {
     localStorage.setItem(STORAGE_KEYS.CUSTOM_DECKS, JSON.stringify(decks));
+    triggerSave();
 }
 
 export function getTtsPreferences() {
@@ -61,6 +75,7 @@ export function getTtsPreferences() {
 
 export function saveTtsPreferences(pref) {
     localStorage.setItem(STORAGE_KEYS.TTS_PREF, JSON.stringify(pref));
+    triggerSave();
 }
 
 // In-Memory Session Password (not persisted)
@@ -159,6 +174,7 @@ export function saveHighScore(packId, gameId, score) {
         if (score > currentBest) {
             scores[key] = score;
             localStorage.setItem('estudiapp_high_scores', JSON.stringify(scores));
+            triggerSave();
             return true; // New record!
         }
         return false;
