@@ -58,6 +58,7 @@ export function openPracticeModal(data) {
         subContainer: document.getElementById('modalSubContainer'),
         imgContainer: document.getElementById('modalImgContainer'),
         vocabImg: document.getElementById('modalVocabImg'),
+        exampleText: document.getElementById('modalExampleSentence'),
         btnReveal: document.getElementById('modalBtnReveal'),
         srsFeedback: document.getElementById('modalSrsFeedback'),
         writeArea: document.getElementById('modalWriteArea'),
@@ -83,7 +84,14 @@ export function openPracticeModal(data) {
         sniperArea: document.getElementById('modalSniperArea'),
         dragArea: document.getElementById('modalDragArea'),
         dictationArea: document.getElementById('modalDictationArea'),
-        wordleArea: document.getElementById('modalWordleArea')
+        wordleArea: document.getElementById('modalWordleArea'),
+        btnEdit: document.getElementById('modalBtnEdit'),
+        editArea: document.getElementById('modalEditArea'),
+        editEs: document.getElementById('modalEditEs'),
+        editEn: document.getElementById('modalEditEn'),
+        editEx: document.getElementById('modalEditEx'),
+        btnSaveEdit: document.getElementById('modalBtnSaveEdit'),
+        btnCancelEdit: document.getElementById('modalBtnCancelEdit')
     };
 
     const packId = "csv_" + data.title.toLowerCase().replace(/[^a-z0-9]/g, "_");

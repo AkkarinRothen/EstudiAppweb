@@ -26,6 +26,8 @@ export class StudyEngine {
         this.isRevealed = true;
         this.lastSpanishText = "";
         this.lastEnglishText = "";
+        this.lastExampleText = "";
+        this.isEditing = false;
         
         // Quiz State
         this.quizAttempts = 0;
@@ -51,6 +53,87 @@ export class StudyEngine {
         }
         this.setupTtsListeners();
         this.setupImageListener();
+        this.setupEditListeners();
+    }
+
+    setupEditListeners() {
+        if (this.elements.btnEdit) {
+            this.elements.btnEdit.onclick = () => this.toggleEdit();
+        }
+        if (this.elements.btnCancelEdit) {
+            this.elements.btnCancelEdit.onclick = () => this.toggleEdit();
+        }
+        if (this.elements.btnSaveEdit) {
+            this.elements.btnSaveEdit.onclick = () => this.saveEdit();
+        }
+    }
+
+    toggleEdit() {
+        if (!this.elements.editArea) return;
+        this.isEditing = !this.isEditing;
+        
+        if (this.isEditing) {
+            this.elements.editArea.style.display = 'flex';
+            if (this.elements.mainText) this.elements.mainText.parentElement.style.display = 'none';
+            if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+            if (this.elements.exampleText) this.elements.exampleText.style.display = 'none';
+            
+            if (this.elements.editEs) this.elements.editEs.value = this.lastSpanishText;
+            if (this.elements.editEn) this.elements.editEn.value = this.lastEnglishText;
+            if (this.elements.editEx) this.elements.editEx.value = this.lastExampleText;
+        } else {
+            this.elements.editArea.style.display = 'none';
+            if (this.elements.mainText) this.elements.mainText.parentElement.style.display = 'flex';
+            this.updateVisibility();
+        }
+    }
+
+    saveEdit() {
+        if (!this.activeEntry) return;
+
+        const newEs = this.elements.editEs.value.trim();
+        const newEn = this.elements.editEn.value.trim();
+        const newEx = this.elements.editEx.value.trim();
+
+        if (!newEs || !newEn) return;
+
+        // Update local entry
+        const oldEs = this.lastSpanishText;
+        this.lastSpanishText = newEs;
+        this.lastEnglishText = newEn;
+        this.lastExampleText = newEx;
+        
+        // Update the entry in the array
+        const textParts = [newEs, newEn];
+        if (newEx) textParts.push(newEx);
+        this.activeEntry.text = textParts.join(" -> ");
+
+        // If it's a custom deck, persist to localStorage
+        if (this.isModal && this.packId.startsWith('csv_')) {
+            const customDecks = Storage.getCustomDecks();
+            // We need to find which custom deck this is. 
+            // The packId is derived from the title.
+            const deck = customDecks.find(d => {
+                const id = 'csv_' + d.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                return id === this.packId;
+            });
+
+            if (deck) {
+                const entryIdx = deck.entries.findIndex(e => e.min === this.activeEntry.min && e.max === this.activeEntry.max);
+                if (entryIdx !== -1) {
+                    deck.entries[entryIdx].text = this.activeEntry.text;
+                    Storage.saveCustomDecks(customDecks);
+                    Fx.playSound('success');
+                }
+            }
+        }
+
+        if (this.elements.mainText) this.elements.mainText.innerText = newEs;
+        if (this.elements.subText) this.elements.subText.innerText = newEn;
+        if (this.elements.exampleText) this.elements.exampleText.innerText = newEx;
+
+        this.toggleEdit();
+        this.updateVisibility();
     }
 
     setupTtsListeners() {
@@ -223,8 +306,9 @@ export class StudyEngine {
         const parts = rawText.split("->");
         const main = parts[0].trim();
         const sub = parts.length > 1 ? parts[1].trim() : "";
+        const example = parts.length > 2 && !parts[2].trim().startsWith('http') ? parts[2].trim() : "";
 
-        this.setEntry(main, sub);
+        this.setEntry(main, sub, example);
 
         // Resolve Image URL
         let imageUrl = "";
@@ -258,6 +342,10 @@ export class StudyEngine {
             if (this.elements.rollVal) this.elements.rollVal.innerText = "Tirada (SRS): " + val;
             if (this.elements.mainText) this.elements.mainText.innerText = main;
             if (this.elements.subText) this.elements.subText.innerText = sub;
+            if (this.elements.exampleText) {
+                this.elements.exampleText.innerText = example;
+                this.elements.exampleText.style.display = 'none';
+            }
             this.updateSrsBadge(main);
 
             const vocabImg = this.elements.vocabImg;
@@ -437,13 +525,16 @@ export class StudyEngine {
         const subContainer = this.elements.subContainer;
         const btnReveal = this.elements.btnReveal;
         const imgContainer = this.elements.imgContainer;
+        const exampleText = this.elements.exampleText;
         const showImages = this.elements.enableImages ? this.elements.enableImages.checked : true;
         const area = this.elements.resultArea;
-        const isSupportedMode = this.currentMode !== 'quiz' && this.currentMode !== 'write' && this.currentMode !== 'scrambled' && this.currentMode !== 'timeAttack';
+        const isSupportedMode = !['quiz', 'write', 'scrambled', 'timeAttack', 'match', 'bubble', 'wordle'].includes(this.currentMode);
 
         if (this.isRevealed) {
             if (subContainer) subContainer.classList.remove('hidden');
             if (btnReveal) btnReveal.style.display = 'none';
+            if (exampleText) exampleText.style.display = this.lastExampleText ? 'block' : 'none';
+            
             if (imgContainer) {
                 imgContainer.style.display = (showImages && isSupportedMode) ? 'block' : 'none';
             }
@@ -455,6 +546,8 @@ export class StudyEngine {
         } else {
             if (subContainer) subContainer.classList.add('hidden');
             if (btnReveal) btnReveal.style.display = 'block';
+            if (exampleText) exampleText.style.display = 'none';
+            
             if (imgContainer) {
                 imgContainer.style.display = (showImages && isSupportedMode) ? 'block' : 'none';
             }
@@ -934,9 +1027,10 @@ export class StudyEngine {
         return imageUrl;
     }
 
-    setEntry(main, sub) {
+    setEntry(main, sub, example = "") {
         this.lastSpanishText = main;
         this.lastEnglishText = sub;
+        this.lastExampleText = example;
         this.addToHistory(main, sub);
     }
 

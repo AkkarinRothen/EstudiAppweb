@@ -15,6 +15,7 @@ export function initPreset(entries, formula) {
         subContainer: document.getElementById('subContainer'),
         imgContainer: document.getElementById('imgContainer'),
         vocabImg: document.getElementById('vocabImg'),
+        exampleText: document.getElementById('exampleText'),
         btnReveal: document.getElementById('btnReveal'),
         srsFeedback: document.getElementById('srsFeedback'),
         writeArea: document.getElementById('writeArea'),

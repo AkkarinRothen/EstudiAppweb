@@ -187,14 +187,14 @@ function renderExplorer() {
     
     // 5. Render Official Decks
     officialList.forEach(pack => {
-        const { percent, encountered } = computePackStats(pack.id, srsData);
+        const { percent, encountered, mastered } = computePackStats(pack.id, srsData);
         const card = document.createElement('a');
         card.href = pack.file;
         card.className = 'deck-card';
         card.setAttribute('data-level', pack.level);
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
-        card.innerHTML = buildOfficialCardHTML(pack, percent, encountered);
+        card.innerHTML = buildOfficialCardHTML(pack, percent, encountered, mastered);
         grid.appendChild(card);
         elementIndex++;
     });
@@ -202,14 +202,14 @@ function renderExplorer() {
     // 6. Render Custom Decks
     customList.forEach(deck => {
         const packId = 'csv_' + deck.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const { percent, encountered } = computePackStats(packId, srsData);
+        const { percent, encountered, mastered } = computePackStats(packId, srsData);
         const wordCount = deck.entries ? deck.entries.length : 0;
         
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
-        card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount);
+        card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);
         grid.appendChild(card);
         
         const clickArea = card.querySelector('.deck-card-click');
@@ -311,14 +311,14 @@ function renderFlattened() {
     
     // Render officials
     filteredOfficials.forEach(pack => {
-        const { percent, encountered } = computePackStats(pack.id, srsData);
+        const { percent, encountered, mastered } = computePackStats(pack.id, srsData);
         const card = document.createElement('a');
         card.href = pack.file;
         card.className = 'deck-card';
         card.setAttribute('data-level', pack.level);
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
-        card.innerHTML = buildOfficialCardHTML(pack, percent, encountered);
+        card.innerHTML = buildOfficialCardHTML(pack, percent, encountered, mastered);
         grid.appendChild(card);
         elementIndex++;
     });
@@ -326,14 +326,14 @@ function renderFlattened() {
     // Render customs
     filteredCustom.forEach(deck => {
         const packId = 'csv_' + deck.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const { percent, encountered } = computePackStats(packId, srsData);
+        const { percent, encountered, mastered } = computePackStats(packId, srsData);
         const wordCount = deck.entries ? deck.entries.length : 0;
         
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
-        card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount);
+        card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);
         grid.appendChild(card);
         
         const clickArea = card.querySelector('.deck-card-click');
@@ -606,10 +606,26 @@ function getResourceTypeBadgeHTML(type) {
     return `<span class="badge-resource-type badge-type-tabla">📋 Tabla</span>`;
 }
 
-function buildOfficialCardHTML(pack, percent, encountered) {
+function getPackIcon(title, category) {
+    const text = (title + ' ' + category).toLowerCase();
+    if (text.includes('salud') || text.includes('health') || text.includes('médico')) return '🏥';
+    if (text.includes('comida') || text.includes('restaurante') || text.includes('food') || text.includes('supermercado')) return '🍎';
+    if (text.includes('viaje') || text.includes('aeropuerto') || text.includes('airport') || text.includes('hotel')) return '✈️';
+    if (text.includes('ocio') || text.includes('hobby') || text.includes('game') || text.includes('juego')) return '🎮';
+    if (text.includes('academico') || text.includes('estudio') || text.includes('school') || text.includes('reuniones')) return '📚';
+    if (text.includes('rutina') || text.includes('time') || text.includes('tiempo')) return '⏰';
+    if (text.includes('saludo') || text.includes('cortesia')) return '👋';
+    if (text.includes('digital') || text.includes('web') || text.includes('tech')) return '💻';
+    if (text.includes('direcciones') || text.includes('mapa')) return '📍';
+    return '📋';
+}
+
+function buildOfficialCardHTML(pack, percent, encountered, mastered = 0) {
     const reviewedLabel = encountered > 0
         ? `${encountered} palabras`
         : 'Sin iniciar';
+
+    const icon = getPackIcon(pack.title, pack.category);
 
     return `
         <div class="deck-card-badges-row">
@@ -618,13 +634,16 @@ function buildOfficialCardHTML(pack, percent, encountered) {
         </div>
         <div class="deck-card-body">
             <div class="deck-card-header">
-                <h3>${pack.title}</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:24px;">${icon}</span>
+                    <h3>${pack.title}</h3>
+                </div>
                 <span class="level-badge level-${pack.level.toLowerCase()}">${pack.level}</span>
             </div>
             <p class="deck-card-desc">${pack.desc}</p>
             <div class="deck-card-meta">
                 <span class="deck-meta-category">${pack.category}</span>
-                <span class="deck-meta-reviewed">${reviewedLabel}</span>
+                <span class="deck-meta-reviewed">${reviewedLabel} (${mastered} ✅)</span>
             </div>
             <div class="deck-progress-row">
                 <span class="deck-progress-label">Dominio SRS</span>
@@ -640,7 +659,7 @@ function buildOfficialCardHTML(pack, percent, encountered) {
     `;
 }
 
-function buildCustomCardHTML(deck, percent, encountered, wordCount) {
+function buildCustomCardHTML(deck, percent, encountered, wordCount, mastered = 0) {
     const reviewedLabel = encountered > 0
         ? `${encountered} palabras`
         : 'Sin iniciar';
@@ -654,7 +673,10 @@ function buildCustomCardHTML(deck, percent, encountered, wordCount) {
         </div>
         <div class="deck-card-body deck-card-click" style="cursor:pointer">
             <div class="deck-card-header">
-                <h3>${deck.title}</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:24px;">📦</span>
+                    <h3>${deck.title}</h3>
+                </div>
                 <button class="deck-delete-btn" title="Eliminar mazo">
                     <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
@@ -662,7 +684,7 @@ function buildCustomCardHTML(deck, percent, encountered, wordCount) {
             <p class="deck-card-desc">${deck.desc || 'Mazo personalizado guardado.'}</p>
             <div class="deck-card-meta">
                 <span class="deck-meta-category">${wordLabel}</span>
-                <span class="deck-meta-reviewed">${reviewedLabel}</span>
+                <span class="deck-meta-reviewed">${reviewedLabel} (${mastered} ✅)</span>
             </div>
             <div class="deck-progress-row">
                 <span class="deck-progress-label">Dominio SRS</span>

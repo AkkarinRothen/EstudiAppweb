@@ -126,7 +126,24 @@
                 <img id="modalVocabImg" class="vocab-image" src="" alt="Vocabulary Image">
             </div>
 
-            <div id="modalMainText" class="entry-text">---</div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                <div id="modalMainText" class="entry-text">---</div>
+                <button id="modalBtnEdit" class="speaker-btn" title="Editar este vocablo" style="width:30px; height:30px; background:transparent;">
+                    <svg viewBox="0 0 24 24" style="width:18px; height:18px; opacity:0.6;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                </button>
+            </div>
+            
+            <div id="modalEditArea" style="display:none; flex-direction:column; gap:8px; margin-top:10px; width:100%;">
+                <input type="text" id="modalEditEs" class="write-input" style="padding:8px;" placeholder="Español">
+                <input type="text" id="modalEditEn" class="write-input" style="padding:8px;" placeholder="Inglés">
+                <input type="text" id="modalEditEx" class="write-input" style="padding:8px;" placeholder="Ejemplo (opcional)">
+                <div style="display:flex; gap:8px;">
+                    <button id="modalBtnSaveEdit" class="srs-btn srs-btn-good" style="padding:8px;">Guardar</button>
+                    <button id="modalBtnCancelEdit" class="srs-btn" style="padding:8px; background:var(--surface-variant); color:var(--on-surface);">Cancelar</button>
+                </div>
+            </div>
+
+            <div id="modalExampleSentence" class="example-sentence"></div>
 
             <div id="modalSubContainer" class="translation">
                 <span id="modalSubText"></span>

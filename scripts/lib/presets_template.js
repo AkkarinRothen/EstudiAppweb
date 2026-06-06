@@ -73,6 +73,7 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             <div class="roll-val" id="rollVal">Tira el dado para empezar</div>
             <div class="vocab-image-container" id="imgContainer"><img id="vocabImg" class="vocab-image" src="" alt=""></div>
             <div id="mainText" class="entry-text">---</div>
+            <div id="exampleText" class="example-sentence"></div>
 
             <div id="subContainer" class="translation">
                 <span id="subText"></span>
