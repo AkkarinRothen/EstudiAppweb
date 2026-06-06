@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Tarjeta de embarque -> Boarding pass"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Puerta de salida -> Departure gate"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Equipaje de mano -> Carry-on luggage"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Escala / Conexión -> Layover"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Mostrador de facturación -> Check-in counter"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Reclamación de equipaje -> Baggage claim"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Asiento de pasillo/ventana -> Aisle/Window seat"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Despegar / Aterrizar -> To take off / To land"
+    }
+]

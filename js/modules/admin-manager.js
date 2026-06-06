@@ -5,6 +5,7 @@
 // ============================================================
 
 import { FOLDERS_CONFIG, DECK_FOLDER_MAPPINGS } from './folders-config.js';
+import * as Storage from './storage.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const STORAGE_KEY_FOLDERS      = 'admin_folders_state';
@@ -793,7 +794,7 @@ function getPacksForFolder(folderId) {
 async function publishChanges() {
     const owner = localStorage.getItem('gh_owner');
     const repo  = localStorage.getItem('gh_repo');
-    const token = localStorage.getItem('gh_token');
+    const token = await Storage.getDecryptedToken();
 
     if (!owner || !repo || !token) {
         showToast('Guarda las credenciales de GitHub primero', true);

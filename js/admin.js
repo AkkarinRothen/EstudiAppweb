@@ -3,6 +3,7 @@ import * as Utils from './modules/utils.js';
 import * as GitHub from './modules/github.js';
 import * as Template from './modules/template.js';
 import * as AdminManager from './modules/admin-manager.js';
+import * as Storage from './modules/storage.js';
 
 // Seguridad / Login (Client-Side Hashing)
 // Hashes para Usuario: AkkarinRothen | Pass: Mily2505
@@ -88,16 +89,17 @@ async function checkLogin() {
     const passHash = await Utils.sha256(pass);
 
     if (userHash === expectedUserHash && passHash === expectedPassHash) {
+        Storage.setSessionPassword(user + ":" + pass);
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainAdminContent').style.display = 'flex';
-        loadAuth();
+        await loadAuth();
     } else {
         errDiv.style.display = 'block';
         document.getElementById('loginPass').value = '';
     }
 }
 
-function saveAuth() {
+async function saveAuth() {
     const owner = document.getElementById('ghOwner').value;
     const repo = document.getElementById('ghRepo').value;
     const token = document.getElementById('ghToken').value;
@@ -109,9 +111,17 @@ function saveAuth() {
 
     localStorage.setItem('gh_owner', owner);
     localStorage.setItem('gh_repo', repo);
-    localStorage.setItem('gh_token', token);
-    
-    showStatus('Credenciales guardadas en tu navegador.', 'success');
+
+    const sessionPass = Storage.getSessionPassword();
+    const encryptedToken = await Storage.encryptText(token, sessionPass);
+    if (encryptedToken) {
+        localStorage.setItem('gh_token_encrypted', encryptedToken);
+        // Clean up any old plaintext token if present
+        localStorage.removeItem('gh_token');
+        showStatus('Credenciales guardadas y cifradas en tu navegador.', 'success');
+    } else {
+        showStatus('Error al cifrar el token.', 'error');
+    }
 }
 
 function toggleGithubCollapse() {
@@ -158,10 +168,10 @@ function updateDiceFormula() {
     }
 }
 
-function loadAuth() {
+async function loadAuth() {
     const owner = localStorage.getItem('gh_owner') || '';
     const repo = localStorage.getItem('gh_repo') || '';
-    const token = localStorage.getItem('gh_token') || '';
+    const token = await Storage.getDecryptedToken() || '';
     
     document.getElementById('ghOwner').value = owner;
     document.getElementById('ghRepo').value = repo;
@@ -194,7 +204,7 @@ function showStatus(msg, type) {
 async function publishPack() {
     const owner = localStorage.getItem('gh_owner');
     const repo = localStorage.getItem('gh_repo');
-    const token = localStorage.getItem('gh_token');
+    const token = await Storage.getDecryptedToken();
 
     if (!owner || !repo || !token) {
         showStatus('Debes guardar las credenciales de GitHub primero.', 'error');

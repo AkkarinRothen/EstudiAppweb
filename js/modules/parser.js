@@ -27,7 +27,7 @@ export function parseCsvRow(row) {
 /**
  * Parses an imported CSV/TSV text into a deck object
  * @param {string} text 
- * @returns {Object} { title, formula, desc, entries }
+ * @returns {Object} { title, formula, desc, entries, errors }
  */
 export function parseImportedCsv(text) {
     const lines = text.split('\n');
@@ -35,12 +35,15 @@ export function parseImportedCsv(text) {
     let formula = "1d8";
     let desc = "Practica con tu tabla didáctica importada.";
     const entries = [];
+    const errors = [];
 
     const isTsv = text.includes('\t');
 
-    for (let line of lines) {
-        line = line.trim();
+    for (let idx = 0; idx < lines.length; idx++) {
+        let line = lines[idx].trim();
+        const lineNum = idx + 1;
         if (!line) continue;
+
         if (line.startsWith('#')) {
             if (line.startsWith('# Tabla:')) {
                 title = line.replace('# Tabla:', '').trim();
@@ -66,8 +69,14 @@ export function parseImportedCsv(text) {
             
             const min = parseInt(minStr);
             const max = parseInt(maxStr);
-            if (!isNaN(min) && !isNaN(max) && textRaw !== "Entrada") {
-                entries.push({ min, max, text: textRaw });
+            if (!isNaN(min) && !isNaN(max)) {
+                if (textRaw !== "Entrada" && textRaw.includes("->")) {
+                    entries.push({ min, max, text: textRaw });
+                } else if (textRaw !== "Entrada") {
+                    errors.push(`Línea ${lineNum}: El texto "${textRaw}" no contiene el separador obligatiorio '->'`);
+                }
+            } else {
+                errors.push(`Línea ${lineNum}: Rangos de dado inválidos (Mín: "${minStr}", Máx: "${maxStr}")`);
             }
         } else if (isTsv && matches.length === 2) {
             const index = entries.length + 1;
@@ -75,12 +84,26 @@ export function parseImportedCsv(text) {
             const enVal = matches[1].replace(/"/g, '').trim();
             if (esVal && enVal) {
                 entries.push({ min: index, max: index, text: `${esVal} -> ${enVal}` });
+            } else {
+                errors.push(`Línea ${lineNum}: Columnas de vocabulario incompletas`);
             }
+        } else if (!isTsv && matches.length === 2) {
+            // Support simple 2-column CSV (es, en)
+            const index = entries.length + 1;
+            const esVal = matches[0].replace(/"/g, '').trim();
+            const enVal = matches[1].replace(/"/g, '').trim();
+            if (esVal && enVal) {
+                entries.push({ min: index, max: index, text: `${esVal} -> ${enVal}` });
+            } else {
+                errors.push(`Línea ${lineNum}: Columnas de vocabulario incompletas`);
+            }
+        } else {
+            errors.push(`Línea ${lineNum}: Columnas insuficientes (Encontradas: ${matches.length}, esperadas: 2 o 3)`);
         }
     }
     
     if (entries.length > 0 && (formula === "1d8" || formula === "")) {
         formula = `1d${entries.length}`;
     }
-    return { title, formula, desc, entries };
+    return { title, formula, desc, entries, errors };
 }

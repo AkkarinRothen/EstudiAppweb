@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Pan y Leche -> Bread and Milk"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Frutas y Verduras -> Fruit and Vegetables"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Carne y Pescado -> Meat and Fish"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Huevos y Queso -> Eggs and Cheese"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Arroz y Pasta -> Rice and Pasta"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Aceite y Sal -> Oil and Salt"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Pasillo -> Aisle"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Carrito de la compra -> Shopping cart"
+    }
+]

@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "¡Hola! -> Hello! / Hi!"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "¿Cómo estás? -> How are you?"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Mucho gusto -> Nice to meet you"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Por favor -> Please"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Gracias -> Thank you"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "De nada -> You're welcome"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Lo siento -> I'm sorry"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "¡Adiós! -> Goodbye!"
+    }
+]

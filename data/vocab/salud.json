@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Me duele la cabeza -> I have a headache"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Estoy resfriado -> I have a cold"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Receta médica -> Prescription"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Pedir una cita -> To make an appointment"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Fiebre -> Fever"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Pastillas / Jarabe -> Pills / Syrup"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Guardar cama -> To stay in bed"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Me siento mejor -> I feel better"
+    }
+]

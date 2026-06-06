@@ -249,6 +249,126 @@
     background: rgba(46, 125, 50, 0.1); padding: 0 2px; border-radius: 2px;
 }
 
+/* Scrambled Mode Styles */
+.scrambled-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    margin-top: 10px;
+}
+.scrambled-slots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+}
+.scrambled-letters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--outline);
+    width: 100%;
+}
+.scrambled-tile {
+    width: 40px;
+    height: 44px;
+    background: var(--container);
+    border: 2px solid var(--outline);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--on-surface);
+}
+.scrambled-tile:hover:not(.disabled) {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.scrambled-tile.active {
+    background: var(--primary-container);
+    border-color: var(--primary);
+    color: var(--on-primary-container);
+}
+.scrambled-tile.disabled {
+    opacity: 0.3;
+    cursor: default;
+    transform: scale(0.9);
+}
+.scrambled-tile.correct {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+.scrambled-tile.incorrect {
+    background: var(--error);
+    border-color: var(--error);
+    color: white;
+}
+.scrambled-slot {
+    width: 40px;
+    height: 44px;
+    border: 2px dashed var(--outline);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.03);
+}
+
+/* Time Attack Styles */
+.timer-container {
+    position: absolute;
+    top: 15px; right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 30;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.timer-icon {
+    width: 16px; height: 16px;
+    animation: pulse-timer 1s infinite alternate;
+}
+@keyframes pulse-timer {
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(1.2); opacity: 0.8; }
+}
+
+.time-attack-results {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+}
+.results-score {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 10px 0;
+}
+.results-label {
+    font-size: 16px;
+    color: var(--on-surface-variant);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 /* SRS Badges & Buttons */
 .srs-badge {
     position: absolute;
@@ -386,28 +506,64 @@
 }
 
 /* Card face visibility control */
-.result-area.flashcard-mode #modalSubContainer {
+.result-area.flashcard-mode #modalSubContainer,
+.result-area.flashcard-mode #subContainer {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.35s ease;
 }
-.result-area.flashcard-mode.flipped #modalSubContainer {
+.result-area.flashcard-mode.flipped #modalSubContainer,
+.result-area.flashcard-mode.flipped #subContainer {
     opacity: 1;
     pointer-events: auto;
 }
 .result-area.flashcard-mode.flipped #modalMainText,
+.result-area.flashcard-mode.flipped #mainText,
 .result-area.flashcard-mode.flipped #modalImgContainer,
+.result-area.flashcard-mode.flipped #imgContainer,
 .result-area.flashcard-mode.flipped #modalBtnReveal,
-.result-area.flashcard-mode.flipped #modalRollVal {
+.result-area.flashcard-mode.flipped #btnReveal,
+.result-area.flashcard-mode.flipped #modalRollVal,
+.result-area.flashcard-mode.flipped #rollVal {
     opacity: 0;
     pointer-events: none;
 }
 .result-area.flashcard-mode #modalMainText,
+.result-area.flashcard-mode #mainText,
 .result-area.flashcard-mode #modalImgContainer,
+.result-area.flashcard-mode #imgContainer,
 .result-area.flashcard-mode #modalBtnReveal,
-.result-area.flashcard-mode #modalRollVal {
+.result-area.flashcard-mode #btnReveal,
+.result-area.flashcard-mode #modalRollVal,
+.result-area.flashcard-mode #rollVal {
     opacity: 1;
     transition: opacity 0.35s ease;
+}
+
+/* Skeleton Shim & Fallback Styles */
+@keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+.vocab-image-container.loading {
+    background: linear-gradient(90deg, var(--surface-variant) 25%, var(--outline) 50%, var(--surface-variant) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+}
+.vocab-fallback-svg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-container);
+    color: var(--on-primary-container);
+}
+.vocab-fallback-svg svg {
+    width: 64px;
+    height: 64px;
+    fill: currentColor;
+    opacity: 0.8;
 }
 
 

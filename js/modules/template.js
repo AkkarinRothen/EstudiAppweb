@@ -46,10 +46,16 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
             <button id="modeFlashcard" class="chip-modal">Flashcard</button>
             <button id="modeQuiz" class="chip-modal">Quiz</button>
             <button id="modeWrite" class="chip-modal">Escritura</button>
+            <button id="modeScrambled" class="chip-modal">Letras</button>
+            <button id="modeTimeAttack" class="chip-modal">Reloj</button>
         </div>
 
         <div class="result-area" id="resultArea">
             <div id="srsBadge" class="srs-badge" style="display: none;">Caja 1</div>
+            <div id="timerContainer" class="timer-container" style="display:none">
+                <svg class="timer-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" fill="currentColor"/></svg>
+                <span id="timerVal">60s</span>
+            </div>
             <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
             
             <div class="dice-container" id="diceContainer">
@@ -79,6 +85,7 @@ export function generateHtml(title, desc, formula, entriesArrayString) {
                 <input type="text" id="writeInput" class="write-input" placeholder="Escribe la traducción..." autocomplete="off">
                 <div id="writeFeedback" class="write-feedback"></div>
             </div>
+            <div id="scrambledArea" class="scrambled-container" style="display:none"></div>
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
                 <button class="srs-btn srs-btn-again">❌ Difícil</button>

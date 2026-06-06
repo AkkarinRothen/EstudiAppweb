@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Despertarse -> Wake up"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Levantarse -> Get up"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Ducharse -> Take a shower"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Cepillarse los dientes -> Brush teeth"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Vestirse -> Get dressed"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Desayunar -> Have breakfast"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Peinarse -> Brush hair / Comb hair"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Hacer la cama -> Make the bed"
+    }
+]

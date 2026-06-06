@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Sin embargo -> Nevertheless / However"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Por lo tanto -> Therefore / Consequently"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "A pesar de -> Despite / In spite of"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Además -> Furthermore / Moreover"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Por otro lado -> On the other hand"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Subrayar / Destacar -> To highlight / To underline"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Evidencia empírica -> Empirical evidence"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "En conclusión -> In a nutshell / In conclusion"
+    }
+]

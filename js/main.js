@@ -35,47 +35,6 @@ function setupEventListeners() {
         }));
     }
 
-    const modalEnableImages = document.getElementById('modalEnableImages');
-    if (modalEnableImages) {
-        modalEnableImages.addEventListener('change', () => UiModal.toggleModalImages());
-    }
-
-    // Modal Modes
-    const modeButtons = {
-        'modalModeDirect': 'direct',
-        'modalModeFlashcard': 'flashcard',
-        'modalModeQuiz': 'quiz',
-        'modalModeWrite': 'write'
-    };
-
-    Object.entries(modeButtons).forEach(([id, mode]) => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.addEventListener('click', () => UiModal.setModalMode(mode));
-        }
-    });
-
-    // Modal Interactions
-    const speakerBtn = document.getElementById('modalSpeaker');
-    if (speakerBtn) {
-        speakerBtn.addEventListener('click', () => UiModal.speakModal());
-    }
-
-    const revealBtn = document.getElementById('modalBtnReveal');
-    if (revealBtn) {
-        revealBtn.addEventListener('click', () => UiModal.revealModal());
-    }
-
-    const srsAgainBtn = document.querySelector('.srs-btn-again');
-    if (srsAgainBtn) {
-        srsAgainBtn.addEventListener('click', () => UiModal.rateModalSrs(false));
-    }
-
-    const srsGoodBtn = document.querySelector('.srs-btn-good');
-    if (srsGoodBtn) {
-        srsGoodBtn.addEventListener('click', () => UiModal.rateModalSrs(true));
-    }
-
     const saveLocalBtn = document.getElementById('modalBtnSaveLocal');
     if (saveLocalBtn) {
         saveLocalBtn.addEventListener('click', () => saveActiveDeckToLibrary());
@@ -84,25 +43,6 @@ function setupEventListeners() {
     const exportBtn = document.getElementById('modalBtnExport');
     if (exportBtn) {
         exportBtn.addEventListener('click', () => Library.exportDeck(UiModal.getImportedTableData()));
-    }
-
-    // TTS Controls
-    const voiceSelect = document.getElementById('modalVoiceSelect');
-    if (voiceSelect) {
-        voiceSelect.addEventListener('change', () => UiModal.saveTtsPreferences());
-    }
-
-    const speedSlider = document.getElementById('modalSpeedSlider');
-    if (speedSlider) {
-        speedSlider.addEventListener('input', (e) => {
-            UiModal.updateSpeedLabel(e.target.value);
-            UiModal.saveTtsPreferences();
-        });
-    }
-
-    const actionBtn = document.getElementById('modalActionBtn');
-    if (actionBtn) {
-        actionBtn.addEventListener('click', () => UiModal.rollModal());
     }
 }
 
@@ -220,6 +160,14 @@ function processCsvFile(file) {
     reader.onload = function(e) {
         const text = e.target.result;
         const parsedData = Parser.parseImportedCsv(text);
+        
+        if (parsedData.errors && parsedData.errors.length > 0) {
+            const errorMsg = `Se encontraron algunas advertencias al importar:\n\n` + 
+                             parsedData.errors.slice(0, 5).join('\n') + 
+                             (parsedData.errors.length > 5 ? `\n... y otros ${parsedData.errors.length - 5} errores más.` : '');
+            alert(errorMsg);
+        }
+
         if (parsedData.entries.length > 0) {
             UiModal.openPracticeModal(parsedData);
         } else {

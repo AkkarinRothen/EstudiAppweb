@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Gira a la izquierda -> Turn left"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Sigue recto -> Go straight ahead"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Cruza la calle -> Cross the street"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "En la esquina -> At the corner"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Está al lado de... -> It's next to..."
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Está enfrente de... -> It's opposite..."
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "A una manzana de distancia -> One block away"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "¿Está lejos? -> Is it far?"
+    }
+]

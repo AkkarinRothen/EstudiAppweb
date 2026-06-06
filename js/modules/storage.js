@@ -62,3 +62,78 @@ export function getTtsPreferences() {
 export function saveTtsPreferences(pref) {
     localStorage.setItem(STORAGE_KEYS.TTS_PREF, JSON.stringify(pref));
 }
+
+// In-Memory Session Password (not persisted)
+let sessionPassword = "";
+
+export function setSessionPassword(pass) {
+    sessionPassword = pass;
+}
+
+export function getSessionPassword() {
+    return sessionPassword;
+}
+
+export async function getDecryptedToken() {
+    const encryptedToken = localStorage.getItem('gh_token_encrypted');
+    if (!encryptedToken || !sessionPassword) return null;
+    return await decryptText(encryptedToken, sessionPassword);
+}
+
+// AES-GCM Cryptography Helpers for Sensitive Data
+async function getCryptoKey(password) {
+    const enc = new TextEncoder();
+    const pwHash = await crypto.subtle.digest('SHA-256', enc.encode(password));
+    return crypto.subtle.importKey(
+        'raw',
+        pwHash,
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt', 'decrypt']
+    );
+}
+
+export async function encryptText(plaintext, password) {
+    try {
+        const enc = new TextEncoder();
+        const key = await getCryptoKey(password);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv: iv },
+            key,
+            enc.encode(plaintext)
+        );
+        const cipherTextBytes = new Uint8Array(encrypted);
+        
+        const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+        const cipherHex = Array.from(cipherTextBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        return ivHex + ":" + cipherHex;
+    } catch (e) {
+        console.error("Encryption error:", e);
+        return null;
+    }
+}
+
+export async function decryptText(ciphertextWithIv, password) {
+    try {
+        const parts = ciphertextWithIv.split(":");
+        if (parts.length !== 2) return null;
+        
+        const ivHex = parts[0];
+        const cipherHex = parts[1];
+        
+        const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const ciphertext = new Uint8Array(cipherHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        
+        const key = await getCryptoKey(password);
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv },
+            key,
+            ciphertext
+        );
+        return new TextDecoder().decode(decrypted);
+    } catch (e) {
+        console.error("Decryption error:", e);
+        return null;
+    }
+}

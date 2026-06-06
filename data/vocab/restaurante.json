@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Una mesa para dos -> A table for two"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "El menú / La carta -> The menu"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Pedir la comida -> To order food"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Agua mineral -> Still water"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "La cuenta, por favor -> The check, please"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Soy vegetariano -> I am a vegetarian"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "¿Dónde está el baño? -> Where is the restroom?"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Propina -> Tip"
+    }
+]

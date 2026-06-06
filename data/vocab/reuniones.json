@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Estoy de acuerdo -> I agree with you"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Punto de vista -> Point of view"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Llegar a un acuerdo -> To reach an agreement"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Hacer un seguimiento -> To follow up"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Posponer la reunión -> To postpone the meeting"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Lluvia de ideas -> Brainstorming"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Resumiendo... -> To sum up..."
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Orden del día -> Agenda"
+    }
+]

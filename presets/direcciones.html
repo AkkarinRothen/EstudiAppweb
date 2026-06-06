@@ -30,7 +30,7 @@
 <body>
     <div class="card">
         <h1>Ciudad y Direcciones</h1>
-        <p class="desc">Cómo pedir y dar indicaciones para llegar a un sitio.</p>
+        <p class="desc">Cómo pedir y dar indicaciones para llegar.</p>
 
         <div class="image-toggle-container">
             <input type="checkbox" id="enableImages" checked>
@@ -42,10 +42,16 @@
             <button id="modeFlashcard" class="chip-modal">Flashcard</button>
             <button id="modeQuiz" class="chip-modal">Quiz</button>
             <button id="modeWrite" class="chip-modal">Escritura</button>
+            <button id="modeScrambled" class="chip-modal">Letras</button>
+            <button id="modeTimeAttack" class="chip-modal">Reloj</button>
         </div>
 
         <div class="result-area" id="resultArea">
             <div id="srsBadge" class="srs-badge" style="display: none;">Caja 1</div>
+            <div id="timerContainer" class="timer-container" style="display:none">
+                <svg class="timer-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" fill="currentColor"/></svg>
+                <span id="timerVal">60s</span>
+            </div>
             <div id="quizScore" class="quiz-score" style="display:none">Puntuación: 0/0</div>
             
             <div class="dice-container" id="diceContainer">
@@ -75,6 +81,7 @@
                 <input type="text" id="writeInput" class="write-input" placeholder="Escribe la traducción..." autocomplete="off">
                 <div id="writeFeedback" class="write-feedback"></div>
             </div>
+            <div id="scrambledArea" class="scrambled-container" style="display:none"></div>
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
                 <button class="srs-btn srs-btn-again">❌ Difícil</button>
@@ -104,7 +111,7 @@
 
     <script type="module">
         import { initPreset } from '../js/modules/preset-runner.js';
-        const entries = [{min:1, max:1, text:"Gira a la izquierda -> Turn left"},{min:2, max:2, text:"Sigue recto -> Go straight ahead"},{min:3, max:3, text:"Cruza la calle -> Cross the street"},{min:4, max:4, text:"En la esquina -> At the corner"},{min:5, max:5, text:"Está al lado de... -> It's next to..."},{min:6, max:6, text:"Está enfrente de... -> It's opposite..."},{min:7, max:7, text:"A una manzana de distancia -> One block away"},{min:8, max:8, text:"¿Está lejos? -> Is it far?"}];
+        const entries = [{min:1, max:1, text:"Gira a la izquierda -> Turn left", example:""},{min:2, max:2, text:"Sigue recto -> Go straight ahead", example:""},{min:3, max:3, text:"Cruza la calle -> Cross the street", example:""},{min:4, max:4, text:"En la esquina -> At the corner", example:""},{min:5, max:5, text:"Está al lado de... -> It's next to...", example:""},{min:6, max:6, text:"Está enfrente de... -> It's opposite...", example:""},{min:7, max:7, text:"A una manzana de distancia -> One block away", example:""},{min:8, max:8, text:"¿Está lejos? -> Is it far?", example:""}];
         const formula = "1d8";
         initPreset(entries, formula);
     </script>

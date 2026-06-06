@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Tengo una reserva -> I have a reservation"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Servicio de habitaciones -> Room service"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Aire acondicionado -> Air conditioning"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Desayuno incluido -> Breakfast included"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Gimnasio / Piscina -> Gym / Swimming pool"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Registrarse / Salir -> Check-in / Check-out"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Caja fuerte -> Safe box"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "La habitación es ruidosa -> The room is noisy"
+    }
+]

@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Subir / Bajar un archivo -> Upload / Download a file"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Contraseña segura -> Secure password"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Navegador web -> Web browser"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Banda ancha -> Broadband"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Cargar el dispositivo -> To charge the device"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Inalámbrico -> Wireless"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Pantalla táctil -> Touch screen"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Adjuntar un documento -> To attach a document"
+    }
+]

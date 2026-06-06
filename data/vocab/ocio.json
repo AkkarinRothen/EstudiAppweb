@@ -1,0 +1,42 @@
+[
+    {
+        "min": 1,
+        "max": 1,
+        "text": "Tocar un instrumento -> To play an instrument"
+    },
+    {
+        "min": 2,
+        "max": 2,
+        "text": "Hacer senderismo -> To go hiking"
+    },
+    {
+        "min": 3,
+        "max": 3,
+        "text": "Sacar fotos -> To take photos"
+    },
+    {
+        "min": 4,
+        "max": 4,
+        "text": "Ir al cine -> To go to the cinema"
+    },
+    {
+        "min": 5,
+        "max": 5,
+        "text": "Hacer ejercicio -> To work out"
+    },
+    {
+        "min": 6,
+        "max": 6,
+        "text": "Quedar con amigos -> To meet friends"
+    },
+    {
+        "min": 7,
+        "max": 7,
+        "text": "Viajar -> To travel"
+    },
+    {
+        "min": 8,
+        "max": 8,
+        "text": "Dibujar / Pintar -> To draw / To paint"
+    }
+]

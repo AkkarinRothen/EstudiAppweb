@@ -2,43 +2,57 @@ const fs = require('fs');
 const path = require('path');
 const { generateHtml } = require('./lib/presets_template');
 
+const packsFile = path.join(__dirname, '..', 'data', 'packs.json');
+const vocabDir = path.join(__dirname, '..', 'data', 'vocab');
 const presetsDir = path.join(__dirname, '..', 'presets');
 
-// Read all presets and rebuild them using the modular template
-fs.readdir(presetsDir, (err, files) => {
-    if (err) {
-        console.error("Error reading presets directory:", err);
-        process.exit(1);
+if (!fs.existsSync(presetsDir)) {
+    fs.mkdirSync(presetsDir, { recursive: true });
+}
+
+// Read catalog packs.json
+let packs = [];
+try {
+    const packsRaw = fs.readFileSync(packsFile, 'utf-8');
+    packs = JSON.parse(packsRaw);
+} catch (e) {
+    console.error("Error reading data/packs.json:", e);
+    process.exit(1);
+}
+
+// Generate preset for each pack in the catalog
+packs.forEach(pack => {
+    const vocabFile = path.join(vocabDir, `${pack.id}.json`);
+    if (!fs.existsSync(vocabFile)) {
+        console.warn(`Warning: Vocabulary file not found for pack: ${pack.id} (${vocabFile}). Skipping.`);
+        return;
     }
 
-    const htmlFiles = files.filter(f => f.endsWith('.html'));
+    let entries = [];
+    try {
+        const vocabRaw = fs.readFileSync(vocabFile, 'utf-8');
+        entries = JSON.parse(vocabRaw);
+    } catch (e) {
+        console.error(`Error reading vocabulary for pack ${pack.id}:`, e);
+        return;
+    }
 
-    htmlFiles.forEach(file => {
-        const filePath = path.join(presetsDir, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
+    if (entries.length === 0) {
+        console.warn(`Warning: Vocabulary list is empty for pack: ${pack.id}. Skipping.`);
+        return;
+    }
 
-        // Extract current data from existing file to preserve content
-        const titleMatch = content.match(/<h1>([^<]+)<\/h1>/) || content.match(/<title>([^<]+)<\/title>/);
-        const title = titleMatch ? titleMatch[1].replace(/^[AB]\d+:\s*/, '').trim() : path.basename(file, '.html');
+    // Format entries to JS object literals string
+    const entriesJson = entries.map(e => {
+        const txt = e.text.replace(/"/g, '\\"');
+        const ex = (e.example || '').replace(/"/g, '\\"');
+        return `{min:${e.min}, max:${e.max}, text:"${txt}", example:"${ex}"}`;
+    }).join(',');
 
-        const descMatch = content.match(/<p class="desc">([^<]+)<\/p>/);
-        const desc = descMatch ? descMatch[1].trim() : "Practica vocabulario con esta tabla interactiva.";
+    const formula = `1d${entries.length}`;
+    const htmlContent = generateHtml(pack.title, pack.desc, entriesJson, formula);
 
-        const entriesMatch = content.match(/const entries\s*=\s*(\[[^\]]+\])/);
-        if (!entriesMatch) {
-            console.log(`Skipping ${file}: No entries list found.`);
-            return;
-        }
-        let entriesJson = entriesMatch[1];
-        // Clean up the JSON if it was previously extracted as a raw string without brackets
-        entriesJson = entriesJson.trim().replace(/^\[/, '').replace(/\]$/, '');
-
-        const formulaMatch = content.match(/const formula\s*=\s*"([^"]+)"/);
-        const formula = formulaMatch ? formulaMatch[1] : "1d8";
-
-        // Generate and write updated preset using the modular runner pattern
-        const updatedHtml = generateHtml(title, desc, entriesJson, formula);
-        fs.writeFileSync(filePath, updatedHtml, 'utf-8');
-        console.log(`Successfully modularized: ${file}`);
-    });
+    const destPath = path.join(presetsDir, `${pack.id}.html`);
+    fs.writeFileSync(destPath, htmlContent, 'utf-8');
+    console.log(`Successfully generated preset: presets/${pack.id}.html (${entries.length} words, formula: ${formula})`);
 });
