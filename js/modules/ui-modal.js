@@ -82,7 +82,8 @@ export function openPracticeModal(data) {
         bubbleArea: document.getElementById('modalBubbleArea'),
         sniperArea: document.getElementById('modalSniperArea'),
         dragArea: document.getElementById('modalDragArea'),
-        dictationArea: document.getElementById('modalDictationArea')
+        dictationArea: document.getElementById('modalDictationArea'),
+        wordleArea: document.getElementById('modalWordleArea')
     };
 
     const packId = "csv_" + data.title.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -107,6 +108,7 @@ export function openPracticeModal(data) {
     document.getElementById('modalModeSniper').onclick = () => engine.setMode('sniper');
     document.getElementById('modalModeDrag').onclick = () => engine.setMode('drag');
     document.getElementById('modalModeDictation').onclick = () => engine.setMode('dictation');
+    document.getElementById('modalModeWordle').onclick = () => engine.setMode('wordle');
     
     const timeAttackBtn = document.getElementById('modalModeTimeAttack');
     if (timeAttackBtn) {

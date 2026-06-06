@@ -2,6 +2,7 @@ import * as Storage from './storage.js';
 import * as Srs from './srs.js';
 import * as Speech from './speech.js';
 import * as Utils from './utils.js';
+import * as Fx from './fx.js';
 
 export class StudyEngine {
     constructor({
@@ -83,6 +84,9 @@ export class StudyEngine {
         this.currentMode = mode;
         this.stopTimeAttack();
         this.stopBubbleGame();
+        this.stopSniperGame();
+
+        Fx.playSound('click');
 
         // Reset elements style
         if (this.elements.quizScore) this.elements.quizScore.style.display = 'none';
@@ -92,6 +96,7 @@ export class StudyEngine {
         if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
         if (this.elements.matchArea) this.elements.matchArea.style.display = 'none';
         if (this.elements.bubbleArea) this.elements.bubbleArea.style.display = 'none';
+        if (this.elements.wordleArea) this.elements.wordleArea.style.display = 'none';
         if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
         if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
@@ -152,6 +157,10 @@ export class StudyEngine {
                 actionBtn.innerText = 'Siguiente Dictado';
                 actionBtn.style.display = 'block';
                 actionBtn.onclick = () => this.startDictationQuestion();
+            } else if (mode === 'wordle') {
+                actionBtn.innerText = 'Pasar Palabra';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.startWordleGame();
             } else {
                 actionBtn.innerText = 'Tirar Dado';
                 actionBtn.style.display = 'block';
@@ -179,6 +188,8 @@ export class StudyEngine {
             this.startDragGame();
         } else if (mode === 'dictation') {
             this.startDictationQuestion();
+        } else if (mode === 'wordle') {
+            this.startWordleGame();
         } else if (mode !== 'timeAttack') {
             if (this.lastEnglishText) {
                 if (this.elements.subText) this.elements.subText.innerText = this.lastEnglishText;
@@ -294,6 +305,14 @@ export class StudyEngine {
                 if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
             }
 
+            if (this.elements.resultArea) {
+                Fx.animate(this.elements.resultArea, {
+                    scale: [0.98, 1],
+                    duration: 500,
+                    easing: 'easeOutElastic(1, .8)'
+                });
+            }
+
             if (actionBtn) actionBtn.disabled = false;
 
             // Prefetch next image
@@ -393,6 +412,14 @@ export class StudyEngine {
         if (!this.lastSpanishText) return;
         const packKey = this.isModal ? "csv_" + this.packId.toLowerCase().replace(/[^a-z0-9]/g, "_") : this.packId;
         Srs.updateWordSrs(packKey, this.lastSpanishText, isCorrect, this.onStatsUpdate);
+        
+        if (isCorrect) {
+            Fx.playSound('success');
+            if (this.currentMode !== 'timeAttack') Fx.celebrate('simple');
+        } else {
+            Fx.playSound('error');
+        }
+
         if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
         this.updateSrsBadge(this.lastSpanishText);
     }
@@ -641,6 +668,7 @@ export class StudyEngine {
             const diffMarkup = Utils.getDiffHighlight(typed, this.lastEnglishText.split(/[/\;,]/)[0].trim());
             feedback.innerHTML = `Incorrecto. <br>Tu intento: <span style="font-weight:normal;">${diffMarkup}</span><br>Correcto: <strong>${this.lastEnglishText}</strong>`;
             feedback.className = "write-feedback incorrect";
+            Fx.shake(input);
         }
 
         if (actionBtn) {
@@ -769,6 +797,8 @@ export class StudyEngine {
         this.timeLeft = 60;
         this.timeAttackScore = 0;
 
+        Fx.playSound('transition');
+
         const timerVal = this.elements.timerVal;
         const timerContainer = this.elements.timerContainer;
         if (timerVal) timerVal.innerText = this.timeLeft + "s";
@@ -804,6 +834,10 @@ export class StudyEngine {
 
     showTimeAttackResults() {
         const scrambledArea = this.elements.scrambledArea;
+
+        Fx.playSound('victory');
+        Fx.celebrate('burst');
+
         if (scrambledArea) {
             scrambledArea.innerHTML = `
                 <div class="time-attack-results">
@@ -1477,7 +1511,197 @@ export class StudyEngine {
         });
     }
 
-    // ─── 🎵 DICTADO DE AUDIO ─────────────────────────────────────────────────
+    // 🧩 WORDLE DINÁMICO ──────────────────────────────────────────────────
+
+    startWordleGame() {
+        const wordleArea = this.elements.wordleArea;
+        if (!wordleArea) return;
+
+        this.activeEntry = Srs.selectNextSrsEntry({ entries: this.entries }, this.lastSpanishText);
+        if (!this.activeEntry) return;
+
+        const parts = this.activeEntry.text.split("->");
+        const spanish = parts[0].trim();
+        const english = parts[1]?.split(/[/\;,]/)[0].trim().toLowerCase() || "";
+
+        if (english.length < 3 || english.length > 8) {
+            // Pick another one if too short or long
+            this.startWordleGame();
+            return;
+        }
+
+        this.lastSpanishText = spanish;
+        this.lastEnglishText = english;
+        this.wordleTarget = english;
+        this.wordleGuesses = [];
+        this.wordleCurrentGuess = "";
+        this.wordleGameOver = false;
+
+        if (this.elements.mainText) this.elements.mainText.innerText = spanish;
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+
+        wordleArea.style.display = 'flex';
+        wordleArea.innerHTML = '';
+        wordleArea.style.setProperty('--word-length', english.length);
+
+        const grid = document.createElement('div');
+        grid.className = 'wordle-grid';
+        for (let i = 0; i < 6; i++) {
+            const row = document.createElement('div');
+            row.className = 'wordle-row';
+            for (let j = 0; j < english.length; j++) {
+                const tile = document.createElement('div');
+                tile.className = 'wordle-tile';
+                row.appendChild(tile);
+            }
+            grid.appendChild(row);
+        }
+        wordleArea.appendChild(grid);
+
+        const keyboard = this._createWordleKeyboard();
+        wordleArea.appendChild(keyboard);
+
+        this._updateWordleGrid();
+    }
+
+    _createWordleKeyboard() {
+        const kb = document.createElement('div');
+        kb.className = 'wordle-keyboard';
+        const rows = [
+            ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+            ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+            ['Enter', 'z', 'x', 'c', 'v', 'b', 'n', 'm', '←']
+        ];
+
+        rows.forEach(row => {
+            const rowEl = document.createElement('div');
+            rowEl.className = 'keyboard-row';
+            row.forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn';
+                if (key === 'Enter' || key === '←') btn.classList.add('wide');
+                btn.innerText = key;
+                btn.onclick = () => this._handleWordleKey(key);
+                btn.dataset.key = key;
+                rowEl.appendChild(btn);
+            });
+            kb.appendChild(rowEl);
+        });
+        return kb;
+    }
+
+    _handleWordleKey(key) {
+        if (this.wordleGameOver) return;
+
+        if (key === '←' || key === 'Backspace') {
+            this.wordleCurrentGuess = this.wordleCurrentGuess.slice(0, -1);
+        } else if (key === 'Enter') {
+            this._submitWordleGuess();
+        } else if (/^[a-z]$/i.test(key) && this.wordleCurrentGuess.length < this.wordleTarget.length) {
+            this.wordleCurrentGuess += key.toLowerCase();
+        }
+        this._updateWordleGrid();
+    }
+
+    _submitWordleGuess() {
+        if (this.wordleCurrentGuess.length !== this.wordleTarget.length) {
+            Fx.shake(this.elements.wordleArea.querySelector('.wordle-row:not(.filled)'));
+            return;
+        }
+
+        const guess = this.wordleCurrentGuess;
+        this.wordleGuesses.push(guess);
+        this.wordleCurrentGuess = "";
+
+        const isCorrect = guess === this.wordleTarget;
+        if (isCorrect || this.wordleGuesses.length >= 6) {
+            this.wordleGameOver = true;
+            this.rateSrs(isCorrect);
+            if (isCorrect) {
+                Fx.celebrate('burst');
+                this.speak();
+            } else {
+                Fx.playSound('error');
+            }
+
+            setTimeout(() => {
+                const actionBtn = this.elements.actionBtn;
+                if (actionBtn) {
+                    actionBtn.innerText = 'Siguiente Palabra';
+                    actionBtn.onclick = () => this.startWordleGame();
+                }
+                if (!isCorrect && this.elements.mainText) {
+                    this.elements.mainText.innerText = `${this.lastSpanishText} -> ${this.wordleTarget}`;
+                }
+            }, 1000);
+        }
+    }
+
+    _updateWordleGrid() {
+        const rows = this.elements.wordleArea.querySelectorAll('.wordle-row');
+
+        // Update submitted guesses
+        this.wordleGuesses.forEach((guess, i) => {
+            const row = rows[i];
+            row.classList.add('filled');
+            const tiles = row.querySelectorAll('.wordle-tile');
+
+            // Simplified Wordle logic for coloring
+            const targetArr = this.wordleTarget.split('');
+            const guessArr = guess.split('');
+            const status = new Array(guess.length).fill('absent');
+
+            // 1. Correct (Green)
+            guessArr.forEach((char, idx) => {
+                if (char === targetArr[idx]) {
+                    status[idx] = 'correct';
+                    targetArr[idx] = null;
+                }
+            });
+
+            // 2. Present (Yellow)
+            guessArr.forEach((char, idx) => {
+                if (status[idx] === 'absent') {
+                    const foundIdx = targetArr.indexOf(char);
+                    if (foundIdx !== -1) {
+                        status[idx] = 'present';
+                        targetArr[foundIdx] = null;
+                    }
+                }
+            });
+
+            tiles.forEach((tile, idx) => {
+                tile.innerText = guess[idx];
+                tile.className = `wordle-tile ${status[idx]}`;
+
+                // Update keyboard
+                const keyBtn = this.elements.wordleArea.querySelector(`.key-btn[data-key="${guess[idx]}"]`);
+                if (keyBtn) {
+                    if (status[idx] === 'correct') {
+                        keyBtn.className = 'key-btn correct';
+                    } else if (status[idx] === 'present' && !keyBtn.classList.contains('correct')) {
+                        keyBtn.className = 'key-btn present';
+                    } else if (status[idx] === 'absent' && !keyBtn.classList.contains('correct') && !keyBtn.classList.contains('present')) {
+                        keyBtn.className = 'key-btn absent';
+                    }
+                }
+            });
+        });
+
+        // Update current active row
+        if (this.wordleGuesses.length < 6 && !this.wordleGameOver) {
+            const activeRow = rows[this.wordleGuesses.length];
+            const tiles = activeRow.querySelectorAll('.wordle-tile');
+            tiles.forEach((tile, i) => {
+                tile.innerText = this.wordleCurrentGuess[i] || "";
+                tile.className = 'wordle-tile' + (i === this.wordleCurrentGuess.length ? ' active' : '');
+            });
+        }
+    }
+
 
     startDictationQuestion() {
         const dictationArea = this.elements.dictationArea;

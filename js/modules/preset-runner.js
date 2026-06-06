@@ -37,7 +37,8 @@ export function initPreset(entries, formula) {
         timerVal: document.getElementById('timerVal'),
         historyList: document.getElementById('historyList'),
         matchArea: document.getElementById('matchArea'),
-        bubbleArea: document.getElementById('bubbleArea')
+        bubbleArea: document.getElementById('bubbleArea'),
+        wordleArea: document.getElementById('wordleArea')
     };
 
     engine = new StudyEngine({
@@ -58,7 +59,7 @@ export function initPreset(entries, formula) {
 
 function setupEventListeners() {
     // Mode Toggles
-    const modes = ['direct', 'flashcard', 'quiz', 'write', 'scrambled', 'timeAttack', 'match', 'bubble'];
+    const modes = ['direct', 'flashcard', 'quiz', 'write', 'scrambled', 'timeAttack', 'match', 'bubble', 'wordle'];
     modes.forEach(mode => {
         const btn = document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1));
         if (btn) {
