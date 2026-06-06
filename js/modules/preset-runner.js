@@ -195,8 +195,13 @@ function updateEntryUI() {
             if (third.startsWith('http')) imageUrl = third;
         }
         if (!imageUrl) {
-            const keyword = Utils.extractImageKeyword(en) || Utils.extractImageKeyword(es);
-            if (keyword) imageUrl = `https://loremflickr.com/400/300/${encodeURIComponent(keyword)}`;
+            const keyword = Utils.extractImageKeyword(en);
+            if (keyword) {
+                imageUrl = `https://loremflickr.com/400/300/${encodeURIComponent(keyword)}`;
+            } else {
+                // Fallback to the whole english text if no specific keyword was extracted
+                imageUrl = `https://loremflickr.com/400/300/${encodeURIComponent(en)}`;
+            }
         }
         
         imgEl.classList.remove('loaded');
