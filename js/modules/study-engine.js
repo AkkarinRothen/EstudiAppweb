@@ -9,6 +9,11 @@ import { BubbleGame } from './games/bubble.js';
 import { SniperGame } from './games/sniper.js';
 import { DragGame } from './games/drag.js';
 import { SentenceGame } from './games/sentence.js';
+import { QuizGame } from './games/quiz.js';
+import { WriteGame } from './games/write.js';
+import { ScrambledGame } from './games/scrambled.js';
+import { DictationGame } from './games/dictation.js';
+import { TimeAttackGame } from './games/timeAttack.js';
 
 export class StudyEngine {
     constructor({
@@ -33,6 +38,11 @@ export class StudyEngine {
         this.sniperGame = new SniperGame(this);
         this.dragGame = new DragGame(this);
         this.sentenceGame = new SentenceGame(this);
+        this.quizGame = new QuizGame(this);
+        this.writeGame = new WriteGame(this);
+        this.scrambledGame = new ScrambledGame(this);
+        this.dictationGame = new DictationGame(this);
+        this.timeAttackGame = new TimeAttackGame(this);
 
         // Internal State
         this.currentMode = 'direct';
@@ -290,7 +300,7 @@ export class StudyEngine {
 
     setMode(mode) {
         this.currentMode = mode;
-        this.stopTimeAttack();
+        this.timeAttackGame.stop();
         this.bubbleGame.stop();
         this.sniperGame.stop();
 
@@ -309,7 +319,6 @@ export class StudyEngine {
         if (this.elements.bubbleArea) this.elements.bubbleArea.style.display = 'none';
         if (this.elements.wordleArea) this.elements.wordleArea.style.display = 'none';
         if (this.elements.sentenceArea) this.elements.sentenceArea.style.display = 'none';
-        if (this.elements.launchpadArea) this.elements.launchpadArea.style.display = 'none';
 
         if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
@@ -344,11 +353,15 @@ export class StudyEngine {
             if (mode === 'quiz' || mode === 'write' || mode === 'scrambled') {
                 actionBtn.innerText = 'Siguiente Pregunta';
                 actionBtn.style.display = 'block';
-                actionBtn.onclick = () => this.nextQuestion();
+                actionBtn.onclick = () => {
+                    if (mode === 'quiz') this.quizGame.start();
+                    else if (mode === 'write') this.writeGame.start();
+                    else this.scrambledGame.start();
+                };
             } else if (mode === 'timeAttack') {
                 actionBtn.innerText = '¡Empezar contrarreloj!';
                 actionBtn.style.display = 'block';
-                actionBtn.onclick = () => this.startTimeAttack();
+                actionBtn.onclick = () => this.timeAttackGame.start();
                 if (this.elements.mainText) this.elements.mainText.innerText = "Prepárate...";
                 if (this.elements.rollVal) this.elements.rollVal.innerText = "Modo Contrarreloj";
             } else if (mode === 'match' || mode === 'bubble') {
@@ -369,7 +382,7 @@ export class StudyEngine {
             } else if (mode === 'dictation') {
                 actionBtn.innerText = 'Siguiente Dictado';
                 actionBtn.style.display = 'block';
-                actionBtn.onclick = () => this.startDictationQuestion();
+                actionBtn.onclick = () => this.dictationGame.start();
             } else if (mode === 'wordle') {
                 actionBtn.innerText = 'Pasar Palabra';
                 actionBtn.style.display = 'block';
@@ -390,11 +403,11 @@ export class StudyEngine {
             this.quizAttempts = 0;
             this.quizCorrect = 0;
             this.updateQuizScoreDisplay();
-            this.startQuizQuestion();
+            this.quizGame.start();
         } else if (mode === 'write') {
-            this.startWriteQuestion();
+            this.writeGame.start();
         } else if (mode === 'scrambled') {
-            this.startScrambledQuestion();
+            this.scrambledGame.start();
         } else if (mode === 'match') {
             this.matchGame.start();
         } else if (mode === 'bubble') {
@@ -404,7 +417,7 @@ export class StudyEngine {
         } else if (mode === 'drag') {
             this.dragGame.start();
         } else if (mode === 'dictation') {
-            this.startDictationQuestion();
+            this.dictationGame.start();
         } else if (mode === 'wordle') {
             this.wordleGame.start();
         } else if (mode === 'sentence') {
@@ -722,370 +735,16 @@ export class StudyEngine {
 
     nextQuestion() {
         if (this.currentMode === 'quiz') {
-            this.startQuizQuestion();
+            this.quizGame.start();
         } else if (this.currentMode === 'write') {
             const actionBtn = this.elements.actionBtn;
             if (actionBtn && actionBtn.innerText === 'Comprobar') {
-                this.checkWriteAnswer();
+                this.writeGame.checkAnswer();
             } else {
-                this.startWriteQuestion();
+                this.writeGame.start();
             }
         } else if (this.currentMode === 'scrambled') {
-            this.startScrambledQuestion();
-        }
-    }
-
-    startQuizQuestion() {
-        if (this.entries.length < 2) {
-            if (this.elements.mainText) this.elements.mainText.innerText = "Se necesitan al menos 2 elementos para jugar.";
-            return;
-        }
-
-        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
-        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
-        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
-        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
-        if (this.elements.writeArea) this.elements.writeArea.style.display = 'none';
-        if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
-        if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
-
-        const dummyTableData = { title: this.packId, entries: this.entries };
-        this.activeEntry = Srs.selectNextSrsEntry(dummyTableData, this.lastSpanishText);
-        if (!this.activeEntry) return;
-
-        const parts = this.activeEntry.text.split("->");
-        const spanish = parts[0].trim();
-        const english = parts.length > 1 ? parts[1].trim() : "";
-
-        this.setEntry(spanish, english);
-
-        if (this.elements.mainText) this.elements.mainText.innerText = spanish;
-
-        // Distractors
-        const options = [english];
-        const otherEntries = this.entries.filter(e => e.text.split("->")[0].trim() !== spanish);
-        const distractors = otherEntries
-            .map(e => e.text.split("->")[1]?.trim() || "")
-            .filter(txt => txt !== "" && txt !== english);
-        const uniqueDistractors = [...new Set(distractors)];
-
-        while (options.length < Math.min(4, uniqueDistractors.length + 1)) {
-            const randomDist = uniqueDistractors[Math.floor(Math.random() * uniqueDistractors.length)];
-            if (!options.includes(randomDist)) {
-                options.push(randomDist);
-            }
-        }
-
-        options.sort(() => Math.random() - 0.5);
-
-        const optionsContainer = this.elements.quizOptions;
-        if (optionsContainer) {
-            optionsContainer.innerHTML = '';
-            optionsContainer.style.display = 'flex';
-
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'quiz-option';
-                btn.innerText = opt;
-                btn.onclick = () => {
-                    const buttons = optionsContainer.querySelectorAll('.quiz-option');
-                    buttons.forEach(b => b.disabled = true);
-
-                    const isCorrect = (opt === english);
-                    this.quizAttempts++;
-
-                    if (isCorrect) {
-                        btn.classList.add('correct');
-                        this.quizCorrect++;
-                        this.speak();
-                        if (this.isTimeAttackActive) {
-                            this.timeAttackScore++;
-                            setTimeout(() => this.nextTimeAttackEntry(), 500);
-                        }
-                    } else {
-                        btn.classList.add('incorrect');
-                        buttons.forEach(b => {
-                            if (b.innerText === english) b.classList.add('correct');
-                        });
-                        if (this.isTimeAttackActive) {
-                            setTimeout(() => this.nextTimeAttackEntry(), 800);
-                        }
-                    }
-
-                    if (!this.isTimeAttackActive) {
-                        this.rateSrs(isCorrect);
-                        this.updateQuizScoreDisplay();
-                    }
-                };
-                optionsContainer.appendChild(btn);
-            });
-        }
-    }
-
-    startWriteQuestion() {
-        if (this.entries.length === 0) return;
-
-        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
-        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
-        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
-        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
-        if (this.elements.quizOptions) this.elements.quizOptions.style.display = 'none';
-        if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
-        if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
-
-        const dummyTableData = { title: this.packId, entries: this.entries };
-        this.activeEntry = Srs.selectNextSrsEntry(dummyTableData, this.lastSpanishText);
-        if (!this.activeEntry) return;
-
-        const parts = this.activeEntry.text.split("->");
-        const spanish = parts[0].trim();
-        const english = parts.length > 1 ? parts[1].trim() : "";
-
-        this.setEntry(spanish, english);
-
-        if (this.elements.mainText) this.elements.mainText.innerText = spanish;
-
-        const writeArea = this.elements.writeArea;
-        if (writeArea) writeArea.style.display = 'flex';
-
-        const input = this.elements.writeInput;
-        if (input) {
-            input.value = "";
-            input.disabled = false;
-            input.focus();
-            input.onkeydown = (e) => {
-                if (e.key === 'Enter') {
-                    this.checkWriteAnswer();
-                }
-            };
-        }
-
-        const feedback = this.elements.writeFeedback;
-        if (feedback) {
-            feedback.innerText = "";
-            feedback.className = "write-feedback";
-        }
-
-        const actionBtn = this.elements.actionBtn;
-        if (actionBtn) {
-            actionBtn.innerText = 'Comprobar';
-            actionBtn.onclick = () => this.checkWriteAnswer();
-        }
-    }
-
-    checkWriteAnswer() {
-        const input = this.elements.writeInput;
-        const feedback = this.elements.writeFeedback;
-        const actionBtn = this.elements.actionBtn;
-
-        if (!input || !feedback) return;
-
-        const typed = input.value.trim();
-        if (!typed) return;
-
-        input.disabled = true;
-
-        const correctOptions = this.lastEnglishText.split(/[/\;,]/).map(s => Utils.cleanText(s.trim()));
-        const typedClean = Utils.cleanText(typed);
-        const isCorrect = correctOptions.includes(typedClean);
-
-        this.rateSrs(isCorrect);
-
-        if (isCorrect) {
-            feedback.innerText = "¡Correcto! 🎉";
-            feedback.className = "write-feedback correct";
-            this.speak();
-        } else {
-            const diffMarkup = Utils.getDiffHighlight(typed, this.lastEnglishText.split(/[/\;,]/)[0].trim());
-            feedback.innerHTML = `Incorrecto. <br>Tu intento: <span style="font-weight:normal;">${diffMarkup}</span><br>Correcto: <strong>${this.lastEnglishText}</strong>`;
-            feedback.className = "write-feedback incorrect";
-            Fx.shake(input);
-        }
-
-        if (actionBtn) {
-            actionBtn.innerText = 'Siguiente Pregunta';
-            actionBtn.onclick = () => this.startWriteQuestion();
-        }
-    }
-
-    startScrambledQuestion() {
-        if (this.entries.length === 0) return;
-
-        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
-        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
-        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
-        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
-        if (this.elements.quizOptions) this.elements.quizOptions.style.display = 'none';
-        if (this.elements.writeArea) this.elements.writeArea.style.display = 'none';
-        if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';
-
-        const dummyTableData = { title: this.packId, entries: this.entries };
-        this.activeEntry = Srs.selectNextSrsEntry(dummyTableData, this.lastSpanishText);
-        if (!this.activeEntry) return;
-
-        const parts = this.activeEntry.text.split("->");
-        const spanish = parts[0].trim();
-        const english = parts.length > 1 ? parts[1].trim() : "";
-
-        this.setEntry(spanish, english);
-
-        if (this.elements.mainText) this.elements.mainText.innerText = spanish;
-
-        const scrambledArea = this.elements.scrambledArea;
-        if (!scrambledArea) return;
-        scrambledArea.innerHTML = '';
-        scrambledArea.style.display = 'flex';
-
-        const baseAnswer = english.split(/[/\;,]/)[0].trim();
-        const letters = baseAnswer.split('').filter(l => l !== ' ');
-        const shuffled = [...letters].sort(() => Math.random() - 0.5);
-
-        const slotsContainer = document.createElement('div');
-        slotsContainer.className = 'scrambled-slots';
-
-        const lettersContainer = document.createElement('div');
-        lettersContainer.className = 'scrambled-letters';
-
-        const slots = [];
-        baseAnswer.split('').forEach(char => {
-            const slot = document.createElement('div');
-            if (char === ' ') {
-                const space = document.createElement('div');
-                space.style.width = '20px';
-                slotsContainer.appendChild(space);
-            } else {
-                slot.className = 'scrambled-slot';
-                slots.push(slot);
-                slotsContainer.appendChild(slot);
-            }
-        });
-
-        shuffled.forEach((letter, index) => {
-            const tile = document.createElement('div');
-            tile.className = 'scrambled-tile';
-            tile.innerText = letter;
-            tile.dataset.letter = letter;
-            tile.dataset.index = index;
-
-            tile.onclick = () => {
-                if (tile.classList.contains('disabled')) return;
-
-                const emptySlot = slots.find(s => !s.hasChildNodes());
-                if (emptySlot) {
-                    const clone = tile.cloneNode(true);
-                    clone.onclick = () => {
-                        emptySlot.removeChild(clone);
-                        tile.classList.remove('disabled');
-                    };
-                    emptySlot.appendChild(clone);
-                    tile.classList.add('disabled');
-
-                    // Check if complete
-                    if (slots.every(s => s.hasChildNodes())) {
-                        const currentString = slots.map(s => s.firstChild.innerText).join('');
-                        const targetString = baseAnswer.replace(/\s/g, '');
-
-                        if (Utils.compareText(currentString, targetString)) {
-                            slots.forEach(s => s.firstChild.classList.add('correct'));
-                            this.rateSrs(true);
-                            this.speak();
-
-                            const actionBtn = this.elements.actionBtn;
-                            if (actionBtn) {
-                                actionBtn.innerText = 'Siguiente Pregunta';
-                                actionBtn.onclick = () => this.startScrambledQuestion();
-                            }
-                        } else {
-                            slots.forEach(s => s.firstChild.classList.add('incorrect'));
-                            setTimeout(() => {
-                                slots.forEach(s => {
-                                    if (s.firstChild) s.removeChild(s.firstChild);
-                                });
-                                scrambledArea.querySelectorAll('.scrambled-tile').forEach(t => t.classList.remove('disabled'));
-                            }, 1000);
-                        }
-                    }
-                }
-            };
-            lettersContainer.appendChild(tile);
-        });
-
-        scrambledArea.appendChild(slotsContainer);
-        scrambledArea.appendChild(lettersContainer);
-
-        const actionBtn = this.elements.actionBtn;
-        if (actionBtn) {
-            actionBtn.innerText = 'Pasar / No sé';
-            actionBtn.onclick = () => {
-                this.rateSrs(false);
-                this.startScrambledQuestion();
-            };
-        }
-    }
-
-    startTimeAttack() {
-        this.isTimeAttackActive = true;
-        this.timeLeft = 60;
-        this.timeAttackScore = 0;
-
-        Fx.playSound('transition');
-
-        const timerVal = this.elements.timerVal;
-        const timerContainer = this.elements.timerContainer;
-        if (timerVal) timerVal.innerText = this.timeLeft + "s";
-        if (timerContainer) timerContainer.style.display = 'flex';
-        
-        const actionBtn = this.elements.actionBtn;
-        if (actionBtn) actionBtn.style.display = 'none';
-
-        this.nextTimeAttackEntry();
-
-        this.timerInterval = setInterval(() => {
-            this.timeLeft--;
-            if (timerVal) timerVal.innerText = this.timeLeft + "s";
-            if (this.timeLeft <= 0) {
-                this.stopTimeAttack();
-                this.showTimeAttackResults();
-            }
-        }, 1000);
-    }
-
-    stopTimeAttack() {
-        this.isTimeAttackActive = false;
-        if (this.timerInterval) clearInterval(this.timerInterval);
-        this.timerInterval = null;
-        const actionBtn = this.elements.actionBtn;
-        if (actionBtn) actionBtn.style.display = 'block';
-    }
-
-    nextTimeAttackEntry() {
-        if (!this.isTimeAttackActive) return;
-        this.startQuizQuestion();
-    }
-
-    showTimeAttackResults() {
-        const scrambledArea = this.elements.scrambledArea;
-
-        Fx.playSound('victory');
-        Fx.celebrate('burst');
-
-        if (scrambledArea) {
-            scrambledArea.innerHTML = `
-                <div class="time-attack-results">
-                    <div class="results-label">¡Tiempo agotado!</div>
-                    <div class="results-score">${this.timeAttackScore}</div>
-                    <div class="results-label">Aciertos</div>
-                </div>
-            `;
-            scrambledArea.style.display = 'flex';
-        }
-        if (this.elements.mainText) this.elements.mainText.innerText = "Fin del Juego";
-        if (this.elements.quizOptions) this.elements.quizOptions.style.display = 'none';
-
-        const actionBtn = this.elements.actionBtn;
-        if (actionBtn) {
-            actionBtn.innerText = 'Volver a intentar';
-            actionBtn.onclick = () => this.setMode('timeAttack');
+            this.scrambledGame.start();
         }
     }
 
@@ -1180,102 +839,5 @@ export class StudyEngine {
         item.className = 'history-item';
         item.innerHTML = `<span>${es}</span><strong>${en}</strong>`;
         list.prepend(item);
-    }
-
-    startDictationQuestion() {
-        const dictationArea = this.elements.dictationArea;
-        if (!dictationArea) return;
-
-        dictationArea.innerHTML = '';
-        dictationArea.style.display = 'flex';
-
-        if (this.entries.length === 0) {
-            dictationArea.innerHTML = '<div class="info">No hay vocablos disponibles.</div>';
-            return;
-        }
-
-        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
-        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
-        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
-        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
-
-        // Select entry using SRS
-        const dummyTableData = { title: this.packId, entries: this.entries };
-        const entry = Srs.selectNextSrsEntry(dummyTableData, this.lastSpanishText);
-        if (!entry) return;
-
-        const parts = entry.text.split('->');
-        const es = parts[0].trim();
-        const en = parts[1]?.split('||')[0].trim() || '';
-        this.lastSpanishText = es;
-        this.lastEnglishText = en;
-
-        if (this.elements.mainText) this.elements.mainText.innerText = '🎵 Escucha y escribe en español';
-
-        dictationArea.innerHTML = `
-            <div class="dictation-instructions">Escucha la pronunciación en inglés y escribe la traducción al español</div>
-            <button class="dictation-replay-btn" id="dictationReplayBtn">🔊 Escuchar de nuevo</button>
-            <input type="text" class="dictation-input" id="dictationInput" placeholder="Escribe la traducción en español..." autocomplete="off">
-            <div class="dictation-feedback" id="dictationFeedback"></div>
-            <button class="srs-btn srs-btn-good" id="dictationCheckBtn" style="width:auto;padding:10px 24px;margin-top:8px;">✅ Verificar</button>
-        `;
-
-        dictationArea.style.display = 'flex';
-
-        // Auto-speak
-        setTimeout(() => {
-            Speech.speak(en,
-                this.elements.voiceSelect?.value,
-                this.elements.speedSlider?.value
-            );
-        }, 400);
-
-        const replayBtn = dictationArea.querySelector('#dictationReplayBtn');
-        replayBtn.addEventListener('click', () => {
-            Speech.speak(en,
-                this.elements.voiceSelect?.value,
-                this.elements.speedSlider?.value
-            );
-        });
-
-        const checkFn = () => {
-            const inputEl = dictationArea.querySelector('#dictationInput');
-            const feedbackEl = dictationArea.querySelector('#dictationFeedback');
-            const val = Utils.cleanText(inputEl?.value || '');
-            const target = Utils.cleanText(es);
-
-            if (!val) return;
-
-            const isCorrect = Utils.compareText(val, target);
-
-            if (isCorrect) {
-                feedbackEl.innerHTML = `<span class="dictation-correct">✅ ¡Correcto! La traducción es <strong>${es}</strong></span>`;
-                inputEl.classList.add('dictation-input-correct');
-                inputEl.disabled = true;
-                this.rateSrs(true);
-                this.speak();
-            } else {
-                feedbackEl.innerHTML = `<span class="dictation-incorrect">❌ Era: <strong>${es}</strong></span>`;
-                inputEl.classList.add('dictation-input-wrong');
-                inputEl.disabled = true;
-                this.rateSrs(false);
-            }
-
-            // Show next button
-            const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
-            if (checkBtn) {
-                checkBtn.innerText = '➡️ Siguiente';
-                checkBtn.onclick = () => this.startDictationQuestion();
-            }
-        };
-
-        const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
-        checkBtn.addEventListener('click', checkFn);
-
-        const inputEl = dictationArea.querySelector('#dictationInput');
-        inputEl.focus();
-        inputEl.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') checkFn();
-        });
     }
 }

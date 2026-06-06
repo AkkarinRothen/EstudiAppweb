@@ -87,6 +87,9 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             <div id="quizOptions" class="quiz-container" style="display:none"></div>
             <div id="matchArea" class="match-container" style="display:none"></div>
             <div id="bubbleArea" class="bubble-container" style="display:none"></div>
+            <div id="sniperArea" class="sniper-container" style="display:none"></div>
+            <div id="dragArea" class="drag-container" style="display:none"></div>
+            <div id="dictationArea" class="dictation-container" style="display:none"></div>
             <div id="wordleArea" class="wordle-container" style="display:none"></div>
             <div id="sentenceArea" class="sentence-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
