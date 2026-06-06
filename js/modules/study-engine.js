@@ -322,6 +322,7 @@ export class StudyEngine {
 
         if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
+        if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
         if (this.elements.timerContainer) this.elements.timerContainer.style.display = (mode === 'timeAttack') ? 'flex' : 'none';
         
         if (this.elements.subContainer) {
