@@ -6,10 +6,11 @@ Este documento describe la arquitectura técnica del portal web de EstudiApp, ba
 
 1. **Modularización Estricta (ES6):** Toda la lógica de negocio y de UI debe residir en `js/modules/`. Los archivos HTML y los puntos de entrada (`main.js`, `admin.js`) deben ser lo más ligeros posible.
 2. **"Thin Client" para Presets:** Los archivos HTML en `presets/` no contienen lógica. Importan `preset-runner.js` que se encarga de renderizar la interactividad basándose en los metadatos y datos del pack.
-3. **Fuente de Verdad:** 
+3. **Web Components Nativos:** Los componentes complejos de la interfaz (ej. barra de nivel, modales) se encapsulan como *Custom Elements* usando Shadow DOM. Esto garantiza aislamiento de estilos y una estructura declarativa y reutilizable sin librerías externas.
+4. **Fuente de Verdad:** 
    - **Configuración:** `data/packs.json` define los packs disponibles.
    - **Persistencia:** `localStorage` (gestionado por `storage.js`) guarda el progreso del usuario (SRS) y preferencias.
-4. **Sin Dependencias Externas:** Se prioriza el uso de APIs nativas del navegador (Fetch, SpeechSynthesis, Crypto, ES Modules) para garantizar velocidad y portabilidad.
+5. **Sin Dependencias Externas:** Se prioriza el uso de APIs nativas del navegador (Fetch, SpeechSynthesis, Crypto, ES Modules, Web Components) para garantizar velocidad y portabilidad.
 
 ## Estructura de Capas
 

@@ -1,16 +1,16 @@
 // Spaced Repetition System (SRS) Logic Module
-import { getSrsData, saveSrsData, getStats, saveStats } from './storage.js';
+import { getSrsData, saveSrsData } from './storage.js';
+import { AppStore } from './state.js';
 
 /**
- * Validates and resets the study streak if the user missed a day (i.e., more than 1 day has passed since lastStudyDate).
+ * Validates and resets the study streak if the user missed a day.
  * @returns {Object} Updated stats
  */
 export function validateStreak() {
-    let stats = getStats();
+    let stats = AppStore.state.stats;
     if (!stats.lastStudyDate) {
         if (stats.streak !== 0) {
             stats.streak = 0;
-            saveStats(stats);
         }
         return stats;
     }
@@ -24,7 +24,6 @@ export function validateStreak() {
         
         if (diffDays > 1) {
             stats.streak = 0;
-            saveStats(stats);
         }
     }
     return stats;
@@ -33,10 +32,9 @@ export function validateStreak() {
 /**
  * Records a study attempt and updates global statistics
  * @param {boolean} isCorrect 
- * @param {Function} onUpdateStatsUI Callback to refresh UI
  */
-export function recordSrsAttempt(isCorrect, onUpdateStatsUI) {
-    let stats = getStats();
+export function recordSrsAttempt(isCorrect) {
+    let stats = AppStore.state.stats;
     stats.totalReviews++;
     if (isCorrect) stats.totalCorrect++;
 
@@ -59,18 +57,13 @@ export function recordSrsAttempt(isCorrect, onUpdateStatsUI) {
         }
         stats.lastStudyDate = todayStr;
     }
-    saveStats(stats);
-    if (onUpdateStatsUI) onUpdateStatsUI();
+    // Proxy handles save
 }
 
 /**
  * Updates the SRS status for a specific word
- * @param {string} packId 
- * @param {string} wordKey 
- * @param {boolean} isCorrect 
- * @param {Function} onUpdateStatsUI 
  */
-export function updateWordSrs(packId, wordKey, isCorrect, onUpdateStatsUI) {
+export function updateWordSrs(packId, wordKey, isCorrect) {
     if (!packId || !wordKey) return;
     let srsData = getSrsData();
     if (!srsData[packId]) srsData[packId] = {};
@@ -88,16 +81,16 @@ export function updateWordSrs(packId, wordKey, isCorrect, onUpdateStatsUI) {
     }
     
     // Set nextReview intervals
-    let interval = 60 * 1000; // 1 min (box 1)
-    if (entry.box === 2) interval = 10 * 60 * 1000; // 10 mins
-    else if (entry.box === 3) interval = 60 * 60 * 1000; // 1 hour
-    else if (entry.box === 4) interval = 24 * 60 * 60 * 1000; // 1 day
-    else if (entry.box === 5) interval = 4 * 24 * 60 * 60 * 1000; // 4 days
+    let interval = 60 * 1000; // 1 min
+    if (entry.box === 2) interval = 10 * 60 * 1000;
+    else if (entry.box === 3) interval = 60 * 60 * 1000;
+    else if (entry.box === 4) interval = 24 * 60 * 60 * 1000;
+    else if (entry.box === 5) interval = 4 * 24 * 60 * 60 * 1000;
     
     entry.nextReview = Date.now() + interval;
     saveSrsData(srsData);
     
-    recordSrsAttempt(isCorrect, onUpdateStatsUI);
+    recordSrsAttempt(isCorrect);
 }
 
 /**

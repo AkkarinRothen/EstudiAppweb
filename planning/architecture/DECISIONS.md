@@ -23,8 +23,10 @@ Este documento registra las decisiones técnicas críticas tomadas por los agent
 - **Racional:** Mantener el rendimiento "Thin Client" y la independencia offline.
 - **Consecuencias:** El Agente Explorador debe priorizar micro-librerías o implementaciones Vanilla JS.
 
-### 2026-06-06 | Agente de Arquitectura (CLI)
-- **Decisión:** Elevación del Agente de Evolución Frontend a Nivel "Staff Engineer".
-- **Racional:** Para liderar la modernización del proyecto, el agente requiere autoridad y habilidades en reactividad nativa (Proxy), Web Components y auditorías de seguridad proactivas.
 - **Consecuencias:** Se creó el script `scripts/audit_codebase.js` como herramienta de supervisión estructural. Este agente ahora prioriza la eliminación de deuda técnica sobre los cambios puramente estéticos.
+
+### 2026-06-06 | Agente de Arquitectura e Innovación (CTO)
+- **Decisión:** Implementación de Reactividad Nativa mediante JS Proxies.
+- **Racional:** Para eliminar la orquestación manual entre la lógica de negocio y la vista (evitando el "Manual Refresh Anti-pattern"), se ha creado un `AppStore` centralizado.
+- **Consecuencias:** Los módulos ya no necesitan llamar a funciones de refresco de UI. Al modificar el estado en el store, los componentes suscritos se actualizan solos. Esto reduce la probabilidad de bugs de inconsistencia visual y mejora la mantenibilidad.
 

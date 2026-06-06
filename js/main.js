@@ -10,6 +10,7 @@ import * as DecksPage from './modules/decks-page.js';
 import * as SupabaseSync from './modules/supabase-sync.js';
 import * as UiGamification from './modules/ui-gamification.js';
 import * as Difficulty from './modules/difficulty-manager.js';
+import { AppStore } from './modules/state.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatsUI();
     initAuth();
     initDifficultySettings();
+
+    // Suscribir la UI al almacén de estado reactivo
+    AppStore.subscribe(() => {
+        updateStatsUI();
+    });
 });
 
 // Registrar callback de sincronización al guardar datos locales
@@ -97,12 +103,6 @@ function updateStatsUI() {
         const prev = parseInt(reviewsEl.dataset.value || "0", 10);
         reviewsEl.dataset.value = stats.totalReviews;
         Utils.animateCounter(reviewsEl, prev, stats.totalReviews, 800, "", "");
-    }
-
-    // Renderizar Gamificación
-    const gamificationContainer = document.getElementById('gamificationContainer');
-    if (gamificationContainer) {
-        UiGamification.renderLevelBadge(gamificationContainer);
     }
 }
 

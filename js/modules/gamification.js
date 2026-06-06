@@ -5,6 +5,7 @@
 
 import * as Storage from './storage.js';
 import * as Fx from './fx.js';
+import { AppStore } from './state.js';
 
 // Configuration
 const XP_PER_CORRECT = 10;
@@ -13,11 +14,11 @@ const LEVEL_BASE_XP = 100;
 const LEVEL_MULTIPLIER = 1.2; // Each level requires 20% more XP than previous
 
 export function getProgression() {
-    return Storage.getProgression();
+    return AppStore.state.progression;
 }
 
 export function saveProgression(data) {
-    Storage.saveProgression(data);
+    AppStore.state.progression = data;
 }
 
 /**
@@ -32,7 +33,7 @@ export function getXpForLevel(level) {
  * Adds XP and handles level ups.
  */
 export function addXp(amount) {
-    const progression = getProgression();
+    const progression = AppStore.state.progression;
     progression.xp += amount;
 
     const nextLevelXp = getXpForLevel(progression.level + 1);
@@ -42,14 +43,13 @@ export function addXp(amount) {
         onLevelUp(progression.level);
     }
 
-    saveProgression(progression);
+    // Proxy automatically triggers persistence through state.js subscription
     return progression;
 }
 
 function onLevelUp(newLevel) {
     console.log(`🎉 ¡Subida de nivel! Ahora eres Nivel ${newLevel}`);
     Fx.showLevelUp(newLevel);
-    // Notification logic could go here
 }
 
 /**
@@ -80,8 +80,8 @@ const ACHIEVEMENTS = [
  * Checks and unlocks achievements based on recent events.
  */
 export function checkAchievements(gameStats = {}) {
-    const progression = getProgression();
-    const stats = Storage.getStats();
+    const progression = AppStore.state.progression;
+    const stats = AppStore.state.stats;
     let unlockedAny = false;
 
     ACHIEVEMENTS.forEach(ach => {
@@ -93,13 +93,10 @@ export function checkAchievements(gameStats = {}) {
         }
     });
 
-    if (unlockedAny) {
-        saveProgression(progression);
-    }
+    // Proxy automatically handles save if achievements changed
 }
 
 function onAchievementUnlocked(ach) {
     console.log(`🏆 Logro Desbloqueado: ${ach.name}`);
     Fx.celebrate('simple');
-    // In-game notification UI could be triggered here
 }

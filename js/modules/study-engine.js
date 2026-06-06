@@ -4,6 +4,7 @@ import * as Speech from './speech.js';
 import * as Utils from './utils.js';
 import * as Fx from './fx.js';
 import * as Gamification from './gamification.js';
+import './ui-launchpad.js';
 import { WordleGame } from './games/wordle.js';
 import { MatchGame } from './games/match.js';
 import { BubbleGame } from './games/bubble.js';
@@ -109,11 +110,21 @@ export class StudyEngine {
             if (btn) btn.style.display = 'flex';
             this.updateVisibility();
         } else {
-            this._renderLaunchpad();
+            area.innerHTML = `<estudiapp-launchpad current-mode="${this.currentMode}"></estudiapp-launchpad>`;
+            const lp = area.querySelector('estudiapp-launchpad');
+            
+            lp.addEventListener('mode-select', (e) => {
+                this.setMode(e.detail.modeId);
+            });
+
+            lp.addEventListener('close', () => {
+                this.toggleLaunchpad();
+            });
+
             area.style.display = 'flex';
             if (btn) btn.style.display = 'none';
             
-            // Hide other areas
+            // Ocultar otras áreas
             if (this.elements.resultArea) this.elements.resultArea.style.display = 'none';
             if (this.elements.writeArea) this.elements.writeArea.style.display = 'none';
             if (this.elements.scrambledArea) this.elements.scrambledArea.style.display = 'none';
@@ -128,99 +139,6 @@ export class StudyEngine {
             
             Fx.animateEntrance(area);
         }
-    }
-
-    _renderLaunchpad() {
-        const area = this.elements.launchpadArea;
-        
-        area.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
-                <h3 style="margin:0; color:var(--primary); font-size:18px;">Modos de Estudio</h3>
-                <button id="closeLaunchpadBtn" class="speaker-btn" style="background:var(--surface-variant); color:var(--on-surface);">
-                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
-                </button>
-            </div>
-        `;
-
-        const closeBtn = area.querySelector('#closeLaunchpadBtn');
-        if (closeBtn) {
-            closeBtn.onclick = () => this.toggleLaunchpad();
-        }
-
-        const groups = [
-            {
-                title: '📖 Repaso inicial',
-                icon: '📚',
-                modes: [
-                    { id: 'direct', title: 'Modo Directo', desc: 'Estudio libre con dados.', icon: '🎲' },
-                    { id: 'flashcard', title: 'Flashcards', desc: 'Sistema clásico de tarjetas.', icon: '🎴' }
-                ]
-            },
-            {
-                title: '📝 Producción y Escritura',
-                icon: '✍️',
-                modes: [
-                    { id: 'write', title: 'Escritura', desc: 'Escribe la traducción exacta.', icon: '⌨️' },
-                    { id: 'scrambled', title: 'Letras', desc: 'Ordena las letras mezcladas.', icon: '🧩' },
-                    { id: 'dictation', title: 'Dictado', desc: 'Escucha y escribe lo que oyes.', icon: '🎧' },
-                    { id: 'wordle', title: 'Wordle', desc: 'Adivina la palabra en 6 intentos.', icon: '🧩' }
-                ]
-            },
-            {
-                title: '🧩 Conexión y Lógica',
-                icon: '🔗',
-                modes: [
-                    { id: 'quiz', title: 'Modo Quiz', desc: 'Elige la opción correcta.', icon: '✅' },
-                    { id: 'match', title: 'Memorama', desc: 'Empareja conceptos (Esp vs Ing).', icon: '🧠' },
-                    { id: 'drag', title: 'Conectar', desc: 'Une palabras con líneas.', icon: '🔗' },
-                    { id: 'diagram', title: 'Diagrama', desc: 'Arrastra etiquetas sobre el plano.', icon: '🏷️' }
-                ]
-            },
-            {
-                title: '🏗️ Gramática y Estructura',
-                icon: '🏗️',
-                modes: [
-                    { id: 'sentence', title: 'Constructor', desc: 'Ordena la frase de ejemplo.', icon: '🏗️' }
-                ]
-            },
-            {
-                title: '🎮 Desafío y Velocidad',
-                icon: '⚡',
-                modes: [
-                    { id: 'timeAttack', title: 'Contrarreloj', desc: 'Acierta todo lo que puedas en 60s.', icon: '⏱️' },
-                    { id: 'bubble', title: 'Burbujas', desc: 'Estalla las pompas correctas.', icon: '🫧' },
-                    { id: 'sniper', title: '🎯 Sniper', desc: 'Dispara a las palabras que caen.', icon: '🎯' }
-                ]
-            }
-        ];
-
-        groups.forEach(group => {
-            const groupEl = document.createElement('div');
-            groupEl.className = 'launchpad-group';
-            groupEl.innerHTML = `<div class="launchpad-group-title">${group.title}</div>`;
-
-            const grid = document.createElement('div');
-            grid.className = 'launchpad-grid';
-
-            group.modes.forEach(mode => {
-                const card = document.createElement('div');
-                card.className = 'mode-card' + (this.currentMode === mode.id ? ' active' : '');
-                card.innerHTML = `
-                    <div class="mode-card-header">
-                        <div class="mode-card-icon">${mode.icon}</div>
-                        <div class="mode-card-title">${mode.title}</div>
-                    </div>
-                    <div class="mode-card-desc">${mode.desc}</div>
-                `;
-                card.onclick = () => {
-                    this.setMode(mode.id);
-                };
-                grid.appendChild(card);
-            });
-
-            groupEl.appendChild(grid);
-            area.appendChild(groupEl);
-        });
     }
 
     toggleEdit() {
