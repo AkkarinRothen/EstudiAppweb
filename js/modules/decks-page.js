@@ -1,12 +1,17 @@
 // Decks Page Module — Unified deck management (official + custom) with folder explorer
 import * as Storage from './storage.js';
 import { animateCounter } from './utils.js';
-import { FOLDERS_CONFIG, DECK_FOLDER_MAPPINGS } from './folders-config.js';
+import { FOLDERS_CONFIG as DEFAULT_FOLDERS, DECK_FOLDER_MAPPINGS as DEFAULT_MAPPINGS } from './folders-config.js';
+import { AppStore } from './state.js';
 
 let allOfficialPacks = [];
 let currentFilter = 'Todos';
 let currentQuery = '';
 let currentFolderId = null; // null represents the root level
+
+// Dynamic config derived from Storage or Defaults
+let activeFolders = [];
+let activeMappings = {};
 
 // ─── Callbacks ────────────────────────────────────────────────────────────────
 
@@ -17,23 +22,37 @@ let _onDeleteCustomDeck = null;
 
 /**
  * Loads official packs from JSON and renders the unified explorer.
- * @param {Function} onOpenCustomDeck  Called with deckData when a CSV deck card is clicked
- * @param {Function} onDeleteCustomDeck Called with deckId when delete is triggered
  */
 export async function init(onOpenCustomDeck, onDeleteCustomDeck) {
     _onOpenCustomDeck = onOpenCustomDeck;
     _onDeleteCustomDeck = onDeleteCustomDeck;
 
+    console.log('📦 DecksPage: Iniciando explorador...');
+
     try {
         const res = await fetch('data/packs.json');
         allOfficialPacks = await res.json();
+        console.log(`✅ DecksPage: ${allOfficialPacks.length} packs oficiales cargados.`);
     } catch (e) {
-        console.error('Error loading packs.json:', e);
+        console.error('❌ DecksPage: Error cargando packs.json:', e);
         allOfficialPacks = [];
     }
 
+    // Cargar configuración de carpetas (priorizando Storage si el usuario usó el admin)
+    const adminState = Storage.getAdminState();
+    activeFolders = adminState.folders || DEFAULT_FOLDERS;
+    activeMappings = adminState.mappings || DEFAULT_MAPPINGS;
+
     setupFilters();
     setupSearch();
+
+    // Suscribirse al AppStore para re-renderizar si cambian las estadísticas o el progreso
+    AppStore.subscribe(() => {
+        console.log('🔄 DecksPage: Detectado cambio en el estado, refrescando...');
+        renderAll();
+        updateGlobalStats();
+    });
+
     renderAll();
     updateGlobalStats();
 }
@@ -49,8 +68,7 @@ export function refresh() {
 function setupSearch() {
     const input = document.getElementById('decksSearchInput') || document.getElementById('searchInput');
     if (!input) return;
-    
-    // Add dynamic input listener
+
     input.addEventListener('input', () => {
         currentQuery = input.value.toLowerCase().trim();
         renderAll();
@@ -63,7 +81,7 @@ function setupFilters() {
         chip.addEventListener('click', () => {
             chips.forEach(c => c.classList.remove('active'));
             chip.classList.add('active');
-            
+
             let filter = chip.dataset.filter;
             if (!filter) {
                 const text = chip.textContent;
@@ -74,16 +92,15 @@ function setupFilters() {
                 else if (text.includes('Personalizados')) filter = 'Personalizados';
                 else filter = 'Todos';
             }
-            
+
             currentFilter = filter;
-            
-            // If selecting Personalizados filter directly, enter that folder
+
             if (currentFilter === 'Personalizados') {
                 currentFolderId = 'personalizados';
             } else if (currentFolderId === 'personalizados' && currentFilter !== 'Todos') {
                 currentFolderId = null;
             }
-            
+
             renderAll();
         });
     });
@@ -94,7 +111,7 @@ function setupFilters() {
 function renderAll() {
     const isSearchActive = currentQuery.length > 0;
     const isFilterActive = currentFilter !== 'Todos' && currentFilter !== 'Personalizados';
-    
+
     if (isSearchActive || isFilterActive) {
         renderFlattened();
     } else {
@@ -108,21 +125,20 @@ function renderExplorer() {
     const grid = document.getElementById('explorerGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    
+
     const breadcrumbs = document.getElementById('explorerBreadcrumbs');
     const srsData = Storage.getSrsData();
-    
-    // 1. Render Breadcrumbs
+
     renderBreadcrumbs(breadcrumbs);
-    
-    // 2. Filter subfolders
-    const currentFolders = FOLDERS_CONFIG.filter(f => f.parentId === currentFolderId);
-    
-    // 3. Get decks in current folder
+
+    // 1. Filtrar subcarpetas
+    const currentFolders = activeFolders.filter(f => f.parentId === currentFolderId);
+
+    // 2. Obtener mazos en la carpeta actual
     const { officialList, customList } = getDecksForFolder(currentFolderId);
-    
+
     const totalItems = currentFolders.length + officialList.length + customList.length;
-    
+
     if (totalItems === 0) {
         if (currentFolderId === 'personalizados') {
             grid.innerHTML = buildCustomEmptyState();
@@ -132,41 +148,32 @@ function renderExplorer() {
         showNoResultsState(false);
         return;
     }
-    
+
     showNoResultsState(false);
     let elementIndex = 0;
-    
-    // 4. Render Folders
+
+    // 3. Renderizar Carpetas
     currentFolders.forEach(folder => {
         const counts = getFolderContentsCount(folder.id);
         const countLabel = formatFolderContentsLabel(counts);
         const folderWrapper = document.createElement('div');
         folderWrapper.innerHTML = buildFolderCardHTML(folder, countLabel);
-        
+
         const element = folderWrapper.firstElementChild;
         element.style.setProperty('--i', elementIndex);
         element.style.animationDelay = `${elementIndex * 30}ms`;
         grid.appendChild(element);
-        
-        // Navigation click
+
         element.addEventListener('click', () => {
             currentFolderId = folder.id;
-            
-            // Sync filter chips: if entering 'personalizados' folder, activate that chip
+
             const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
             chips.forEach(c => {
                 c.classList.remove('active');
-                
-                let isPersonalizados = false;
-                if (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados')) {
-                    isPersonalizados = true;
-                }
-                
-                let isTodos = false;
-                if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
-                    isTodos = true;
-                }
-                
+
+                let isPersonalizados = (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados'));
+                let isTodos = (c.dataset.filter === 'Todos' || c.textContent.includes('Todos'));
+
                 if (folder.id === 'personalizados' && isPersonalizados) {
                     c.classList.add('active');
                     currentFilter = 'Personalizados';
@@ -175,17 +182,17 @@ function renderExplorer() {
                     currentFilter = 'Todos';
                 }
             });
-            
+
             renderAll();
-            
+
             const expSec = document.getElementById('explorerSection');
             if (expSec) expSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-        
+
         elementIndex++;
     });
-    
-    // 5. Render Official Decks
+
+    // 4. Renderizar Mazos Oficiales
     officialList.forEach(pack => {
         const { percent, encountered, mastered } = computePackStats(pack.id, srsData);
         const card = document.createElement('a');
@@ -198,25 +205,25 @@ function renderExplorer() {
         grid.appendChild(card);
         elementIndex++;
     });
-    
-    // 6. Render Custom Decks
+
+    // 5. Renderizar Mazos Personalizados
     customList.forEach(deck => {
         const packId = 'csv_' + deck.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
         const { percent, encountered, mastered } = computePackStats(packId, srsData);
         const wordCount = deck.entries ? deck.entries.length : 0;
-        
+
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);
         grid.appendChild(card);
-        
+
         const clickArea = card.querySelector('.deck-card-click');
         if (clickArea && _onOpenCustomDeck) {
             clickArea.addEventListener('click', () => _onOpenCustomDeck(deck));
         }
-        
+
         const delBtn = card.querySelector('.deck-delete-btn');
         if (delBtn && _onDeleteCustomDeck) {
             delBtn.addEventListener('click', (e) => {
@@ -228,17 +235,16 @@ function renderExplorer() {
     });
 }
 
-// ─── Flattened Mode: Dynamic query/filter search results ─────────────────────
+// ─── Flattened Mode ──────────────────────────────────────────────────────────
 
 function renderFlattened() {
     const grid = document.getElementById('explorerGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    
+
     const srsData = Storage.getSrsData();
     const customDecks = Storage.getCustomDecks();
-    
-    // Filter official packs
+
     let filteredOfficials = [];
     if (currentFilter !== 'Personalizados') {
         filteredOfficials = allOfficialPacks.filter(p => {
@@ -250,8 +256,7 @@ function renderFlattened() {
             return matchesLevel && matchesQuery;
         });
     }
-    
-    // Filter custom decks
+
     let filteredCustom = [];
     if (currentFilter === 'Todos' || currentFilter === 'Personalizados') {
         filteredCustom = customDecks.filter(deck => {
@@ -261,55 +266,44 @@ function renderFlattened() {
             return matchesQuery;
         });
     }
-    
+
     const totalCount = filteredOfficials.length + filteredCustom.length;
-    
-    // Render breadcrumbs with dynamic search status
     const breadcrumbs = document.getElementById('explorerBreadcrumbs');
     if (breadcrumbs) {
         let filterLabel = currentFilter === 'Todos' ? 'Todos los niveles' : `Nivel ${currentFilter}`;
         if (currentFilter === 'Personalizados') filterLabel = 'Mazos Personalizados';
-        
+
         breadcrumbs.innerHTML = `
             <span class="breadcrumb-item" id="btnBackToExplorer">← Volver al Explorador</span>
             <span class="breadcrumb-separator">/</span>
             <span class="breadcrumb-item active">Resultados (${filterLabel}${currentQuery ? `: "${currentQuery}"` : ''})</span>
         `;
-        
+
         document.getElementById('btnBackToExplorer').onclick = () => {
-            // Reset state
             const searchInput = document.getElementById('decksSearchInput') || document.getElementById('searchInput');
             if (searchInput) searchInput.value = '';
             currentQuery = '';
-            
+
             const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
             chips.forEach(c => {
                 c.classList.remove('active');
-                
-                let isTodos = false;
-                if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
-                    isTodos = true;
-                }
-                
-                if (isTodos) c.classList.add('active');
+                if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) c.classList.add('active');
             });
             currentFilter = 'Todos';
             currentFolderId = null;
-            
             renderAll();
         };
     }
-    
+
     if (totalCount === 0) {
         grid.innerHTML = '<p class="decks-empty-inline">No se encontraron mazos que coincidan con la búsqueda.</p>';
         showNoResultsState(true);
         return;
     }
-    
+
     showNoResultsState(false);
     let elementIndex = 0;
-    
-    // Render officials
+
     filteredOfficials.forEach(pack => {
         const { percent, encountered, mastered } = computePackStats(pack.id, srsData);
         const card = document.createElement('a');
@@ -322,25 +316,24 @@ function renderFlattened() {
         grid.appendChild(card);
         elementIndex++;
     });
-    
-    // Render customs
+
     filteredCustom.forEach(deck => {
         const packId = 'csv_' + deck.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
         const { percent, encountered, mastered } = computePackStats(packId, srsData);
         const wordCount = deck.entries ? deck.entries.length : 0;
-        
+
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);
         grid.appendChild(card);
-        
+
         const clickArea = card.querySelector('.deck-card-click');
         if (clickArea && _onOpenCustomDeck) {
             clickArea.addEventListener('click', () => _onOpenCustomDeck(deck));
         }
-        
+
         const delBtn = card.querySelector('.deck-delete-btn');
         if (delBtn && _onDeleteCustomDeck) {
             delBtn.addEventListener('click', (e) => {
@@ -357,44 +350,35 @@ function renderFlattened() {
 function renderBreadcrumbs(container) {
     if (!container) return;
     container.innerHTML = '';
-    
+
     const trail = [{ id: null, title: 'Inicio' }];
-    
+
     if (currentFolderId !== null) {
         const path = [];
-        let current = FOLDERS_CONFIG.find(f => f.id === currentFolderId);
+        let current = activeFolders.find(f => f.id === currentFolderId);
         while (current) {
             path.unshift(current);
-            current = FOLDERS_CONFIG.find(f => f.id === current.parentId);
+            current = activeFolders.find(f => f.id === current.parentId);
         }
         trail.push(...path);
     }
-    
+
     trail.forEach((item, index) => {
         const isLast = index === trail.length - 1;
         const span = document.createElement('span');
         span.className = `breadcrumb-item ${isLast ? 'active' : ''}`;
         span.textContent = item.title;
-        
+
         if (!isLast) {
             span.addEventListener('click', () => {
                 currentFolderId = item.id;
-                
-                // Sync filter chips
+
                 const chips = document.querySelectorAll('.decks-filter-chip, .filter-chip');
                 chips.forEach(c => {
                     c.classList.remove('active');
-                    
-                    let isPersonalizados = false;
-                    if (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados')) {
-                        isPersonalizados = true;
-                    }
-                    
-                    let isTodos = false;
-                    if (c.dataset.filter === 'Todos' || c.textContent.includes('Todos')) {
-                        isTodos = true;
-                    }
-                    
+                    let isPersonalizados = (c.dataset.filter === 'Personalizados' || c.textContent.includes('Personalizados'));
+                    let isTodos = (c.dataset.filter === 'Todos' || c.textContent.includes('Todos'));
+
                     if (item.id === 'personalizados' && isPersonalizados) {
                         c.classList.add('active');
                         currentFilter = 'Personalizados';
@@ -403,13 +387,13 @@ function renderBreadcrumbs(container) {
                         currentFilter = 'Todos';
                     }
                 });
-                
+
                 renderAll();
             });
         }
-        
+
         container.appendChild(span);
-        
+
         if (!isLast) {
             const sep = document.createElement('span');
             sep.className = 'breadcrumb-separator';
@@ -420,14 +404,14 @@ function renderBreadcrumbs(container) {
 }
 
 function getFolderContentsCount(folderId) {
-    const subfolders = FOLDERS_CONFIG.filter(f => f.parentId === folderId);
-    
+    const subfolders = activeFolders.filter(f => f.parentId === folderId);
+
     let mazoCount = 0;
     let tablaCount = 0;
     let cartaCount = 0;
-    
+
     const { officialList, customList } = getDecksForFolder(folderId);
-    
+
     const allItems = [...officialList, ...customList];
     allItems.forEach(item => {
         const type = (item.type || 'tabla').toLowerCase();
@@ -435,42 +419,32 @@ function getFolderContentsCount(folderId) {
         else if (type === 'tabla') tablaCount++;
         else if (type === 'carta') cartaCount++;
     });
-    
+
     subfolders.forEach(sub => {
         const subCounts = getFolderContentsCount(sub.id);
         mazoCount += subCounts.mazo;
         tablaCount += subCounts.tabla;
         cartaCount += subCounts.carta;
     });
-    
+
     return { mazo: mazoCount, tabla: tablaCount, carta: cartaCount };
 }
 
 function formatFolderContentsLabel(counts) {
     const parts = [];
-    if (counts.mazo > 0) {
-        parts.push(counts.mazo === 1 ? '1 mazo' : `${counts.mazo} mazos`);
-    }
-    if (counts.tabla > 0) {
-        parts.push(counts.tabla === 1 ? '1 tabla' : `${counts.tabla} tablas`);
-    }
-    if (counts.carta > 0) {
-        parts.push(counts.carta === 1 ? '1 carta' : `${counts.carta} cartas`);
-    }
-    if (parts.length === 0) {
-        return 'Vacío';
-    }
-    return parts.join(', ');
+    if (counts.mazo > 0) parts.push(counts.mazo === 1 ? '1 mazo' : `${counts.mazo} mazos`);
+    if (counts.tabla > 0) parts.push(counts.tabla === 1 ? '1 tabla' : `${counts.tabla} tablas`);
+    if (counts.carta > 0) parts.push(counts.carta === 1 ? '1 carta' : `${counts.carta} cartas`);
+    return parts.length === 0 ? 'Vacío' : parts.join(', ');
 }
 
 function getDecksForFolder(folderId) {
     const customDecks = Storage.getCustomDecks();
     let officialList = [];
     let customList = [];
-    
+
     if (folderId === 'generales') {
         officialList = allOfficialPacks.filter(pack => (pack.type || 'tabla').toLowerCase() === 'mazo');
-        customList = [];
     } else if (folderId === 'tablas') {
         officialList = allOfficialPacks.filter(pack => {
             const type = (pack.type || 'tabla').toLowerCase();
@@ -480,37 +454,35 @@ function getDecksForFolder(folderId) {
     } else if (folderId === 'personalizados') {
         customList = customDecks;
     } else if (folderId === null) {
-        // Root Level: Show decks that ARE NOT in any folder
+        // Root Level
         officialList = allOfficialPacks.filter(pack => {
-            const folders = DECK_FOLDER_MAPPINGS[pack.id] || [];
+            const folders = activeMappings[pack.id] || [];
             return folders.length === 0;
         });
-        
+
         customList = customDecks.filter(deck => {
             const folders = deck.folders || [];
             return folders.length === 0;
         });
     } else {
-        // Inside a specific folder
+        // Inside specific folder
         officialList = allOfficialPacks.filter(pack => {
-            const folders = DECK_FOLDER_MAPPINGS[pack.id] || [];
+            const folders = activeMappings[pack.id] || [];
             return folders.includes(folderId);
         });
-        
+
         customList = customDecks.filter(deck => {
             const folders = deck.folders || [];
             return folders.includes(folderId);
         });
     }
-    
+
     return { officialList, customList };
 }
 
 function showNoResultsState(visible) {
     const noResults = document.getElementById('decksNoResults');
-    if (noResults) {
-        noResults.style.display = visible ? 'flex' : 'none';
-    }
+    if (noResults) noResults.style.display = visible ? 'flex' : 'none';
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -530,7 +502,7 @@ function computePackStats(packId, srsData) {
 }
 
 function updateGlobalStats() {
-    const stats = Storage.getStats();
+    const stats = AppStore.state.stats;
     const srsData = Storage.getSrsData();
 
     let totalEncountered = 0;
@@ -542,14 +514,12 @@ function updateGlobalStats() {
         });
     });
 
-    const masteryPercent = totalEncountered > 0
-        ? Math.round((totalMastered / totalEncountered) * 100) : 0;
+    const masteryPercent = totalEncountered > 0 ? Math.round((totalMastered / totalEncountered) * 100) : 0;
 
-    const streakEl = document.getElementById('decksStatStreak') || document.getElementById('statStreak');
-    const dominioEl = document.getElementById('decksStatDominio') || document.getElementById('statDominio');
-    const progressEl = document.getElementById('decksStatProgress') || document.getElementById('statProgressFill');
-    const repasoEl = document.getElementById('decksStatRepasos') || document.getElementById('statRepasos');
-    const totalDecksEl = document.getElementById('decksStatTotal');
+    const streakEl = document.getElementById('statStreak');
+    const dominioEl = document.getElementById('statDominio');
+    const progressEl = document.getElementById('statProgressFill');
+    const repasoEl = document.getElementById('statRepasos');
 
     if (streakEl) {
         const prev = parseInt(streakEl.dataset.value || "0", 10);
@@ -561,20 +531,11 @@ function updateGlobalStats() {
         dominioEl.dataset.value = masteryPercent;
         animateCounter(dominioEl, prev, masteryPercent, 800, "", "%");
     }
-    if (progressEl) {
-        progressEl.style.width = `${masteryPercent}%`;
-    }
+    if (progressEl) progressEl.style.width = `${masteryPercent}%`;
     if (repasoEl) {
         const prev = parseInt(repasoEl.dataset.value || "0", 10);
         repasoEl.dataset.value = stats.totalReviews;
         animateCounter(repasoEl, prev, stats.totalReviews, 800, "", "");
-    }
-    if (totalDecksEl) {
-        const customCount = Storage.getCustomDecks().length;
-        const totalVal = allOfficialPacks.length + customCount;
-        const prev = parseInt(totalDecksEl.dataset.value || "0", 10);
-        totalDecksEl.dataset.value = totalVal;
-        animateCounter(totalDecksEl, prev, totalVal, 800, "", "");
     }
 }
 
@@ -582,18 +543,11 @@ function updateGlobalStats() {
 
 function buildFolderCardHTML(folder, countLabel) {
     const coverUrl = `https://loremflickr.com/400/180/${encodeURIComponent(folder.coverKeyword)}`;
-    
     return `
         <div class="folder-card-wrapper folder-${folder.color}" data-folder-id="${folder.id}">
             <div class="folder-tab"></div>
             <div class="folder-card">
-                <img
-                    class="folder-cover-img"
-                    src="${coverUrl}"
-                    alt="${folder.title}"
-                    loading="lazy"
-                    onload="this.classList.add('loaded');"
-                >
+                <img class="folder-cover-img" src="${coverUrl}" alt="${folder.title}" loading="lazy" onload="this.classList.add('loaded');">
                 <div class="folder-cover-overlay"></div>
                 <div class="folder-content">
                     <div class="folder-header">
@@ -613,32 +567,25 @@ function buildFolderCardHTML(folder, countLabel) {
 
 function getResourceTypeBadgeHTML(type) {
     const t = (type || 'tabla').toLowerCase();
-    if (t === 'carta') return `<span class="badge-resource-type badge-type-carta">🎴 Carta</span>`;
-    if (t === 'mazo') return `<span class="badge-resource-type badge-type-mazo">🗂️ Mazo</span>`;
-    return `<span class="badge-resource-type badge-type-tabla">📋 Tabla</span>`;
+    if (t === 'carta') return '<span class="badge-resource-type badge-type-carta">🎴 Carta</span>';
+    if (t === 'mazo') return '<span class="badge-resource-type badge-type-mazo">🗂️ Mazo</span>';
+    return '<span class="badge-resource-type badge-type-tabla">📋 Tabla</span>';
 }
 
 function getPackIcon(title, category) {
     const text = (title + ' ' + category).toLowerCase();
     if (text.includes('salud') || text.includes('health') || text.includes('médico')) return '🏥';
-    if (text.includes('comida') || text.includes('restaurante') || text.includes('food') || text.includes('supermercado')) return '🍎';
-    if (text.includes('viaje') || text.includes('aeropuerto') || text.includes('airport') || text.includes('hotel')) return '✈️';
-    if (text.includes('ocio') || text.includes('hobby') || text.includes('game') || text.includes('juego')) return '🎮';
-    if (text.includes('academico') || text.includes('estudio') || text.includes('school') || text.includes('reuniones')) return '📚';
-    if (text.includes('rutina') || text.includes('time') || text.includes('tiempo')) return '⏰';
-    if (text.includes('saludo') || text.includes('cortesia')) return '👋';
-    if (text.includes('digital') || text.includes('web') || text.includes('tech')) return '💻';
-    if (text.includes('direcciones') || text.includes('mapa')) return '📍';
+    if (text.includes('comida') || text.includes('restaurante') || text.includes('food')) return '🍎';
+    if (text.includes('viaje') || text.includes('aeropuerto') || text.includes('airport')) return '✈️';
+    if (text.includes('ocio') || text.includes('hobby')) return '🎮';
+    if (text.includes('academico') || text.includes('estudio')) return '📚';
+    if (text.includes('rutina') || text.includes('time')) return '⏰';
     return '📋';
 }
 
 function buildOfficialCardHTML(pack, percent, encountered, mastered = 0) {
-    const reviewedLabel = encountered > 0
-        ? `${encountered} palabras`
-        : 'Sin iniciar';
-
+    const reviewedLabel = encountered > 0 ? `${encountered} palabras` : 'Sin iniciar';
     const icon = getPackIcon(pack.title, pack.category);
-
     return `
         <div class="deck-card-badges-row">
             ${getResourceTypeBadgeHTML(pack.type)}
@@ -672,12 +619,8 @@ function buildOfficialCardHTML(pack, percent, encountered, mastered = 0) {
 }
 
 function buildCustomCardHTML(deck, percent, encountered, wordCount, mastered = 0) {
-    const reviewedLabel = encountered > 0
-        ? `${encountered} palabras`
-        : 'Sin iniciar';
-
+    const reviewedLabel = encountered > 0 ? `${encountered} palabras` : 'Sin iniciar';
     const wordLabel = wordCount > 0 ? `${wordCount} palabras` : '';
-
     return `
         <div class="deck-card-badges-row">
             ${getResourceTypeBadgeHTML(deck.type || 'tabla')}

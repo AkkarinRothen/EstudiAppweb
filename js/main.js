@@ -14,7 +14,7 @@ import { AppStore } from './modules/state.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    UiModal.init(updateStatsUI);
+    UiModal.init(); 
     DecksPage.init(UiModal.openPracticeModal, deleteCustomDeck);
     setupDragAndDrop();
     setupEventListeners();
@@ -45,10 +45,7 @@ function setupEventListeners() {
     // Modal Controls
     const closeBtn = document.querySelector('.close-btn');
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => UiModal.closeModal(() => {
-            DecksPage.refresh();
-            updateStatsUI();
-        }));
+        closeBtn.addEventListener('click', () => UiModal.closeModal());
     }
 
     const saveLocalBtn = document.getElementById('modalBtnSaveLocal');
