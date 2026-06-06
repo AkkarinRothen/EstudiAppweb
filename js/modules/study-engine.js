@@ -132,6 +132,13 @@ export class StudyEngine {
                 ]
             },
             {
+                title: '🏗️ Gramática y Estructura',
+                icon: '🏗️',
+                modes: [
+                    { id: 'sentence', title: 'Constructor', desc: 'Ordena la frase de ejemplo.', icon: '🏗️' }
+                ]
+            },
+            {
                 title: '🎮 Desafío y Velocidad',
                 icon: '⚡',
                 modes: [
@@ -287,7 +294,9 @@ export class StudyEngine {
         if (this.elements.matchArea) this.elements.matchArea.style.display = 'none';
         if (this.elements.bubbleArea) this.elements.bubbleArea.style.display = 'none';
         if (this.elements.wordleArea) this.elements.wordleArea.style.display = 'none';
-        if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
+        if (this.elements.sentenceArea) this.elements.sentenceArea.style.display = 'none';
+        if (this.elements.launchpadArea) this.elements.launchpadArea.style.display = 'none';
+
         if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
         if (this.elements.timerContainer) this.elements.timerContainer.style.display = (mode === 'timeAttack') ? 'flex' : 'none';
@@ -351,6 +360,10 @@ export class StudyEngine {
                 actionBtn.innerText = 'Pasar Palabra';
                 actionBtn.style.display = 'block';
                 actionBtn.onclick = () => this.startWordleGame();
+            } else if (mode === 'sentence') {
+                actionBtn.innerText = 'Pasar Frase';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.startSentenceGame();
             } else {
                 actionBtn.innerText = 'Tirar Dado';
                 actionBtn.style.display = 'block';
@@ -380,6 +393,8 @@ export class StudyEngine {
             this.startDictationQuestion();
         } else if (mode === 'wordle') {
             this.startWordleGame();
+        } else if (mode === 'sentence') {
+            this.startSentenceGame();
         } else if (mode !== 'timeAttack') {
             if (this.lastEnglishText) {
                 if (this.elements.subText) this.elements.subText.innerText = this.lastEnglishText;
@@ -1906,7 +1921,137 @@ export class StudyEngine {
     }
 
 
-    startDictationQuestion() {
+    // 🏗️ CONSTRUCTOR DE FRASES ──────────────────────────────────────────────
+
+    startSentenceGame() {
+        const sentenceArea = this.elements.sentenceArea;
+        if (!sentenceArea) return;
+
+        // Find an entry that HAS an example sentence
+        const entriesWithExample = this.entries.filter(e => {
+            const parts = e.text.split("->");
+            return parts.length > 2 && !parts[2].trim().startsWith('http');
+        });
+
+        if (entriesWithExample.length === 0) {
+            if (this.elements.mainText) this.elements.mainText.innerText = "Este mazo no tiene frases de ejemplo.";
+            return;
+        }
+
+        this.activeEntry = entriesWithExample[Math.floor(Math.random() * entriesWithExample.length)];
+        const parts = this.activeEntry.text.split("->");
+        const spanish = parts[0].trim();
+        const englishExample = parts[2].trim();
+
+        this.lastSpanishText = spanish;
+        this.sentenceTargetWords = englishExample.split(/\s+/).filter(w => w.length > 0);
+        this.sentenceCurrentWords = [];
+        this.sentenceGameOver = false;
+
+        if (this.elements.mainText) this.elements.mainText.innerText = spanish;
+        if (this.elements.subContainer) this.elements.subContainer.style.display = 'none';
+        if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
+        if (this.elements.rollVal) this.elements.rollVal.style.display = 'none';
+        if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+        if (this.elements.exampleText) this.elements.exampleText.style.display = 'none';
+
+        sentenceArea.style.display = 'flex';
+        sentenceArea.innerHTML = `
+            <div class="sentence-target-slots" id="sentenceSlots"></div>
+            <div class="sentence-word-chips" id="sentenceChips"></div>
+        `;
+
+        const slotsContainer = sentenceArea.querySelector('#sentenceSlots');
+        const chipsContainer = sentenceArea.querySelector('#sentenceChips');
+
+        // Create empty slots
+        this.sentenceTargetWords.forEach(() => {
+            const slot = document.createElement('div');
+            slot.className = 'sentence-slot';
+            slotsContainer.appendChild(slot);
+        });
+
+        // Create shuffled chips
+        const shuffledWords = [...this.sentenceTargetWords]
+            .map((word, index) => ({ word, originalIndex: index }))
+            .sort(() => Math.random() - 0.5);
+
+        shuffledWords.forEach((item) => {
+            const chip = document.createElement('div');
+            chip.className = 'word-chip';
+            chip.innerText = item.word;
+            
+            chip.onclick = () => {
+                if (this.sentenceGameOver || chip.classList.contains('disabled')) return;
+                
+                // Add word to current guess
+                this.sentenceCurrentWords.push(item.word);
+                chip.classList.add('disabled');
+                
+                // Update slots
+                const slots = slotsContainer.querySelectorAll('.sentence-slot');
+                const nextSlot = Array.from(slots).find(s => !s.innerText);
+                if (nextSlot) {
+                    nextSlot.innerText = item.word;
+                    nextSlot.classList.add('filled');
+                    
+                    // Allow clicking a filled slot to remove it
+                    nextSlot.onclick = () => {
+                        if (this.sentenceGameOver) return;
+                        // Find the word in the current guess
+                        const idx = this.sentenceCurrentWords.indexOf(item.word);
+                        if (idx !== -1) {
+                            this.sentenceCurrentWords.splice(idx, 1);
+                            nextSlot.innerText = "";
+                            nextSlot.classList.remove('filled');
+                            chip.classList.remove('disabled');
+                        }
+                    };
+                }
+
+                // Check if sentence is complete
+                if (this.sentenceCurrentWords.length === this.sentenceTargetWords.length) {
+                    this._validateSentence();
+                }
+            };
+            
+            chipsContainer.appendChild(chip);
+        });
+    }
+
+    _validateSentence() {
+        const slots = this.elements.sentenceArea.querySelectorAll('.sentence-slot');
+        const isCorrect = this.sentenceCurrentWords.join(' ') === this.sentenceTargetWords.join(' ');
+        
+        this.sentenceGameOver = true;
+        this.rateSrs(isCorrect);
+
+        slots.forEach((slot, i) => {
+            slot.classList.add(isCorrect ? 'correct' : 'incorrect');
+            slot.onclick = null; // Disable removal
+        });
+
+        if (isCorrect) {
+            Fx.celebrate('burst');
+            Fx.playSound('success');
+            // Speak the whole sentence
+            Speech.speak(this.sentenceTargetWords.join(' '), this.elements.voiceSelect, this.elements.speedSlider);
+        } else {
+            Fx.playSound('error');
+            Fx.shake(this.elements.sentenceArea.querySelector('.sentence-target-slots'));
+        }
+
+        setTimeout(() => {
+            const actionBtn = this.elements.actionBtn;
+            if (actionBtn) {
+                actionBtn.innerText = 'Siguiente Frase';
+                actionBtn.onclick = () => this.startSentenceGame();
+            }
+            if (!isCorrect && this.elements.mainText) {
+                this.elements.mainText.innerText = `${this.lastSpanishText} -> ${this.sentenceTargetWords.join(' ')}`;
+            }
+        }, 1000);
+    }
         const dictationArea = this.elements.dictationArea;
         if (!dictationArea) return;
 

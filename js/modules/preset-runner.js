@@ -40,6 +40,7 @@ export function initPreset(entries, formula) {
         matchArea: document.getElementById('matchArea'),
         bubbleArea: document.getElementById('bubbleArea'),
         wordleArea: document.getElementById('wordleArea'),
+        sentenceArea: document.getElementById('sentenceArea'),
         btnLaunchpad: document.getElementById('btnLaunchpad'),
         launchpadArea: document.getElementById('launchpadArea')
     };
