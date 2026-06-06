@@ -22,7 +22,7 @@ export function initPreset(entries, formula) {
     setupEventListeners();
     
     // Initialize TTS
-    Speech.initVoices('voiceSelect', 'speedSlider', 'speedVal');
+    Speech.initTtsControls(document.getElementById('voiceSelect'), document.getElementById('speedSlider'), document.getElementById('speedVal'));
     
     const actionBtn = document.getElementById('actionBtn');
     if (actionBtn) actionBtn.innerText = "Tirar Dado";
