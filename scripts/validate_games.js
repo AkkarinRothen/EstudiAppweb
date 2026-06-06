@@ -57,8 +57,11 @@ files.forEach(file => {
     }
 
     // 6. Accesibilidad: Verificar si hay elementos clickables sin rol de botón o tabindex
-    if (content.includes('onclick') && !content.includes('role=') && !content.includes('tabindex=')) {
-        issues.push(`Accesibilidad: Se detectaron eventos onclick directos. Considera añadir role="button" y tabindex="0" para navegación por teclado.`);
+    const hasClickEvents = content.includes('onclick') || content.includes('.onclick') || content.includes('addEventListener(\'click\'');
+    const hasA11yAttrs = content.includes('role=') || content.includes('setAttribute(\'role\'') || content.includes('setAttribute("role"');
+    
+    if (hasClickEvents && !hasA11yAttrs) {
+        issues.push(`Accesibilidad: Se detectaron eventos de click directos. Considera añadir role="button" y tabindex="0" para navegación por teclado.`);
     }
 
     // 7. Rendimiento: Verificar uso excesivo de timers

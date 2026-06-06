@@ -9,6 +9,7 @@ import * as UiModal from './modules/ui-modal.js';
 import * as DecksPage from './modules/decks-page.js';
 import * as SupabaseSync from './modules/supabase-sync.js';
 import * as UiGamification from './modules/ui-gamification.js';
+import * as Difficulty from './modules/difficulty-manager.js';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     updateStatsUI();
     initAuth();
+    initDifficultySettings();
 });
 
 // Registrar callback de sincronización al guardar datos locales
@@ -102,6 +104,79 @@ function updateStatsUI() {
     if (gamificationContainer) {
         UiGamification.renderLevelBadge(gamificationContainer);
     }
+}
+
+function initDifficultySettings() {
+    const btnOpen = document.getElementById('btnDifficultyModal');
+    const modal = document.getElementById('difficultyModal');
+    const btnClose = document.getElementById('btnDifficultyClose');
+    const btnSave = document.getElementById('btnSaveDifficulty');
+    
+    const modeLinear = document.getElementById('modeLinear');
+    const modeProgressive = document.getElementById('modeProgressive');
+    const linearLevels = document.getElementById('linearLevels');
+    const progressiveInfo = document.getElementById('progressiveInfo');
+    const diffChips = document.querySelectorAll('.diff-chip');
+
+    if (!btnOpen || !modal) return;
+
+    let currentSettings = Difficulty.getSettings();
+
+    const updateUI = () => {
+        if (currentSettings.mode === Difficulty.DIFFICULTY_MODES.LINEAR) {
+            modeLinear.classList.add('srs-btn-good');
+            modeLinear.classList.remove('srs-btn-again');
+            modeProgressive.classList.remove('srs-btn-good');
+            linearLevels.style.display = 'block';
+            progressiveInfo.style.display = 'none';
+        } else {
+            modeProgressive.classList.add('srs-btn-good');
+            modeLinear.classList.remove('srs-btn-good');
+            linearLevels.style.display = 'none';
+            progressiveInfo.style.display = 'block';
+        }
+
+        diffChips.forEach(chip => {
+            if (chip.dataset.level === currentSettings.level) {
+                chip.style.background = 'var(--primary-container)';
+                chip.style.color = 'var(--on-primary-container)';
+            } else {
+                chip.style.background = 'transparent';
+                chip.style.color = 'var(--on-surface)';
+            }
+        });
+    };
+
+    btnOpen.onclick = () => {
+        currentSettings = Difficulty.getSettings();
+        updateUI();
+        modal.style.display = 'flex';
+    };
+
+    btnClose.onclick = () => modal.style.display = 'none';
+
+    modeLinear.onclick = () => {
+        currentSettings.mode = Difficulty.DIFFICULTY_MODES.LINEAR;
+        updateUI();
+    };
+
+    modeProgressive.onclick = () => {
+        currentSettings.mode = Difficulty.DIFFICULTY_MODES.PROGRESSIVE;
+        updateUI();
+    };
+
+    diffChips.forEach(chip => {
+        chip.onclick = () => {
+            currentSettings.level = chip.dataset.level;
+            updateUI();
+        };
+    });
+
+    btnSave.onclick = () => {
+        Difficulty.saveSettings(currentSettings);
+        modal.style.display = 'none';
+        Fx.playSound('success');
+    };
 }
 
 // Drag and Drop implementation

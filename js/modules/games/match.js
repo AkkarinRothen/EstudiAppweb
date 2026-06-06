@@ -1,4 +1,5 @@
 import * as Utils from '../utils.js';
+import * as Difficulty from '../difficulty-manager.js';
 
 export class MatchGame {
     constructor(engine) {
@@ -26,7 +27,15 @@ export class MatchGame {
             return;
         }
 
-        const gameSize = Math.min(6, this.engine.entries.length);
+        // Calculate difficulty settings
+        const factor = Difficulty.getDifficultyFactor(0); // Fixed for grid games
+        const params = Difficulty.lerpParams(
+            { gridSize: 4, flipDelay: 2000 }, // Easy
+            { gridSize: 10, flipDelay: 600 },  // Hard
+            factor
+        );
+
+        const gameSize = Math.min(Math.floor(params.gridSize), this.engine.entries.length);
         const shuffledEntries = [...this.engine.entries].sort(() => Math.random() - 0.5);
         const selected = shuffledEntries.slice(0, gameSize);
 
@@ -83,14 +92,16 @@ export class MatchGame {
         const grid = document.createElement('div');
         grid.className = 'match-grid';
         
-        let activeCards = [];
-        let matchedCount = 0;
-
         cards.forEach(cardData => {
             const cardEl = document.createElement('div');
             cardEl.className = 'match-card';
             cardEl.dataset.id = cardData.id;
             cardEl.dataset.pairId = cardData.pairId;
+            
+            // Accessibility
+            cardEl.setAttribute('role', 'button');
+            cardEl.setAttribute('tabindex', '0');
+
             cardEl.innerHTML = `
                 <div class="match-card-inner">
                     <div class="match-card-front">❓</div>
@@ -99,60 +110,81 @@ export class MatchGame {
                     </div>
                 </div>
             `;
-
-            cardEl.addEventListener('click', () => {
-                if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || activeCards.length >= 2) {
-                    return;
-                }
-
-                cardEl.classList.add('flipped');
-                activeCards.push(cardEl);
-
-                if (activeCards.length === 2) {
-                    const [card1, card2] = activeCards;
-                    if (card1.dataset.pairId === card2.dataset.pairId) {
-                        const t1 = setTimeout(() => {
-                            card1.classList.add('matched');
-                            card2.classList.add('matched');
-                            activeCards = [];
-                            matchedCount++;
-
-                            if (matchedCount === gameSize) {
-                                showWinScreen();
-                            }
-                        }, 500);
-                        this.activeTimers.push(t1);
-                    } else {
-                        const t2 = setTimeout(() => {
-                            card1.classList.remove('flipped');
-                            card2.classList.remove('flipped');
-                            activeCards = [];
-                        }, 1200);
-                        this.activeTimers.push(t2);
-                    }
-                }
-            });
-
             grid.appendChild(cardEl);
         });
 
+        this.setupEventListeners(grid, gameSize);
         matchArea.appendChild(grid);
+    }
 
-        const showWinScreen = () => {
-            matchArea.innerHTML = `
-                <div class="match-win-screen">
-                    <h3 style="color:var(--success); font-size:24px; margin:0;">¡Felicidades! 🎉</h3>
-                    <p class="info" style="font-size:14px;">Has emparejado todos los términos correctamente.</p>
-                    <button class="srs-btn srs-btn-good" style="margin-top:10px; width:auto; padding:12px 24px;">Jugar de nuevo</button>
-                </div>
-            `;
-            const btn = matchArea.querySelector('button');
-            if (btn) btn.onclick = () => this.start();
+    setupEventListeners(grid, gameSize) {
+        let activeCards = [];
+        let matchedCount = 0;
+
+        this.clickHandler = (e) => {
+            const cardEl = e.target.closest('.match-card');
+            if (!cardEl || cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || activeCards.length >= 2) {
+                return;
+            }
+
+            cardEl.classList.add('flipped');
+            activeCards.push(cardEl);
+
+            if (activeCards.length === 2) {
+                const [card1, card2] = activeCards;
+                if (card1.dataset.pairId === card2.dataset.pairId) {
+                    const t1 = setTimeout(() => {
+                        card1.classList.add('matched');
+                        card2.classList.add('matched');
+                        activeCards = [];
+                        matchedCount++;
+
+                        if (matchedCount === gameSize) {
+                            this.showWinScreen();
+                        }
+                    }, 500);
+                    this.activeTimers.push(t1);
+                } else {
+                    // Use dynamic difficulty parameters if available, else fallback
+                    const factor = Difficulty.getDifficultyFactor(0);
+                    const params = Difficulty.lerpParams({ flipDelay: 2000 }, { flipDelay: 600 }, factor);
+
+                    const t2 = setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        activeCards = [];
+                    }, params.flipDelay);
+                    this.activeTimers.push(t2);
+                }
+            }
         };
+
+        grid.addEventListener('click', this.clickHandler);
+    }
+
+    showWinScreen() {
+        const matchArea = this.engine.elements.matchArea;
+        if (!matchArea) return;
+
+        matchArea.innerHTML = `
+            <div class="match-win-screen">
+                <h3 style="color:var(--success); font-size:24px; margin:0;">¡Felicidades! 🎉</h3>
+                <p class="info" style="font-size:14px;">Has emparejado todos los términos correctamente.</p>
+                <button class="srs-btn srs-btn-good" style="margin-top:10px; width:auto; padding:12px 24px;" role="button" tabindex="0">Jugar de nuevo</button>
+            </div>
+        `;
+        const btn = matchArea.querySelector('button');
+        if (btn) btn.onclick = () => this.start();
     }
 
     stop() {
         this.activeTimers.forEach(timer => clearTimeout(timer));
         this.activeTimers = [];
+
+        const matchArea = this.engine.elements.matchArea;
+        const grid = matchArea?.querySelector('.match-grid');
+        if (grid && this.clickHandler) {
+            grid.removeEventListener('click', this.clickHandler);
+        }
     }
 }

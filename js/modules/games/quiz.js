@@ -6,7 +6,7 @@ export class QuizGame {
         this.timeoutId = null;
     }
 
-    start() {
+    start(numOptions = 4) {
         this.stop();
 
         if (this.engine.entries.length < 2) {
@@ -42,7 +42,8 @@ export class QuizGame {
             .filter(txt => txt !== "" && txt !== english);
         const uniqueDistractors = [...new Set(distractors)];
 
-        while (options.length < Math.min(4, uniqueDistractors.length + 1)) {
+        const targetOptionsCount = Math.min(numOptions, uniqueDistractors.length + 1);
+        while (options.length < targetOptionsCount) {
             const randomDist = uniqueDistractors[Math.floor(Math.random() * uniqueDistractors.length)];
             if (!options.includes(randomDist)) {
                 options.push(randomDist);
@@ -60,45 +61,63 @@ export class QuizGame {
                 const btn = document.createElement('button');
                 btn.className = 'quiz-option';
                 btn.innerText = opt;
-                btn.onclick = () => {
-                    const buttons = optionsContainer.querySelectorAll('.quiz-option');
-                    buttons.forEach(b => b.disabled = true);
-
-                    const isCorrect = (opt === english);
-                    this.engine.quizAttempts++;
-
-                    if (isCorrect) {
-                        btn.classList.add('correct');
-                        this.engine.quizCorrect++;
-                        this.engine.speak();
-                        if (this.engine.isTimeAttackActive) {
-                            this.engine.timeAttackScore++;
-                            this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 500);
-                        }
-                    } else {
-                        btn.classList.add('incorrect');
-                        buttons.forEach(b => {
-                            if (b.innerText === english) b.classList.add('correct');
-                        });
-                        if (this.engine.isTimeAttackActive) {
-                            this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 800);
-                        }
-                    }
-
-                    if (!this.engine.isTimeAttackActive) {
-                        this.engine.rateSrs(isCorrect);
-                        this.engine.updateQuizScoreDisplay();
-                    }
-                };
+                btn.setAttribute('role', 'button');
+                btn.setAttribute('tabindex', '0');
                 optionsContainer.appendChild(btn);
             });
+
+            this.setupEventListeners(optionsContainer, english);
         }
+    }
+
+    setupEventListeners(container, correctAnswer) {
+        this.optionHandler = (e) => {
+            const btn = e.target.closest('.quiz-option');
+            if (!btn || btn.disabled) return;
+
+            const buttons = container.querySelectorAll('.quiz-option');
+            buttons.forEach(b => b.disabled = true);
+
+            const opt = btn.innerText;
+            const isCorrect = (opt === correctAnswer);
+            this.engine.quizAttempts++;
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                this.engine.quizCorrect++;
+                this.engine.speak();
+                if (this.engine.isTimeAttackActive) {
+                    this.engine.timeAttackScore++;
+                    this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 500);
+                }
+            } else {
+                btn.classList.add('incorrect');
+                buttons.forEach(b => {
+                    if (b.innerText === correctAnswer) b.classList.add('correct');
+                });
+                if (this.engine.isTimeAttackActive) {
+                    this.timeoutId = setTimeout(() => this.engine.timeAttackGame.nextEntry(), 800);
+                }
+            }
+
+            if (!this.engine.isTimeAttackActive) {
+                this.engine.rateSrs(isCorrect);
+                this.engine.updateQuizScoreDisplay();
+            }
+        };
+
+        container.addEventListener('click', this.optionHandler);
     }
 
     stop() {
         if (this.timeoutId) {
             clearTimeout(this.timeoutId);
             this.timeoutId = null;
+        }
+        
+        const container = this.engine.elements.quizOptions;
+        if (container && this.optionHandler) {
+            container.removeEventListener('click', this.optionHandler);
         }
     }
 }

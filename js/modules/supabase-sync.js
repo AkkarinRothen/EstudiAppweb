@@ -64,7 +64,8 @@ export async function syncCloudToLocal() {
         if (data.srs_data) Storage.saveSrsData(data.srs_data);
         if (data.stats) Storage.saveStats(data.stats);
         if (data.progression) Storage.saveProgression(data.progression);
-        if (data.high_scores) localStorage.setItem('estudiapp_high_scores', JSON.stringify(data.high_scores));
+        if (data.difficulty) Storage.saveDifficultySettings(data.difficulty);
+        if (data.high_scores) Storage.saveHighScores(data.high_scores);
         if (data.custom_decks) Storage.saveCustomDecks(data.custom_decks);
         if (data.tts_pref) Storage.saveTtsPreferences(data.tts_pref);
 
@@ -94,6 +95,7 @@ export async function syncLocalToCloud() {
         const srs_data = Storage.getSrsData();
         const stats = Storage.getStats();
         const progression = Storage.getProgression();
+        const difficulty = Storage.getDifficultySettings();
         const high_scores = Storage.getHighScores();
         const custom_decks = Storage.getCustomDecks();
         const tts_pref = Storage.getTtsPreferences() || {};
@@ -105,6 +107,7 @@ export async function syncLocalToCloud() {
                 srs_data,
                 stats,
                 progression,
+                difficulty,
                 high_scores,
                 custom_decks,
                 tts_pref

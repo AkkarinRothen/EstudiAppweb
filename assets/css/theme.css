@@ -138,6 +138,53 @@ footer {
     font-weight: 500;
 }
 
+/* --- ✨ ANIMACIONES DE SUBIDA DE NIVEL --- */
+@keyframes levelUpPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes levelUpGlow {
+    0% { box-shadow: 0 0 0 0 rgba(103, 80, 164, 0.7); }
+    70% { box-shadow: 0 0 0 20px rgba(103, 80, 164, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(103, 80, 164, 0); }
+}
+
+.level-up-splash {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    pointer-events: none;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 40px;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    animation: levelUpPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    border: 3px solid var(--primary);
+}
+
+.level-up-splash h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--primary);
+    font-size: 32px;
+    margin: 0;
+}
+
+.level-up-splash p {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.level-up-active {
+    animation: levelUpGlow 1.5s infinite;
+}
+
+
 
 @keyframes cover-shimmer {
     0%   { background-position: 200% 0; }

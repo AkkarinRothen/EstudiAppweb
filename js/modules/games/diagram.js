@@ -141,46 +141,43 @@ export class DiagramGame {
 
         // Populate labels dock
         shuffledLabels.forEach(data => {
+        // Populate labels dock
+        shuffledLabels.forEach(data => {
             const labelEl = document.createElement('div');
             labelEl.className = 'diagram-label';
             labelEl.innerText = data.english;
             labelEl.dataset.id = data.id;
-
-            // Store original data
             labelEl.hotspot = data.hotspot;
-
-            // Attach drag events
-            this.setupDragEvents(labelEl, wrapper, labelsContainer);
+            
+            // Accessibility
+            labelEl.setAttribute('role', 'button');
+            labelEl.setAttribute('tabindex', '0');
 
             labelsContainer.appendChild(labelEl);
         });
+
+        this.setupEventListeners(wrapper, labelsContainer);
     }
 
-    setupDragEvents(labelEl, wrapper, labelsContainer) {
-        labelEl.addEventListener('pointerdown', (e) => {
-            if (labelEl.classList.contains('matched') || labelEl.classList.contains('animating-back')) return;
+    setupEventListeners(wrapper, labelsContainer) {
+        this.pointerDownHandler = (e) => {
+            const labelEl = e.target.closest('.diagram-label');
+            if (!labelEl || labelEl.classList.contains('matched') || labelEl.classList.contains('animating-back')) return;
 
-            // Select this label
             this.currentDraggingLabel = labelEl;
             labelEl.classList.add('dragging');
 
-            // Record client offsets
             const rectLabel = labelEl.getBoundingClientRect();
             const rectWrapper = wrapper.getBoundingClientRect();
 
-            // Create placeholder in labels dock to prevent jumpy layout shifts
             const placeholder = document.createElement('div');
             placeholder.className = 'diagram-label-placeholder';
             placeholder.style.width = `${rectLabel.width}px`;
             placeholder.style.height = `${rectLabel.height}px`;
-            
-            // Insert placeholder right before label
             labelEl.parentNode.insertBefore(placeholder, labelEl);
 
-            // Temporarily append label to wrapper for free-floating movement
             wrapper.appendChild(labelEl);
 
-            // Compute initial offsets relative to wrapper
             const initialLeft = rectLabel.left - rectWrapper.left;
             const initialTop = rectLabel.top - rectWrapper.top;
 
@@ -191,79 +188,54 @@ export class DiagramGame {
             labelEl.style.height = `${rectLabel.height}px`;
             labelEl.style.margin = '0';
 
-            // Store drag state
             this.dragState = {
                 placeholder: placeholder,
                 rectWrapper: rectWrapper,
-                labelWidth: rectLabel.width,
-                labelHeight: rectLabel.height,
                 startX: e.clientX,
                 startY: e.clientY,
                 initialLeft: initialLeft,
                 initialTop: initialTop
             };
 
-            // Set pointer capture
             labelEl.setPointerCapture(e.pointerId);
-            
-            // Visual feedback on pointer down
             Fx.playSound('click');
-        });
+        };
 
-        labelEl.addEventListener('pointermove', (e) => {
-            if (this.currentDraggingLabel !== labelEl || !this.dragState) return;
-
-            // Calculate delta
+        this.pointerMoveHandler = (e) => {
+            if (!this.currentDraggingLabel || !this.dragState) return;
             const dx = e.clientX - this.dragState.startX;
             const dy = e.clientY - this.dragState.startY;
+            this.currentDraggingLabel.style.left = `${this.dragState.initialLeft + dx}px`;
+            this.currentDraggingLabel.style.top = `${this.dragState.initialTop + dy}px`;
+        };
 
-            // Calculate new position
-            let newLeft = this.dragState.initialLeft + dx;
-            let newTop = this.dragState.initialTop + dy;
-
-            // Update style
-            labelEl.style.left = `${newLeft}px`;
-            labelEl.style.top = `${newTop}px`;
-        });
-
-        const handlePointerUp = (e) => {
-            if (this.currentDraggingLabel !== labelEl || !this.dragState) return;
-
+        this.pointerUpHandler = (e) => {
+            if (!this.currentDraggingLabel || !this.dragState) return;
+            
+            const labelEl = this.currentDraggingLabel;
             labelEl.releasePointerCapture(e.pointerId);
             labelEl.classList.remove('dragging');
 
             const rectWrapper = wrapper.getBoundingClientRect();
-            
-            // Calculate label center coordinates relative to wrapper
             const labelWidth = labelEl.offsetWidth;
             const labelHeight = labelEl.offsetHeight;
             const labelCenterX = labelEl.offsetLeft + labelWidth / 2;
             const labelCenterY = labelEl.offsetTop + labelHeight / 2;
 
-            // Get target hotspot info
             const targetHotspot = labelEl.hotspot;
             const hotspotX = (targetHotspot.left / 100) * rectWrapper.width;
             const hotspotY = (targetHotspot.top / 100) * rectWrapper.height;
 
-            // Calculate distance to correct hotspot
             const distDx = labelCenterX - hotspotX;
             const distDy = labelCenterY - hotspotY;
             const distance = Math.sqrt(distDx * distDx + distDy * distDy);
 
-            const snapThreshold = 45; // pixels
-
-            if (distance < snapThreshold) {
-                // Correct match!
+            if (distance < 45) {
                 labelEl.classList.add('matched');
                 targetHotspot.el.classList.add('matched');
+                labelEl.style.left = `${hotspotX - labelWidth / 2}px`;
+                labelEl.style.top = `${hotspotY - labelHeight / 2}px`;
 
-                // Align label perfectly with hotspot
-                const targetLeft = hotspotX - labelWidth / 2;
-                const targetTop = hotspotY - labelHeight / 2;
-                labelEl.style.left = `${targetLeft}px`;
-                labelEl.style.top = `${targetTop}px`;
-
-                // Speak and rate SRS
                 this.engine.rateSrs(true);
                 this.engine.lastEnglishText = targetHotspot.english;
                 this.engine.lastSpanishText = targetHotspot.spanish;
@@ -271,63 +243,41 @@ export class DiagramGame {
                     this.engine.elements.mainText.innerText = `${targetHotspot.spanish} -> ${targetHotspot.english}`;
                 }
                 this.engine.speak();
-
-                // Play success sound
                 Fx.playSound('success');
-
-                // Clean up placeholder
-                if (this.dragState.placeholder) {
-                    this.dragState.placeholder.remove();
-                }
-
+                if (this.dragState.placeholder) this.dragState.placeholder.remove();
                 this.matchedCount++;
-                this.checkWinCondition(labelsContainer);
+                this.checkWinCondition();
             } else {
-                // Incorrect match!
                 Fx.playSound('error');
                 Fx.shake(labelEl);
                 this.engine.rateSrs(false);
-
-                // Animate fly-back to placeholder
                 labelEl.classList.add('animating-back');
                 labelEl.style.transition = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
 
                 const placeholder = this.dragState.placeholder;
                 const rectPlaceholder = placeholder.getBoundingClientRect();
                 const rectWrapperNow = wrapper.getBoundingClientRect();
-
-                const targetLeft = rectPlaceholder.left - rectWrapperNow.left;
-                const targetTop = rectPlaceholder.top - rectWrapperNow.top;
-
-                labelEl.style.left = `${targetLeft}px`;
-                labelEl.style.top = `${targetTop}px`;
+                labelEl.style.left = `${rectPlaceholder.left - rectWrapperNow.left}px`;
+                labelEl.style.top = `${rectPlaceholder.top - rectWrapperNow.top}px`;
 
                 setTimeout(() => {
-                    // Re-insert into labels dock and clear styling
                     placeholder.parentNode.insertBefore(labelEl, placeholder);
                     labelEl.classList.remove('animating-back');
-                    labelEl.style.position = '';
-                    labelEl.style.left = '';
-                    labelEl.style.top = '';
-                    labelEl.style.width = '';
-                    labelEl.style.height = '';
-                    labelEl.style.margin = '';
-                    labelEl.style.transition = '';
-
+                    labelEl.style.cssText = '';
                     placeholder.remove();
                 }, 300);
             }
-
-            // Reset drag state
             this.currentDraggingLabel = null;
             this.dragState = null;
         };
 
-        labelEl.addEventListener('pointerup', handlePointerUp);
-        labelEl.addEventListener('pointercancel', handlePointerUp);
+        labelsContainer.addEventListener('pointerdown', this.pointerDownHandler);
+        wrapper.addEventListener('pointermove', this.pointerMoveHandler);
+        wrapper.addEventListener('pointerup', this.pointerUpHandler);
+        wrapper.addEventListener('pointercancel', this.pointerUpHandler);
     }
 
-    checkWinCondition(labelsContainer) {
+    checkWinCondition() {
         if (this.matchedCount === this.hotspots.length) {
             setTimeout(() => {
                 Fx.playSound('victory');
@@ -347,6 +297,21 @@ export class DiagramGame {
     }
 
     stop() {
+        const diagramArea = this.engine.elements.diagramArea;
+        const wrapper = diagramArea?.querySelector('#diagramWrapper');
+        const labelsContainer = diagramArea?.querySelector('#diagramLabels');
+
+        if (labelsContainer && this.pointerDownHandler) {
+            labelsContainer.removeEventListener('pointerdown', this.pointerDownHandler);
+        }
+        if (wrapper) {
+            if (this.pointerMoveHandler) wrapper.removeEventListener('pointermove', this.pointerMoveHandler);
+            if (this.pointerUpHandler) {
+                wrapper.removeEventListener('pointerup', this.pointerUpHandler);
+                wrapper.removeEventListener('pointercancel', this.pointerUpHandler);
+            }
+        }
+
         this.currentDraggingLabel = null;
         this.dragState = null;
     }

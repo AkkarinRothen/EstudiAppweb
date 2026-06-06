@@ -58,6 +58,10 @@ Para cualquier tarea relacionada con juegos y herramientas de estudio, puedes in
     - *Rol:* Asegurar el esquema de base de datos, escribir migraciones controladas, vigilar las políticas RLS y programar planes de respaldo (backups) y recuperación.
     - *Especialidad:* PostgreSQL, Supabase RLS, planes de Disaster Recovery e integridad de datos.
 
+13. **[Agente de Evolución Frontend y Mantenimiento](agent_frontend_evolution.md):**
+    - *Rol:* Modernizar la estructura del código, aplicar patrones Clean Code, optimizar el rendimiento (Core Web Vitals) y proponer la adopción de nuevas tendencias web.
+    - *Especialidad:* Arquitectura de Software Frontend, micro-optimizaciones, ECMAScript moderno y CSS avanzado.
+
 ## Protocolo de Comunicación entre Agentes (Handoff)
 
 Para asegurar que no se pierda información crítica entre tareas, cada agente debe finalizar su intervención con un **Informe de Handoff**:
@@ -78,6 +82,7 @@ Cada agente tiene asignado un conjunto de herramientas (scripts/comandos) que DE
 | **QA / Mecánicas** | `node scripts/validate_games.js` | Verificar estructura DoD de juegos. |
 | **DevOps / Contenido** | `node scripts/build_presets.js` | Sincronizar presets con packs.json. |
 | **Estética** | `F12 > Lighthouse / Console` | Verificar rendimiento y errores de carga. |
+| **Frontend Evolution** | `node scripts/validate_games.js` | Asegurar calidad tras refactorización. |
 | **DBA** | `supabase db lint` (o similar) | Verificar integridad de esquemas. |
 
 ---

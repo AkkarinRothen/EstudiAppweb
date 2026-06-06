@@ -56,6 +56,8 @@ export class WriteGame {
         const actionBtn = this.engine.elements.actionBtn;
         if (actionBtn) {
             actionBtn.innerText = 'Comprobar';
+            actionBtn.setAttribute('role', 'button');
+            actionBtn.setAttribute('tabindex', '0');
             actionBtn.onclick = () => this.checkAnswer();
         }
     }
@@ -96,6 +98,10 @@ export class WriteGame {
     }
 
     stop() {
-        // Implementado para conformidad con el DoD
+        const input = this.engine.elements.writeInput;
+        if (input) input.onkeydown = null;
+        
+        const actionBtn = this.engine.elements.actionBtn;
+        if (actionBtn) actionBtn.onclick = null;
     }
 }

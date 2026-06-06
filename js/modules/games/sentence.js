@@ -57,6 +57,8 @@ export class SentenceGame {
         this.sentenceTargetWords.forEach(() => {
             const slot = document.createElement('div');
             slot.className = 'sentence-slot';
+            slot.setAttribute('role', 'button');
+            slot.setAttribute('tabindex', '0');
             slotsContainer.appendChild(slot);
         });
 
@@ -69,43 +71,59 @@ export class SentenceGame {
             const chip = document.createElement('div');
             chip.className = 'word-chip';
             chip.innerText = item.word;
+            chip.dataset.word = item.word;
             
-            chip.onclick = () => {
-                if (this.sentenceGameOver || chip.classList.contains('disabled')) return;
-                
-                // Add word to current guess
-                this.sentenceCurrentWords.push(item.word);
-                chip.classList.add('disabled');
-                
-                // Update slots
-                const slots = slotsContainer.querySelectorAll('.sentence-slot');
-                const nextSlot = Array.from(slots).find(s => !s.innerText);
-                if (nextSlot) {
-                    nextSlot.innerText = item.word;
-                    nextSlot.classList.add('filled');
-                    
-                    // Allow clicking a filled slot to remove it
-                    nextSlot.onclick = () => {
-                        if (this.sentenceGameOver) return;
-                        // Find the word in the current guess
-                        const idx = this.sentenceCurrentWords.indexOf(item.word);
-                        if (idx !== -1) {
-                            this.sentenceCurrentWords.splice(idx, 1);
-                            nextSlot.innerText = "";
-                            nextSlot.classList.remove('filled');
-                            chip.classList.remove('disabled');
-                        }
-                    };
-                }
-
-                // Check if sentence is complete
-                if (this.sentenceCurrentWords.length === this.sentenceTargetWords.length) {
-                    this._validateSentence();
-                }
-            };
+            // Accessibility
+            chip.setAttribute('role', 'button');
+            chip.setAttribute('tabindex', '0');
             
             chipsContainer.appendChild(chip);
         });
+
+        this.setupEventListeners(slotsContainer, chipsContainer);
+    }
+
+    setupEventListeners(slotsContainer, chipsContainer) {
+        this.chipHandler = (e) => {
+            const chip = e.target.closest('.word-chip');
+            if (!chip || this.sentenceGameOver || chip.classList.contains('disabled')) return;
+
+            const word = chip.dataset.word;
+            this.sentenceCurrentWords.push(word);
+            chip.classList.add('disabled');
+
+            const slots = slotsContainer.querySelectorAll('.sentence-slot');
+            const nextSlot = Array.from(slots).find(s => !s.innerText);
+            if (nextSlot) {
+                nextSlot.innerText = word;
+                nextSlot.dataset.word = word;
+                nextSlot.classList.add('filled');
+            }
+
+            if (this.sentenceCurrentWords.length === this.sentenceTargetWords.length) {
+                this._validateSentence();
+            }
+        };
+
+        this.slotHandler = (e) => {
+            const slot = e.target.closest('.sentence-slot');
+            if (!slot || this.sentenceGameOver || !slot.classList.contains('filled')) return;
+
+            const word = slot.dataset.word;
+            const idx = this.sentenceCurrentWords.indexOf(word);
+            if (idx !== -1) {
+                this.sentenceCurrentWords.splice(idx, 1);
+                slot.innerText = "";
+                slot.dataset.word = "";
+                slot.classList.remove('filled');
+                
+                const chip = chipsContainer.querySelector(`.word-chip[data-word="${word}"].disabled`);
+                if (chip) chip.classList.remove('disabled');
+            }
+        };
+
+        chipsContainer.addEventListener('click', this.chipHandler);
+        slotsContainer.addEventListener('click', this.slotHandler);
     }
 
     _validateSentence() {
@@ -147,5 +165,15 @@ export class SentenceGame {
             clearTimeout(this.timeoutId);
             this.timeoutId = null;
         }
+
+        const sentenceArea = this.engine.elements.sentenceArea;
+        const slotsContainer = sentenceArea?.querySelector('#sentenceSlots');
+        const chipsContainer = sentenceArea?.querySelector('#sentenceChips');
+
+        if (chipsContainer && this.chipHandler) chipsContainer.removeEventListener('click', this.chipHandler);
+        if (slotsContainer && this.slotHandler) slotsContainer.removeEventListener('click', this.slotHandler);
+        
+        const actionBtn = this.engine.elements.actionBtn;
+        if (actionBtn) actionBtn.onclick = null;
     }
 }

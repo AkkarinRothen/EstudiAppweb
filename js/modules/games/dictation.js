@@ -42,10 +42,10 @@ export class DictationGame {
 
         dictationArea.innerHTML = `
             <div class="dictation-instructions">Escucha la pronunciación en inglés y escribe la traducción al español</div>
-            <button class="dictation-replay-btn" id="dictationReplayBtn">🔊 Escuchar de nuevo</button>
+            <button class="dictation-replay-btn" id="dictationReplayBtn" role="button" tabindex="0">🔊 Escuchar de nuevo</button>
             <input type="text" class="dictation-input" id="dictationInput" placeholder="Escribe la traducción en español..." autocomplete="off">
             <div class="dictation-feedback" id="dictationFeedback"></div>
-            <button class="srs-btn srs-btn-good" id="dictationCheckBtn" style="width:auto;padding:10px 24px;margin-top:8px;">✅ Verificar</button>
+            <button class="srs-btn srs-btn-good" id="dictationCheckBtn" style="width:auto;padding:10px 24px;margin-top:8px;" role="button" tabindex="0">✅ Verificar</button>
         `;
 
         dictationArea.style.display = 'flex';
@@ -59,12 +59,13 @@ export class DictationGame {
         }, 400);
 
         const replayBtn = dictationArea.querySelector('#dictationReplayBtn');
-        replayBtn.addEventListener('click', () => {
+        this.replayHandler = () => {
             Speech.speak(en,
                 this.engine.elements.voiceSelect?.value,
                 this.engine.elements.speedSlider?.value
             );
-        });
+        };
+        replayBtn.addEventListener('click', this.replayHandler);
 
         const checkFn = () => {
             const inputEl = dictationArea.querySelector('#dictationInput');
@@ -98,21 +99,34 @@ export class DictationGame {
         };
 
         const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
-        checkBtn.addEventListener('click', checkFn);
+        this.checkHandler = checkFn;
+        checkBtn.addEventListener('click', this.checkHandler);
 
         const inputEl = dictationArea.querySelector('#dictationInput');
         inputEl.focus();
-        inputEl.addEventListener('keydown', (e) => {
+        this.keydownHandler = (e) => {
             if (e.key === 'Enter') {
                 checkFn();
             }
-        });
+        };
+        inputEl.addEventListener('keydown', this.keydownHandler);
     }
 
     stop() {
         if (this.speakTimeout) {
             clearTimeout(this.speakTimeout);
             this.speakTimeout = null;
+        }
+
+        const dictationArea = this.engine.elements.dictationArea;
+        if (dictationArea) {
+            const replayBtn = dictationArea.querySelector('#dictationReplayBtn');
+            const checkBtn = dictationArea.querySelector('#dictationCheckBtn');
+            const inputEl = dictationArea.querySelector('#dictationInput');
+
+            if (replayBtn && this.replayHandler) replayBtn.removeEventListener('click', this.replayHandler);
+            if (checkBtn && this.checkHandler) checkBtn.removeEventListener('click', this.checkHandler);
+            if (inputEl && this.keydownHandler) inputEl.removeEventListener('keydown', this.keydownHandler);
         }
     }
 }

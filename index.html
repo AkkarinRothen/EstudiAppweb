@@ -19,7 +19,8 @@
             <h1>EstudiApp - Portal Didáctico</h1>
             <p>Aprende vocabulario de forma interactiva y profesional</p>
         </div>
-        <div id="authHeaderContainer">
+        <div id="authHeaderContainer" style="display:flex; gap:10px;">
+            <button id="btnDifficultyModal" class="btn-sync-status" style="background:var(--secondary-container); color:var(--on-secondary-container);" title="Ajustar dificultad de juegos">🎮 Dificultad</button>
             <button id="btnAuthModal" class="btn-sync-status" title="Conectar con Supabase">☁️ Conectar Nube</button>
         </div>
     </div>
@@ -260,6 +261,42 @@
                 ✓ Tus récords, SRS y estadísticas están a salvo.
             </div>
             <button id="btnSubmitSignOut" class="srs-btn" style="padding:12px; width:100%; background:var(--error); color:var(--on-error); margin:0; font-family:'Outfit',sans-serif;">Cerrar Sesión</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Configuración de Dificultad -->
+<div class="modal-overlay" id="difficultyModal" style="display:none;">
+    <div class="modal-card auth-card" style="max-width:400px; padding:25px;">
+        <button class="close-btn" id="btnDifficultyClose">×</button>
+        <h2 style="font-family:'Orbitron',sans-serif; margin-bottom:8px;">Dificultad</h2>
+        <p class="desc" style="font-size:13px; opacity:0.8; margin-bottom:20px;">Personaliza cómo progresan los juegos interactivos.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:20px; width:100%; text-align:left;">
+            <div class="form-group">
+                <label style="font-size:14px; font-weight:600; margin-bottom:10px; display:block; font-family:'Outfit',sans-serif;">Modo de Progresión</label>
+                <div style="display:flex; gap:10px;">
+                    <button id="modeLinear" class="srs-btn" style="flex:1; margin:0; padding:10px; font-size:13px; background:var(--surface-variant); color:var(--on-surface-variant);">Fija (Lineal)</button>
+                    <button id="modeProgressive" class="srs-btn srs-btn-good" style="flex:1; margin:0; padding:10px; font-size:13px;">Progresiva</button>
+                </div>
+            </div>
+
+            <div id="linearLevels" class="form-group" style="display:none;">
+                <label style="font-size:14px; font-weight:600; margin-bottom:10px; display:block; font-family:'Outfit',sans-serif;">Nivel de Dificultad</label>
+                <div style="display:flex; gap:8px;">
+                    <button class="diff-chip" data-level="easy" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--outline); cursor:pointer; background:transparent;">Fácil</button>
+                    <button class="diff-chip active" data-level="medium" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--outline); cursor:pointer; background:var(--primary-container);">Medio</button>
+                    <button class="diff-chip" data-level="hard" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--outline); cursor:pointer; background:transparent;">Difícil</button>
+                </div>
+            </div>
+
+            <div id="progressiveInfo" class="sync-info-box" style="padding:12px; background:var(--primary-container); color:var(--on-primary-container); border-radius:8px; font-size:12px; line-height:1.4;">
+                ⚡ En el modo **Progresivo**, la velocidad y frecuencia de los juegos aumentarán conforme consigas más puntos. ¡Ideal para desafíos!
+            </div>
+            
+            <p style="font-size:11px; opacity:0.6; font-style:italic;">* Los modos de estudio (Flashcards, Escritura) siempre priorizan el aprendizaje y no se ven afectados.</p>
+            
+            <button id="btnSaveDifficulty" class="main-btn" style="margin-top:5px;">Guardar Cambios</button>
         </div>
     </div>
 </div>

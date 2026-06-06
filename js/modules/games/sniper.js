@@ -1,6 +1,7 @@
 import * as Utils from '../utils.js';
 import * as Fx from '../fx.js';
 import * as Storage from '../storage.js';
+import * as Difficulty from '../difficulty-manager.js';
 
 export class SniperGame {
     constructor(engine) {
@@ -52,14 +53,15 @@ export class SniperGame {
 
         const input = sniperArea.querySelector('#sniperInput');
         input.focus();
-        input.addEventListener('keydown', (e) => {
+        this.keydownHandler = (e) => {
             if (e.key === 'Enter') {
                 const val = Utils.cleanText(input.value);
                 if (!val) return;
                 this._checkAnswer(val);
                 input.value = '';
             }
-        });
+        };
+        input.addEventListener('keydown', this.keydownHandler);
 
         // Start dynamic spawns
         this._scheduleNextSpawn();
@@ -68,12 +70,18 @@ export class SniperGame {
     _scheduleNextSpawn() {
         if (this.sniperSpawnTimeout) clearTimeout(this.sniperSpawnTimeout);
 
-        // Spawn delay decreases down to 1000ms as score increases
-        const delay = Math.max(1000, 2400 - (this.sniperScore * 120));
+        // Use DifficultyManager for dynamic delay
+        const factor = Difficulty.getDifficultyFactor(this.sniperScore);
+        const params = Difficulty.lerpParams(
+            { spawnDelay: 2800 }, // Easy (0.0)
+            { spawnDelay: 800 },  // Hard (1.0)
+            factor
+        );
+
         this.sniperSpawnTimeout = setTimeout(() => {
             this._spawnWord();
             this._scheduleNextSpawn();
-        }, delay);
+        }, params.spawnDelay);
     }
 
     _pickNextTarget() {
@@ -125,9 +133,19 @@ export class SniperGame {
         word.dataset.correct = isCorrect ? '1' : '0';
         word.style.left = `${5 + Math.random() * 70}%`;
 
-        // Calculate fall speed (decreases down to 1.8s)
-        const duration = Math.max(1.8, 4.0 - (this.sniperScore * 0.15));
-        word.style.animation = `sniperFall ${duration}s linear forwards`;
+        // Accessibility
+        word.setAttribute('role', 'button');
+        word.setAttribute('tabindex', '0');
+
+        // Calculate fall speed using DifficultyManager
+        const factor = Difficulty.getDifficultyFactor(this.sniperScore);
+        const params = Difficulty.lerpParams(
+            { duration: 5.0 }, // Easy (0.0)
+            { duration: 1.5 }, // Hard (1.0)
+            factor
+        );
+        
+        word.style.animation = `sniperFall ${params.duration}s linear forwards`;
 
         word.addEventListener('animationend', () => {
             if (word.parentNode) {
@@ -323,6 +341,13 @@ export class SniperGame {
             clearTimeout(this.sniperSpawnTimeout);
             this.sniperSpawnTimeout = null;
         }
+
+        const sniperArea = this.engine.elements.sniperArea;
+        const input = sniperArea?.querySelector('#sniperInput');
+        if (input && this.keydownHandler) {
+            input.removeEventListener('keydown', this.keydownHandler);
+        }
+
         this._sniperTarget = null;
     }
 }

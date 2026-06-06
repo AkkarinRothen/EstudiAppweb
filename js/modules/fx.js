@@ -136,3 +136,27 @@ export async function shake(target) {
         });
     }
 }
+
+/**
+ * Shows a full-screen level up splash
+ * @param {number} level 
+ */
+export async function showLevelUp(level) {
+    const splash = document.createElement('div');
+    splash.className = 'level-up-splash';
+    splash.innerHTML = `
+        <h2>¡NIVEL ${level}!</h2>
+        <p>Tu conocimiento sigue creciendo ✨</p>
+    `;
+    document.body.appendChild(splash);
+
+    await celebrate('burst');
+    await playSound('victory');
+
+    setTimeout(() => {
+        splash.style.transition = 'opacity 1s, transform 1s';
+        splash.style.opacity = '0';
+        splash.style.transform = 'translate(-50%, -60%) scale(0.8)';
+        setTimeout(() => splash.remove(), 1000);
+    }, 3000);
+}

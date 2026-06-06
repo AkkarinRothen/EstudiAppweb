@@ -48,8 +48,7 @@ export function addXp(amount) {
 
 function onLevelUp(newLevel) {
     console.log(`🎉 ¡Subida de nivel! Ahora eres Nivel ${newLevel}`);
-    Fx.celebrate('burst');
-    Fx.playSound('victory');
+    Fx.showLevelUp(newLevel);
     // Notification logic could go here
 }
 

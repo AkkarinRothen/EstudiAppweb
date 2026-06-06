@@ -1,10 +1,11 @@
 import * as Utils from '../utils.js';
 import * as Fx from '../fx.js';
+import * as Difficulty from '../difficulty-manager.js';
 
 export class BubbleGame {
     constructor(engine) {
         this.engine = engine;
-        this.bubbleSpawnInterval = null;
+        this.bubbleSpawnTimeout = null;
         this.bubbleTargetEntry = null;
         this.bubbleScore = 0;
     }
@@ -35,48 +36,10 @@ export class BubbleGame {
         this.bubbleScore = 0;
         this.selectNextTarget();
 
-        const playground = bubbleArea.querySelector('#bubbleGamePlayground');
-        this.bubbleSpawnInterval = setInterval(() => {
-            if (!this.bubbleTargetEntry) return;
-
-            const isCorrect = Math.random() < 0.35;
-            let text = "";
-            let entry = null;
-
-            if (isCorrect) {
-                entry = this.bubbleTargetEntry;
-                text = entry.en;
-            } else {
-                const distractors = this.engine.entries.filter(e => e.text.split("->")[0].trim() !== this.bubbleTargetEntry.es);
-                entry = distractors[Math.floor(Math.random() * distractors.length)];
-                text = entry ? entry.en : "";
-            }
-
-            if (!text) return;
-
-            const bubble = document.createElement('div');
-            bubble.className = 'bubble-element';
-            bubble.innerText = text;
-            bubble.style.left = `${5 + Math.random() * 75}%`;
-            
-            const size = 75 + Math.floor(Math.random() * 20);
-            bubble.style.width = `${size}px`;
-            bubble.style.height = `${size}px`;
-            
-            // Accesibilidad
-            bubble.setAttribute('role', 'button');
-            bubble.setAttribute('tabindex', '0');
-
-            bubble.addEventListener('animationend', (e) => {
-                if (e.animationName === 'floatUp') {
-                    bubble.remove();
-                }
-            });
-
-            playground.appendChild(bubble);
-        }, 1600);
+        this._scheduleNextSpawn();
 
         // Usar delegación de eventos en el playground para evitar fugas de memoria
+        const playground = bubbleArea.querySelector('#bubbleGamePlayground');
         this.clickHandler = (e) => {
             const bubble = e.target.closest('.bubble-element');
             if (!bubble || bubble.classList.contains('pop') || bubble.classList.contains('wrong')) return;
@@ -125,6 +88,74 @@ export class BubbleGame {
         playground.addEventListener('click', this.clickHandler);
     }
 
+    _scheduleNextSpawn() {
+        if (this.bubbleSpawnTimeout) clearTimeout(this.bubbleSpawnTimeout);
+
+        // Difficulty adjustment
+        const factor = Difficulty.getDifficultyFactor(this.bubbleScore);
+        const params = Difficulty.lerpParams(
+            { spawnDelay: 2500 }, // Easy (0.0)
+            { spawnDelay: 800 },  // Hard (1.0)
+            factor
+        );
+
+        this.bubbleSpawnTimeout = setTimeout(() => {
+            this._spawnBubble();
+            this._scheduleNextSpawn();
+        }, params.spawnDelay);
+    }
+
+    _spawnBubble() {
+        const bubbleArea = this.engine.elements.bubbleArea;
+        const playground = bubbleArea?.querySelector('#bubbleGamePlayground');
+        if (!playground || !this.bubbleTargetEntry) return;
+
+        const isCorrect = Math.random() < 0.35;
+        let text = "";
+        let entry = null;
+
+        if (isCorrect) {
+            entry = this.bubbleTargetEntry;
+            text = entry.en;
+        } else {
+            const distractors = this.engine.entries.filter(e => e.text.split("->")[0].trim() !== this.bubbleTargetEntry.es);
+            entry = distractors[Math.floor(Math.random() * distractors.length)];
+            text = entry ? entry.en : "";
+        }
+
+        if (!text) return;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble-element';
+        bubble.innerText = text;
+        bubble.style.left = `${5 + Math.random() * 75}%`;
+        
+        const size = 75 + Math.floor(Math.random() * 20);
+        bubble.style.width = `${size}px`;
+        bubble.style.height = `${size}px`;
+        
+        // Difficulty adjustment for floating speed
+        const factor = Difficulty.getDifficultyFactor(this.bubbleScore);
+        const params = Difficulty.lerpParams(
+            { floatDuration: 10 }, // Easy (seconds)
+            { floatDuration: 4 },  // Hard (seconds)
+            factor
+        );
+        bubble.style.animation = `floatUp ${params.floatDuration}s linear forwards`;
+
+        // Accesibilidad
+        bubble.setAttribute('role', 'button');
+        bubble.setAttribute('tabindex', '0');
+
+        bubble.addEventListener('animationend', (e) => {
+            if (e.animationName === 'floatUp') {
+                bubble.remove();
+            }
+        });
+
+        playground.appendChild(bubble);
+    }
+
     selectNextTarget() {
         if (this.engine.entries.length === 0) return;
         
@@ -143,9 +174,9 @@ export class BubbleGame {
     }
 
     stop() {
-        if (this.bubbleSpawnInterval) {
-            clearInterval(this.bubbleSpawnInterval);
-            this.bubbleSpawnInterval = null;
+        if (this.bubbleSpawnTimeout) {
+            clearTimeout(this.bubbleSpawnTimeout);
+            this.bubbleSpawnTimeout = null;
         }
 
         const bubbleArea = this.engine.elements.bubbleArea;

@@ -66,40 +66,29 @@ export function setPacks(packs) {
 // ── State Load / Save ─────────────────────────────────────────────────────────
 
 function loadState() {
-    // Check if we need to migrate/reset the state in localStorage due to folder layout updates
-    const savedFolders = localStorage.getItem(STORAGE_KEY_FOLDERS);
-    let loadedFolders = savedFolders ? JSON.parse(savedFolders) : null;
+    const adminState = Storage.getAdminState();
+    let loadedFolders = adminState.folders;
 
     if (loadedFolders) {
         const hasTablas = loadedFolders.some(f => f.id === 'tablas');
         const hasDeleted = loadedFolders.some(f => f.id === 'viajes_aeropuerto');
         if (!hasTablas || hasDeleted) {
             loadedFolders = null; // force reload from FOLDERS_CONFIG
-            localStorage.removeItem(STORAGE_KEY_FOLDERS);
-            localStorage.removeItem(STORAGE_KEY_MAPPINGS);
+            Storage.clearAdminState();
         }
     }
 
     folders = loadedFolders ? loadedFolders : deepCopy(FOLDERS_CONFIG);
-
-    // Folder-pack mappings
-    const savedMappings = localStorage.getItem(STORAGE_KEY_MAPPINGS);
-    folderMappings = (savedMappings && loadedFolders) ? JSON.parse(savedMappings) : deepCopy(DECK_FOLDER_MAPPINGS);
-
-    // Resource order per folder
-    const savedOrder = localStorage.getItem(STORAGE_KEY_ORDER);
-    resourceOrder = savedOrder ? JSON.parse(savedOrder) : {};
-
-    // Pack metadata overrides
-    const savedOverrides = localStorage.getItem(STORAGE_KEY_OVERRIDES);
-    packOverrides = savedOverrides ? JSON.parse(savedOverrides) : {};
+    folderMappings = (adminState.mappings && loadedFolders) ? adminState.mappings : deepCopy(DECK_FOLDER_MAPPINGS);
+    resourceOrder = adminState.order || {};
+    packOverrides = adminState.overrides || {};
 }
 
 function saveState() {
-    localStorage.setItem(STORAGE_KEY_FOLDERS,  JSON.stringify(folders));
-    localStorage.setItem(STORAGE_KEY_MAPPINGS, JSON.stringify(folderMappings));
-    localStorage.setItem(STORAGE_KEY_ORDER,    JSON.stringify(resourceOrder));
-    localStorage.setItem(STORAGE_KEY_OVERRIDES,JSON.stringify(packOverrides));
+    Storage.saveAdminFolders(folders);
+    Storage.saveAdminMappings(folderMappings);
+    Storage.saveAdminOrder(resourceOrder);
+    Storage.savePackOverrides(packOverrides);
 }
 
 // ── Setup UI Wiring ───────────────────────────────────────────────────────────
@@ -690,9 +679,8 @@ function deleteSelected() {
         allPacks = allPacks.filter(p => {
             if (p.id !== pid) return true;
             if (p._custom) {
-                // Remove from localStorage custom decks
-                const decks = JSON.parse(localStorage.getItem(STORAGE_KEY_CUSTOM_DECKS) || '[]');
-                localStorage.setItem(STORAGE_KEY_CUSTOM_DECKS, JSON.stringify(decks.filter(d => d.id !== pid)));
+                const decks = Storage.getCustomDecks();
+                Storage.saveCustomDecks(decks.filter(d => d.id !== pid));
             }
             return false;
         });
@@ -792,11 +780,10 @@ function getPacksForFolder(folderId) {
 // ── Publish to GitHub ─────────────────────────────────────────────────────────
 
 async function publishChanges() {
-    const owner = localStorage.getItem('gh_owner');
-    const repo  = localStorage.getItem('gh_repo');
+    const config = Storage.getGitHubConfig();
     const token = await Storage.getDecryptedToken();
 
-    if (!owner || !repo || !token) {
+    if (!config.owner || !config.repo || !token) {
         showToast('Guarda las credenciales de GitHub primero', true);
         return;
     }
@@ -810,8 +797,8 @@ async function publishChanges() {
 
     showToast('Publicando folders-config.js…');
     try {
-        const existing = await githubGet(owner, repo, token, 'js/modules/folders-config.js');
-        await githubPut(owner, repo, token, 'js/modules/folders-config.js', encodedFC,
+        const existing = await githubGet(config.owner, config.repo, token, 'js/modules/folders-config.js');
+        await githubPut(config.owner, config.repo, token, 'js/modules/folders-config.js', encodedFC,
             '📁 Update folders config via admin', existing?.sha);
         showToast('Cambios publicados en GitHub ✅');
     } catch (e) {

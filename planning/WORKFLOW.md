@@ -39,6 +39,25 @@ Para probar el sistema de módulos ES6 localmente, se requiere un servidor web (
 - O usar Python: `python -m http.server 8000`.
 - O usar Node: `npx serve`.
 
-## 5. Validación de Paridad (Android)
+## 6. Ciclo de Vida del Desarrollo con Agentes
 
-Cualquier mejora en el algoritmo de aprendizaje o en el sistema de gestión de mazos debe ser comunicada o implementada de forma análoga en la aplicación Android (`StudiApp`) para mantener la experiencia de usuario consistente.
+EstudiApp utiliza un **Framework de Agentes Operativos** para asegurar la calidad y coherencia técnica:
+
+### 🛠️ La Toolbox del Desarrollador (Scripts Críticos)
+Antes de marcar una tarea como terminada (DoD), se DEBEN ejecutar los siguientes comandos según el área afectada:
+- **Lógica de Juegos:** `node scripts/validate_games.js` (Verifica estructura, memoria y accesibilidad).
+- **Contenido/Presets:** `node scripts/build_presets.js` (Sincroniza presets físicos con `data/packs.json`).
+
+### 🔄 Protocolo de Handoff
+Al finalizar cualquier intervención, el responsable (humano o agente IA) debe dejar un **Informe de Handoff** en el chat o en un log temporal que detalle:
+- **Cambios Realizados:** Módulos tocados.
+- **Decisiones Arquitectónicas:** Referenciar a `planning/architecture/DECISIONS.md` si se cambió una norma.
+- **Validación:** Confirmar qué scripts de la Toolbox pasaron con éxito.
+- **Pendientes:** Qué debe hacer el siguiente perfil (ej. "Mecánicas listas, falta Estética").
+
+### 🧠 Registro de Decisiones (ADL)
+Cualquier cambio que afecte a la estructura global (ej. prohibición de librerías externas, cambio en la racha de estudio) debe registrarse en `planning/architecture/DECISIONS.md`. Esto sirve como memoria a largo plazo del proyecto.
+
+## 7. Validación de Paridad (Android)
+
+Cualquier mejora en el algoritmo de aprendizaje, sistema de gamificación o gestión de mazos debe ser comunicada o implementada de forma análoga en la aplicación Android (`StudiApp`) para mantener la experiencia de usuario consistente.

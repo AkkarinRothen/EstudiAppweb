@@ -64,8 +64,20 @@ export class WordleGame {
 
         const keyboard = this._createKeyboard();
         wordleArea.appendChild(keyboard);
+        
+        this.setupEventListeners(wordleArea);
 
         this._updateGrid();
+    }
+
+    setupEventListeners(wordleArea) {
+        const keyboard = wordleArea.querySelector('.wordle-keyboard');
+        this.keyHandler = (e) => {
+            const btn = e.target.closest('.key-btn');
+            if (!btn) return;
+            this._handleKey(btn.dataset.key);
+        };
+        keyboard.addEventListener('click', this.keyHandler);
     }
 
     _createKeyboard() {
@@ -85,8 +97,9 @@ export class WordleGame {
                 btn.className = 'key-btn';
                 if (key === 'Enter' || key === '←') btn.classList.add('wide');
                 btn.innerText = key;
-                btn.onclick = () => this._handleKey(key);
                 btn.dataset.key = key;
+                btn.setAttribute('role', 'button');
+                btn.setAttribute('tabindex', '0');
                 rowEl.appendChild(btn);
             });
             kb.appendChild(rowEl);
@@ -208,5 +221,14 @@ export class WordleGame {
             clearTimeout(this.timeoutId);
             this.timeoutId = null;
         }
+
+        const wordleArea = this.engine.elements.wordleArea;
+        const keyboard = wordleArea?.querySelector('.wordle-keyboard');
+        if (keyboard && this.keyHandler) {
+            keyboard.removeEventListener('click', this.keyHandler);
+        }
+        
+        const actionBtn = this.engine.elements.actionBtn;
+        if (actionBtn) actionBtn.onclick = null;
     }
 }

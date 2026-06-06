@@ -15,12 +15,68 @@ export const STORAGE_KEYS = {
     SRS_DATA: 'estudiapp_srs_data',
     STATS: 'estudiapp_stats',
     PROGRESSION: 'estudiapp_progression',
+    DIFFICULTY: 'estudiapp_difficulty',
+    HIGH_SCORES: 'estudiapp_high_scores',
     CUSTOM_DECKS: 'estudiapp_custom_decks',
     TTS_PREF: 'estudiapp_tts_pref',
     GH_OWNER: 'gh_owner',
     GH_REPO: 'gh_repo',
-    GH_TOKEN: 'gh_token'
+    GH_TOKEN: 'gh_token',
+    ADMIN_FOLDERS: 'admin_folders_state',
+    ADMIN_MAPPINGS: 'admin_mappings_state',
+    ADMIN_ORDER: 'admin_resource_order',
+    PACK_OVERRIDES: 'pack_overrides'
 };
+
+export function getAdminState() {
+    return {
+        folders: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_FOLDERS)),
+        mappings: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_MAPPINGS)),
+        order: JSON.parse(localStorage.getItem(STORAGE_KEYS.ADMIN_ORDER)),
+        overrides: JSON.parse(localStorage.getItem(STORAGE_KEYS.PACK_OVERRIDES))
+    };
+}
+
+export function saveAdminFolders(folders) {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_FOLDERS, JSON.stringify(folders));
+}
+
+export function saveAdminMappings(mappings) {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_MAPPINGS, JSON.stringify(mappings));
+}
+
+export function saveAdminOrder(order) {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_ORDER, JSON.stringify(order));
+}
+
+export function savePackOverrides(overrides) {
+    localStorage.setItem(STORAGE_KEYS.PACK_OVERRIDES, JSON.stringify(overrides));
+}
+
+export function clearAdminState() {
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_FOLDERS);
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_MAPPINGS);
+}
+
+export function getGitHubConfig() {
+    return {
+        owner: localStorage.getItem(STORAGE_KEYS.GH_OWNER),
+        repo: localStorage.getItem(STORAGE_KEYS.GH_REPO)
+    };
+}
+
+export function getDifficultySettings() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.DIFFICULTY));
+    } catch (e) {
+        return null;
+    }
+}
+
+export function saveDifficultySettings(settings) {
+    localStorage.setItem(STORAGE_KEYS.DIFFICULTY, JSON.stringify(settings));
+    triggerSave();
+}
 
 export function getProgression() {
     try {
@@ -169,10 +225,15 @@ export async function decryptText(ciphertextWithIv, password) {
 
 export function getHighScores() {
     try {
-        return JSON.parse(localStorage.getItem('estudiapp_high_scores')) || {};
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.HIGH_SCORES)) || {};
     } catch (e) {
         return {};
     }
+}
+
+export function saveHighScores(scores) {
+    localStorage.setItem(STORAGE_KEYS.HIGH_SCORES, JSON.stringify(scores));
+    triggerSave();
 }
 
 export function getHighScore(packId, gameId) {
@@ -187,8 +248,7 @@ export function saveHighScore(packId, gameId, score) {
         const currentBest = scores[key] || 0;
         if (score > currentBest) {
             scores[key] = score;
-            localStorage.setItem('estudiapp_high_scores', JSON.stringify(scores));
-            triggerSave();
+            saveHighScores(scores);
             return true; // New record!
         }
         return false;

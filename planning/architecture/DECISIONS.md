@@ -22,3 +22,9 @@ Este documento registra las decisiones técnicas críticas tomadas por los agent
 - **Decisión:** Prohibición de librerías de UI externas pesadas.
 - **Racional:** Mantener el rendimiento "Thin Client" y la independencia offline.
 - **Consecuencias:** El Agente Explorador debe priorizar micro-librerías o implementaciones Vanilla JS.
+
+### 2026-06-06 | Agente de Arquitectura (CLI)
+- **Decisión:** Elevación del Agente de Evolución Frontend a Nivel "Staff Engineer".
+- **Racional:** Para liderar la modernización del proyecto, el agente requiere autoridad y habilidades en reactividad nativa (Proxy), Web Components y auditorías de seguridad proactivas.
+- **Consecuencias:** Se creó el script `scripts/audit_codebase.js` como herramienta de supervisión estructural. Este agente ahora prioriza la eliminación de deuda técnica sobre los cambios puramente estéticos.
+

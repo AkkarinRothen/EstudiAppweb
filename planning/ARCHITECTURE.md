@@ -14,20 +14,29 @@ Este documento describe la arquitectura técnica del portal web de EstudiApp, ba
 ## Estructura de Capas
 
 ### 1. Capa de Módulos (`js/modules/`)
-- `storage.js`: Centraliza el acceso a `localStorage`.
-- `srs.js`: Algoritmo de Repetición Espaciada (Spaced Repetition System).
+- `storage.js`: Centraliza el acceso a `localStorage` y define las claves globales.
+- `srs.js`: Algoritmo de Repetición Espaciada (SRS).
 - `speech.js`: Motor de Text-to-Speech (TTS).
-- `fx.js`: Gestor centralizado de efectos visuales (Anime.js, Confetti) y sonidos (Howler.js).
-- `utils.js`: Utilidades compartidas (limpieza de texto, hashes, comparaciones).
+- `fx.js`: Gestor centralizado de efectos visuales (Anime.js, Confetti) y sonidos (Howler.js). Incluye animaciones premium de subida de nivel.
+- `gamification.js`: Motor de XP, niveles y lógica de logros.
+- `difficulty-manager.js`: Centraliza la lógica de dificultad adaptativa (Lineal vs Progresiva).
+- `supabase-sync.js`: Sincronización bidireccional en tiempo real con Supabase (Nube).
+- `ui-gamification.js`: Componentes visuales de progreso (Barra XP, Nivel).
+- `utils.js`: Utilidades compartidas (limpieza de texto, hashes, counter animations).
 - `github.js`: Integración con la API de GitHub para publicación.
 - `parser.js`: Procesamiento de datos CSV/TSV.
 - `library.js`: Gestión de la biblioteca de mazos locales/personalizados.
 - `template.js`: Generador de HTML para los presets.
-- `preset-runner.js`: Inicializador unificado para el funcionamiento de cualquier pack de estudio.
-- `study-engine.js`: Motor principal que orquesta el SRS, la UI de la tarjeta principal y el Launchpad de selección de modos.
+- `preset-runner.js`: Inicializador unificado para el funcionamiento de cualquier pack.
+- `study-engine.js`: Orquestador principal. Integra SRS, Gamificación y Modos de Juego.
 - `ui-portal.js`: Renderizado y filtrado del portal principal.
-- `ui-modal.js`: Inicialización del modal interactivo de práctica (Dashboard).
-- **`games/` (Subdirectorio):** Contiene la lógica aislada de cada modo de juego (ej. `wordle.js`, `match.js`, `sentence.js`). El `StudyEngine` instancia estas clases y llama a sus métodos `start()`.
+- `ui-modal.js`: Dashboard interactivo de práctica.
+- **`games/` (Subdirectorio):** Lógica aislada de minijuegos con gestión de ciclo de vida (`start`/`stop`) y limpieza de memoria.
+
+### 2. Capa de Persistencia y Sincronización
+- **Local:** `localStorage` como caché primaria y modo offline.
+- **Nube:** `Supabase` para persistencia multi-dispositivo de SRS, estadísticas, logros y configuración de dificultad.
+- **Integridad:** Sincronización automática tras cambios locales (debounce de 2.5s).
 
 ### 2. Puntos de Entrada
 - `js/main.js`: Orquestador del portal (`index.html`).
