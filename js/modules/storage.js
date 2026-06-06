@@ -137,3 +137,32 @@ export async function decryptText(ciphertextWithIv, password) {
         return null;
     }
 }
+
+export function getHighScores() {
+    try {
+        return JSON.parse(localStorage.getItem('estudiapp_high_scores')) || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+export function getHighScore(packId, gameId) {
+    const scores = getHighScores();
+    return scores[`${packId}_${gameId}`] || 0;
+}
+
+export function saveHighScore(packId, gameId, score) {
+    try {
+        const scores = getHighScores();
+        const key = `${packId}_${gameId}`;
+        const currentBest = scores[key] || 0;
+        if (score > currentBest) {
+            scores[key] = score;
+            localStorage.setItem('estudiapp_high_scores', JSON.stringify(scores));
+            return true; // New record!
+        }
+        return false;
+    } catch (e) {
+        return false;
+    }
+}

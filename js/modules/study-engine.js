@@ -97,15 +97,18 @@ export class StudyEngine {
 
     toggleLaunchpad() {
         const area = this.elements.launchpadArea;
+        const btn = this.elements.btnLaunchpad;
         if (!area) return;
 
         const isVisible = area.style.display === 'flex';
         if (isVisible) {
             area.style.display = 'none';
+            if (btn) btn.style.display = 'flex';
             this.updateVisibility();
         } else {
             this._renderLaunchpad();
             area.style.display = 'flex';
+            if (btn) btn.style.display = 'none';
             
             // Hide other areas
             if (this.elements.resultArea) this.elements.resultArea.style.display = 'none';
@@ -125,7 +128,20 @@ export class StudyEngine {
 
     _renderLaunchpad() {
         const area = this.elements.launchpadArea;
-        area.innerHTML = '';
+        
+        area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                <h3 style="margin:0; color:var(--primary); font-size:18px;">Modos de Estudio</h3>
+                <button id="closeLaunchpadBtn" class="speaker-btn" style="background:var(--surface-variant); color:var(--on-surface);">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/></svg>
+                </button>
+            </div>
+        `;
+
+        const closeBtn = area.querySelector('#closeLaunchpadBtn');
+        if (closeBtn) {
+            closeBtn.onclick = () => this.toggleLaunchpad();
+        }
 
         const groups = [
             {

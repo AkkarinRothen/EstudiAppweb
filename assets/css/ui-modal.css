@@ -788,7 +788,8 @@
     background: var(--surface-variant);
     border-radius: 12px;
     font-weight: bold;
-    font-size: 15px;
+    font-size: 14px;
+    font-family: 'Orbitron', monospace;
 }
 
 .sniper-lives-display { letter-spacing: 3px; }
@@ -800,8 +801,27 @@
     padding: 12px 16px;
     border-radius: 14px;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 15px;
     text-align: center;
+    font-family: 'Orbitron', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 0 15px rgba(103, 80, 164, 0.2);
+}
+
+.sniper-crosshair {
+    width: 22px;
+    height: 22px;
+    animation: sniperCrosshairRotate 3s linear infinite;
+    fill: currentColor;
+    flex-shrink: 0;
+}
+
+@keyframes sniperCrosshairRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .sniper-lanes {
@@ -887,6 +907,28 @@
     gap: 8px;
     padding: 24px;
     text-align: center;
+    font-family: 'Orbitron', monospace;
+}
+
+/* CRT Screen Filter and Lasers */
+.sniper-lanes.crt {
+    position: relative;
+}
+.sniper-lanes.crt::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(103, 80, 164, 0.06), rgba(0, 255, 0, 0.02), rgba(103, 80, 164, 0.06));
+    z-index: 4;
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.2;
+    border-radius: 14px;
+}
+
+.laser-beam-svg {
+    transition: opacity 0.15s ease-out;
 }
 
 /* ─── 🔗 ARRASTRAR Y CONECTAR ────────────────────────────────────────────── */
@@ -1202,34 +1244,49 @@
 
 /* Floating Switcher Button */
 .btn-change-mode {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: var(--secondary-container);
-    color: var(--on-secondary-container);
-    padding: 10px 20px;
+    background: var(--primary);
+    color: white;
+    padding: 12px 24px;
     border-radius: 100px;
     border: none;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    margin-bottom: 20px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 100;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(103, 80, 164, 0.4);
 }
 
 .btn-change-mode:hover {
-    background: var(--primary);
-    color: white;
-    transform: scale(1.05);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(103, 80, 164, 0.6);
+}
+
+.btn-change-mode.active {
+    background: var(--surface-variant);
+    color: var(--on-surface);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 @media (max-width: 480px) {
     .launchpad-grid {
         grid-template-columns: 1fr;
     }
+    .btn-change-mode {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 20px;
+        font-size: 13px;
+    }
 }
+
 
 .wordle-keyboard {
     display: flex;

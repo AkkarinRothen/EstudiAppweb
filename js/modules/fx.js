@@ -28,6 +28,7 @@ async function ensureInit() {
                 sounds.click = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3'], volume: 0.2 });
                 sounds.transition = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/2571/2568-preview.mp3'], volume: 0.2 });
                 sounds.victory = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'], volume: 0.6 });
+                sounds.laser = new Howl({ src: ['https://assets.mixkit.co/active_storage/sfx/1681/1681-preview.mp3'], volume: 0.4 });
             }
         }
         if (!anime) {
