@@ -14,7 +14,8 @@ export class WordleGame {
         const wordleArea = this.engine.elements.wordleArea;
         if (!wordleArea) return;
 
-        this.engine.activeEntry = Srs.selectNextSrsEntry({ entries: this.engine.entries }, this.engine.lastSpanishText);
+        const dummyTableData = { title: this.engine.packId, entries: this.engine.entries };
+        this.engine.activeEntry = Srs.selectNextSrsEntry(dummyTableData, this.engine.lastSpanishText);
         if (!this.engine.activeEntry) return;
 
         const parts = this.engine.activeEntry.text.split("->");

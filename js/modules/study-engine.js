@@ -14,6 +14,7 @@ import { WriteGame } from './games/write.js';
 import { ScrambledGame } from './games/scrambled.js';
 import { DictationGame } from './games/dictation.js';
 import { TimeAttackGame } from './games/timeAttack.js';
+import { DiagramGame } from './games/diagram.js';
 
 export class StudyEngine {
     constructor({
@@ -43,6 +44,7 @@ export class StudyEngine {
         this.scrambledGame = new ScrambledGame(this);
         this.dictationGame = new DictationGame(this);
         this.timeAttackGame = new TimeAttackGame(this);
+        this.diagramGame = new DiagramGame(this);
 
         // Internal State
         this.currentMode = 'direct';
@@ -121,6 +123,7 @@ export class StudyEngine {
             if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
             if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
             if (this.elements.wordleArea) this.elements.wordleArea.style.display = 'none';
+            if (this.elements.diagramArea) this.elements.diagramArea.style.display = 'none';
             
             Fx.animateEntrance(area);
         }
@@ -168,7 +171,8 @@ export class StudyEngine {
                 modes: [
                     { id: 'quiz', title: 'Modo Quiz', desc: 'Elige la opción correcta.', icon: '✅' },
                     { id: 'match', title: 'Memorama', desc: 'Empareja conceptos (Esp vs Ing).', icon: '🧠' },
-                    { id: 'drag', title: 'Conectar', desc: 'Une palabras con líneas.', icon: '🔗' }
+                    { id: 'drag', title: 'Conectar', desc: 'Une palabras con líneas.', icon: '🔗' },
+                    { id: 'diagram', title: 'Diagrama', desc: 'Arrastra etiquetas sobre el plano.', icon: '🏷️' }
                 ]
             },
             {
@@ -209,7 +213,6 @@ export class StudyEngine {
                 `;
                 card.onclick = () => {
                     this.setMode(mode.id);
-                    this.toggleLaunchpad();
                 };
                 grid.appendChild(card);
             });
@@ -319,6 +322,7 @@ export class StudyEngine {
         this.timeAttackGame.stop();
         this.bubbleGame.stop();
         this.sniperGame.stop();
+        this.diagramGame.stop();
 
         Fx.playSound('click');
 
@@ -340,6 +344,7 @@ export class StudyEngine {
         if (this.elements.dragArea) this.elements.dragArea.style.display = 'none';
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
         if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
+        if (this.elements.diagramArea) this.elements.diagramArea.style.display = 'none';
         if (this.elements.timerContainer) this.elements.timerContainer.style.display = (mode === 'timeAttack') ? 'flex' : 'none';
         
         if (this.elements.subContainer) {
@@ -409,6 +414,10 @@ export class StudyEngine {
                 actionBtn.innerText = 'Pasar Frase';
                 actionBtn.style.display = 'block';
                 actionBtn.onclick = () => this.sentenceGame.start();
+            } else if (mode === 'diagram') {
+                actionBtn.innerText = 'Reiniciar Diagrama';
+                actionBtn.style.display = 'block';
+                actionBtn.onclick = () => this.diagramGame.start();
             } else {
                 actionBtn.innerText = 'Tirar Dado';
                 actionBtn.style.display = 'block';
@@ -440,6 +449,8 @@ export class StudyEngine {
             this.wordleGame.start();
         } else if (mode === 'sentence') {
             this.sentenceGame.start();
+        } else if (mode === 'diagram') {
+            this.diagramGame.start();
         } else if (mode !== 'timeAttack') {
             if (this.lastEnglishText) {
                 if (this.elements.subText) this.elements.subText.innerText = this.lastEnglishText;

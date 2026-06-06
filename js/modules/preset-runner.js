@@ -44,6 +44,7 @@ export function initPreset(entries, formula) {
         dictationArea: document.getElementById('dictationArea'),
         wordleArea: document.getElementById('wordleArea'),
         sentenceArea: document.getElementById('sentenceArea'),
+        diagramArea: document.getElementById('diagramArea'),
         btnLaunchpad: document.getElementById('btnLaunchpad'),
         launchpadArea: document.getElementById('launchpadArea')
     };

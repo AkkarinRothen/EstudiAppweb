@@ -6,6 +6,7 @@ Este directorio contiene la documentación estratégica y técnica del portal we
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md):** Descripción detallada de la estructura de módulos ES6, capas de datos y flujo de información.
 - **[WORKFLOW.md](./WORKFLOW.md):** Guía paso a paso para añadir contenido, modificar lógica y publicar cambios.
+- **[agents/README.md](./agents/README.md):** Orquestación de agentes de IA especializados en el desarrollo y mejora de juegos interactivos.
 
 ## Objetivos del Proyecto Web
 

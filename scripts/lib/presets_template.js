@@ -92,6 +92,7 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             <div id="dictationArea" class="dictation-container" style="display:none"></div>
             <div id="wordleArea" class="wordle-container" style="display:none"></div>
             <div id="sentenceArea" class="sentence-container" style="display:none"></div>
+            <div id="diagramArea" class="diagram-container" style="display:none"></div>
             <div id="srsFeedback" class="srs-feedback-container" style="display:none">
                 <button class="srs-btn srs-btn-again">❌ Difícil</button>
                 <button class="srs-btn srs-btn-good">✅ Fácil</button>
