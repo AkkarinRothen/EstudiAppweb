@@ -82,6 +82,41 @@ export class StudyEngine {
         this.setupTtsListeners();
         this.setupImageListener();
         this.setupEditListeners();
+        this.setupGestures();
+    }
+
+    setupGestures() {
+        const area = this.elements.resultArea;
+        if (!area) return;
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        area.addEventListener('touchstart', (e) => {
+            if (this.currentMode !== 'flashcard' || !this.isRevealed) return;
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        area.addEventListener('touchend', (e) => {
+            if (this.currentMode !== 'flashcard' || !this.isRevealed) return;
+            touchEndX = e.changedTouches[0].screenX;
+            this.handleSwipe(touchStartX, touchEndX);
+        }, { passive: true });
+    }
+
+    handleSwipe(start, end) {
+        const threshold = 100;
+        const diff = end - start;
+
+        if (Math.abs(diff) < threshold) return;
+
+        if (diff > 0) {
+            // Swipe Right -> Good
+            this.rateSrs(true);
+        } else {
+            // Swipe Left -> Again
+            this.rateSrs(false);
+        }
     }
 
     setupEditListeners() {
@@ -612,6 +647,7 @@ export class StudyEngine {
         
         if (isCorrect) {
             Fx.playSound('success');
+            Fx.vibrate('success');
             if (this.currentMode !== 'timeAttack') Fx.celebrate('simple');
             
             // Gamificación: Sumar XP y verificar logros
@@ -619,6 +655,7 @@ export class StudyEngine {
             Gamification.checkAchievements({ gameId: this.currentMode });
         } else {
             Fx.playSound('error');
+            Fx.vibrate('error');
         }
 
         if (this.elements.srsFeedback) this.elements.srsFeedback.style.display = 'none';

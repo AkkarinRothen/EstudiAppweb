@@ -214,3 +214,19 @@ export async function showLevelUp(level) {
         setTimeout(() => splash.remove(), 1000);
     }, 3000);
 }
+
+/**
+ * Triggers a vibration pattern on mobile devices
+ * @param {string|number|Array} pattern - 'success', 'error', or a custom array
+ */
+export function vibrate(pattern) {
+    if (!navigator.vibrate) return;
+
+    if (pattern === 'success') {
+        navigator.vibrate(50); // Single short vibration
+    } else if (pattern === 'error') {
+        navigator.vibrate([100, 50, 100]); // Two short vibrations
+    } else {
+        navigator.vibrate(pattern);
+    }
+}
