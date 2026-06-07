@@ -105,18 +105,14 @@
     </div>
 
     <div class="main-content-area">
-        <!-- Import Area -->
-        <div class="import-area" id="dropZone">
-            <svg viewBox="0 0 24 24">
-                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-            </svg>
-            <h3>Importar Tabla Didáctica</h3>
-            <p>Arrastra tu archivo CSV exportado desde la app o haz clic para subirlo</p>
-            <input type="file" id="csvInput" class="import-input" accept=".csv">
-        </div>
-
         <div class="controls">
-            <input type="text" id="searchInput" class="search-bar" placeholder="Buscar un pack (ej: restaurante, salud...)">
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <input type="text" id="searchInput" class="search-bar" style="flex: 1;" placeholder="Buscar un pack...">
+                <div class="import-area-mini" id="dropZone" title="Importar Tabla CSV (o arrastra el archivo)">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                    <input type="file" id="csvInput" class="import-input" accept=".csv" style="display:none">
+                </div>
+            </div>
             <div class="filter-section">
                 <button class="filter-chip active">Todos</button>
                 <button class="filter-chip">Nivel A1</button>
@@ -388,7 +384,7 @@
 
 <footer style="margin-top: 60px; padding: 40px 20px; text-align: center; border-top: 1px solid var(--outline-variant); opacity: 0.6; font-size: 12px;">
     <p>© 2026 EstudiApp Portal - Por AkkarinRothen</p>
-    <p id="appVersion">Versión: estudiapp-v20260607043643</p>
+    <p id="appVersion">Versión: estudiapp-v20260607044000</p>
 </footer>
 
 </body>
