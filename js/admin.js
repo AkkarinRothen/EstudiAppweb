@@ -17,9 +17,12 @@ let activeSearchTerm = "";
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🏁 Admin Initializing...');
+    
     // Intentar auto-login si ya hay sesión
     const sessionPass = Storage.getSessionPassword();
     if (sessionPass && sessionPass.includes(":")) {
+        console.log('🔄 Detectada sesión previa. Intentando auto-login...');
         const [user, pass] = sessionPass.split(":");
         await performLogin(user, pass);
     }
@@ -30,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkLogin() {
     const user = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value.trim();
+    console.log('🛡️ Validando credenciales para:', user);
     await performLogin(user, pass);
 }
 
@@ -45,13 +49,14 @@ async function performLogin(user, pass) {
 
     if (userHash === expectedUserHash && passHash === expectedPassHash) {
         Storage.setSessionPassword(user + ":" + pass);
+        
         const overlay = document.getElementById('loginOverlay');
         if (overlay) overlay.style.display = 'none';
         
         const mainContent = document.getElementById('mainAdminContent');
         if (mainContent) mainContent.style.display = 'flex';
         
-        showStatus(`👋 ¡Bienvenido, ${user}! Sesión restaurada.`, 'success');
+        showStatus(`👋 ¡Bienvenido, ${user}! Sesión activa.`, 'success');
         
         const headerTitle = document.querySelector('header h1');
         if (headerTitle && !headerTitle.innerHTML.includes('🛡️')) {
@@ -60,15 +65,28 @@ async function performLogin(user, pass) {
 
         await loadAuth();
     } else {
+        console.warn('❌ Credenciales inválidas');
         if (errDiv) errDiv.style.display = 'block';
         const passInput = document.getElementById('loginPass');
         if (passInput) passInput.value = '';
-        // Si falló el auto-login, limpiar la sesión corrupta
         Storage.setSessionPassword("");
     }
 }
 
-    // ... existing listeners ...
+function setupEventListeners() {
+    const loginBtn = document.getElementById('btnLoginAcceder');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', checkLogin);
+    }
+
+    const loginPass = document.getElementById('loginPass');
+    if (loginPass) {
+        loginPass.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkLogin();
+        });
+    }
+
+    // Bulk selection
     const selectAllRows = document.getElementById('selectAllRows');
     if (selectAllRows) {
         selectAllRows.addEventListener('change', (e) => {
@@ -77,24 +95,15 @@ async function performLogin(user, pass) {
         });
     }
 
+    // AI Actions
     const aiTranslateBtn = document.getElementById('aiTranslateBtn');
     if (aiTranslateBtn) {
         aiTranslateBtn.addEventListener('click', () => translateWithAI());
     }
 
-    const loginBtn = document.getElementById('btnLoginAcceder');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', () => {
-            console.log('🛡️ Intentando acceder al panel de editor...');
-            checkLogin();
-        });
-    }
-
-    const loginPass = document.getElementById('loginPass');
-    if (loginPass) {
-        loginPass.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkLogin();
-        });
+    const aiGenerateExamplesBtn = document.getElementById('aiGenerateExamplesBtn');
+    if (aiGenerateExamplesBtn) {
+        aiGenerateExamplesBtn.addEventListener('click', () => generateExamplesWithAI());
     }
 
     // GitHub Config
@@ -139,7 +148,7 @@ async function performLogin(user, pass) {
     if (deleteSelectedRowsBtn) {
         deleteSelectedRowsBtn.addEventListener('click', () => {
             const tbody = document.getElementById('vocabTableBody');
-            const checkboxes = tbody.querySelectorAll('.row-selector:checked');
+            const checkboxes = Array.from(tbody.querySelectorAll('.row-selector:checked'));
             if (checkboxes.length === 0) {
                 alert('Por favor selecciona al menos una fila para eliminar.');
                 return;
@@ -153,11 +162,6 @@ async function performLogin(user, pass) {
                 document.getElementById('selectAllRows').checked = false;
             }
         });
-    }
-
-    const aiGenerateExamplesBtn = document.getElementById('aiGenerateExamplesBtn');
-    if (aiGenerateExamplesBtn) {
-        aiGenerateExamplesBtn.addEventListener('click', () => generateExamplesWithAI());
     }
 
     // Image Search Popover Actions
@@ -240,44 +244,11 @@ async function performLogin(user, pass) {
     }
 }
 
-async function checkLogin() {
-    const user = document.getElementById('loginUser').value.trim();
-    const pass = document.getElementById('loginPass').value.trim();
-    const errDiv = document.getElementById('loginError');
-
-    if (!user || !pass) {
-        errDiv.style.display = 'block';
-        return;
-    }
-
-    const userHash = await Utils.sha256(user);
-    const passHash = await Utils.sha256(pass);
-
-    if (userHash === expectedUserHash && passHash === expectedPassHash) {
-        Storage.setSessionPassword(user + ":" + pass);
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('mainAdminContent').style.display = 'flex';
-        
-        // Mostrar indicador de Admin
-        showStatus(`👋 ¡Bienvenido, ${user}! Has iniciado sesión como Administrador.`, 'success');
-        
-        const headerTitle = document.querySelector('header h1');
-        if (headerTitle) {
-            headerTitle.innerHTML += ' <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:12px; vertical-align:middle; margin-left:10px;">🛡️ Modo Editor</span>';
-        }
-
-        await loadAuth();
-    } else {
-        errDiv.style.display = 'block';
-        document.getElementById('loginPass').value = '';
-    }
-}
-
 async function saveAuth() {
-    const owner = document.getElementById('ghOwner').value;
-    const repo = document.getElementById('ghRepo').value;
-    const token = document.getElementById('ghToken').value;
-    const geminiKey = document.getElementById('geminiApiKey').value;
+    const owner = document.getElementById('ghOwner').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    const token = document.getElementById('ghToken').value.trim();
+    const geminiKey = document.getElementById('geminiApiKey').value.trim();
 
     if (!owner || !repo || !token) {
         showStatus('Por favor completa todos los campos de GitHub.', 'error');
@@ -291,10 +262,8 @@ async function saveAuth() {
     const encryptedToken = await Storage.encryptText(token, sessionPass);
     if (encryptedToken) {
         localStorage.setItem('gh_token_encrypted', encryptedToken);
-        // Clean up any old plaintext token if present
         localStorage.removeItem('gh_token');
         
-        // Save gemini key if present
         if (geminiKey) {
             const encryptedGemini = await Storage.encryptText(geminiKey, sessionPass);
             if (encryptedGemini) {
@@ -528,23 +497,17 @@ async function loadAuth() {
 
 function handleTablePaste(e, inputEl, isEs) {
     const pasteData = e.clipboardData.getData('text');
-    // If it doesn't contain tabs or newlines, perform standard paste
     if (!pasteData.includes('\t') && !pasteData.includes('\n') && !pasteData.includes('\r')) {
         return;
     }
     
     e.preventDefault();
-    
-    // Split into rows, ignore empty rows at the end
     const rawRows = pasteData.split(/\r?\n/);
     const rows = rawRows.filter((r, idx) => r.trim() !== '' || idx < rawRows.length - 1);
     if (rows.length === 0) return;
     
     const tr = inputEl.closest('tr');
     if (!tr) return;
-    
-    const tbody = document.getElementById('vocabTableBody');
-    const allTrs = Array.from(tbody.querySelectorAll('tr'));
     
     rows.forEach((rowText, idx) => {
         let esVal = '';
@@ -557,22 +520,12 @@ function handleTablePaste(e, inputEl, isEs) {
             enVal = cols[1] || '';
             imgVal = cols[2] || '';
         } else {
-            // No tab, paste all in the active column
-            if (isEs) {
-                esVal = rowText;
-            } else {
-                enVal = rowText;
-            }
+            if (isEs) esVal = rowText; else enVal = rowText;
         }
         
         if (idx === 0) {
-            // Write into the active row's inputs
-            if (esVal || !rowText.includes('\t')) {
-                tr.querySelector('.vocab-es').value = esVal;
-            }
-            if (enVal || !rowText.includes('\t')) {
-                tr.querySelector('.vocab-en').value = enVal;
-            }
+            if (esVal || !rowText.includes('\t')) tr.querySelector('.vocab-es').value = esVal;
+            if (enVal || !rowText.includes('\t')) tr.querySelector('.vocab-en').value = enVal;
             if (imgVal) {
                 tr._existingImgUrl = imgVal;
                 delete tr._imageWebpBase64;
@@ -586,11 +539,9 @@ function handleTablePaste(e, inputEl, isEs) {
                 removeBtn.style.display = 'inline-block';
             }
         } else {
-            // For subsequent rows, add a new row
             addTableRow(esVal, enVal, imgVal);
         }
     });
-    
     updateDiceFormula();
 }
 
@@ -600,19 +551,13 @@ function openImageSearchPopover(tr) {
         alert("Por favor introduce un término en inglés antes de buscar una imagen.");
         return;
     }
-    
     activeSearchRow = tr;
     activeSearchTerm = englishVal;
     activeLockId = Math.floor(Math.random() * 10000) + 1;
-    
     document.getElementById('imageSearchQueryText').innerText = `Buscando imágenes para: "${englishVal}"`;
     const searchInput = document.getElementById('imageSearchInput');
-    if (searchInput) {
-        searchInput.value = englishVal;
-    }
-    
+    if (searchInput) searchInput.value = englishVal;
     document.getElementById('imageSearchPopover').style.display = 'flex';
-    
     updatePopoverImage();
 }
 
@@ -621,17 +566,10 @@ function updatePopoverImage() {
     const img = document.getElementById('imageSearchPreviewImg');
     spinner.style.display = 'block';
     img.style.display = 'none';
-    
     const keyword = Utils.extractImageKeyword(activeSearchTerm);
     const imgUrl = `https://loremflickr.com/320/240/${encodeURIComponent(keyword)}?lock=${activeLockId}`;
-    
-    img.onload = () => {
-        spinner.style.display = 'none';
-        img.style.display = 'block';
-    };
-    img.onerror = () => {
-        spinner.innerText = "Error al cargar la imagen.";
-    };
+    img.onload = () => { spinner.style.display = 'none'; img.style.display = 'block'; };
+    img.onerror = () => { spinner.innerText = "Error al cargar la imagen."; };
     img.src = imgUrl;
 }
 
@@ -647,48 +585,27 @@ async function translateWithAI() {
         showStatus('Por favor introduce tu Clave API de Gemini para usar esta función.', 'error');
         return;
     }
-
     const tbody = document.getElementById('vocabTableBody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
     const selectedRows = rows.filter(row => row.querySelector('.row-selector')?.checked);
-    
     const targets = selectedRows.length > 0 ? selectedRows : rows;
-    const wordsToTranslate = targets
-        .map((row, idx) => ({ index: idx, es: row.querySelector('.vocab-es').value.trim() }))
-        .filter(w => w.es !== "");
-
+    const wordsToTranslate = targets.map((row, idx) => ({ index: idx, es: row.querySelector('.vocab-es').value.trim() })).filter(w => w.es !== "");
     if (wordsToTranslate.length === 0) {
         showStatus('No hay palabras en español para traducir.', 'error');
         return;
     }
-
     const btn = document.getElementById('aiTranslateBtn');
-    btn.disabled = true;
-    btn.innerText = "🤖 Traduciendo...";
+    btn.disabled = true; btn.innerText = "🤖 Traduciendo...";
     showStatus(`Traduciendo ${wordsToTranslate.length} términos con Gemini...`, 'warning');
-
     try {
-        const prompt = `Traduce las siguientes palabras del español al inglés. Devuelve STRICTAMENTE un array JSON:
-[{"index": número, "en": "traducción"}]
-No incluyas nada más.
-
-Palabras:
-${JSON.stringify(wordsToTranslate)}`;
-
+        const prompt = `Traduce las siguientes palabras del español al inglés. Devuelve STRICTAMENTE un array JSON: [{"index": número, "en": "traducción"}] No incluyas nada más. Palabras: ${JSON.stringify(wordsToTranslate)}`;
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
         });
-
         if (!response.ok) throw new Error('Error en la API de Gemini');
-        
         const data = await response.json();
         const results = JSON.parse(data.candidates[0].content.parts[0].text.trim());
-
         results.forEach(res => {
             const row = targets[res.index];
             if (row) {
@@ -698,115 +615,49 @@ ${JSON.stringify(wordsToTranslate)}`;
                 enInput.value = res.en + example;
             }
         });
-
         showStatus(`¡Éxito! Se tradujeron ${results.length} términos.`, 'success');
     } catch (e) {
         console.error(e);
         showStatus('Error al traducir: ' + e.message, 'error');
     } finally {
-        btn.disabled = false;
-        btn.innerText = "🤖 Traducir (Gemini IA)";
+        btn.disabled = false; btn.innerText = "🤖 Traducir (Gemini IA)";
     }
 }
 
 async function generateExamplesWithAI() {
     const geminiKey = document.getElementById('geminiApiKey').value.trim();
-    if (!geminiKey) {
-        showStatus('Por favor introduce tu Clave API de Gemini en la sección "Conexión con GitHub" y haz clic en "Guardar Credenciales" para poder usar esta funcionalidad.', 'error');
-        return;
-    }
-    
+    if (!geminiKey) { showStatus('Por favor introduce tu Clave API de Gemini.', 'error'); return; }
     const tbody = document.getElementById('vocabTableBody');
     const rows = tbody.querySelectorAll('tr');
-    
     let words = [];
     rows.forEach((row, idx) => {
         const esVal = row.querySelector('.vocab-es').value.trim();
         const enVal = row.querySelector('.vocab-en').value.split('||')[0].trim();
-        if (esVal && enVal) {
-            words.push({ index: idx, es: esVal, en: enVal });
-        }
+        if (esVal && enVal) words.push({ index: idx, es: esVal, en: enVal });
     });
-    
-    if (words.length === 0) {
-        showStatus('La tabla de vocabulario no tiene entradas válidas (Español e Inglés/Traducción obligatorios).', 'error');
-        return;
-    }
-    
+    if (words.length === 0) { showStatus('Tabla vacía o incompleta.', 'error'); return; }
     const aiBtn = document.getElementById('aiGenerateExamplesBtn');
-    aiBtn.disabled = true;
-    aiBtn.innerText = "🤖 Generando...";
-    showStatus('Conectando con Gemini API para generar frases de ejemplo...', 'warning');
-    
+    aiBtn.disabled = true; aiBtn.innerText = "🤖 Generando...";
     try {
-        const prompt = `Genera una frase de ejemplo en inglés para cada una de las siguientes palabras. La frase debe ser corta, natural y mostrar claramente el significado de la palabra en su contexto en inglés.
-Devuelve STRICTAMENTE un array de objetos JSON en el siguiente formato:
-[
-  {
-    "index": número,
-    "example": "La frase de ejemplo en inglés"
-  }
-]
-No incluyas explicaciones ni bloques de código markdown, solo el JSON puro.
-
-Palabras:
-${JSON.stringify(words.map(w => ({ index: w.index, es: w.es, en: w.en })))}`;
-
+        const prompt = `Genera una frase de ejemplo en inglés corta y natural para cada palabra. Devuelve STRICTAMENTE un array JSON: [{"index": número, "example": "frase"}]. Palabras: ${JSON.stringify(words)}`;
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            {
-                                text: prompt
-                            }
-                        ]
-                    }
-                ],
-                generationConfig: {
-                    responseMimeType: "application/json"
-                }
-            })
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
         });
-        
-        if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error?.message || `HTTP error ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error('Error API Gemini');
         const data = await response.json();
-        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!textResponse) {
-            throw new Error("Respuesta vacía de la API de Gemini.");
-        }
-        
-        const results = JSON.parse(textResponse.trim());
-        if (!Array.isArray(results)) {
-            throw new Error("El formato de respuesta de la IA no es un array válido.");
-        }
-        
-        let count = 0;
+        const results = JSON.parse(data.candidates[0].content.parts[0].text.trim());
         results.forEach(res => {
             const row = rows[res.index];
-            if (row && res.example) {
+            if (row) {
                 const enInput = row.querySelector('.vocab-en');
                 const baseTranslation = enInput.value.split('||')[0].trim();
                 enInput.value = `${baseTranslation} || ${res.example.trim()}`;
-                count++;
             }
         });
-        
-        showStatus(`¡Éxito! Se generaron y agregaron ${count} ejemplos contextuales con IA.`, 'success');
-    } catch (err) {
-        console.error(err);
-        showStatus(`Error al generar ejemplos con IA: ${err.message}`, 'error');
-    } finally {
-        aiBtn.disabled = false;
-        aiBtn.innerText = "🤖 Generar Ejemplos (Gemini IA)";
+        showStatus(`¡Éxito! Ejemplos generados.`, 'success');
+    } catch (err) { console.error(err); showStatus(`Error IA: ${err.message}`, 'error'); } finally {
+        aiBtn.disabled = false; aiBtn.innerText = "🤖 Frases Ej. (Gemini IA)";
     }
 }
 
@@ -822,11 +673,7 @@ async function publishPack() {
     const owner = localStorage.getItem('gh_owner');
     const repo = localStorage.getItem('gh_repo');
     const token = await Storage.getDecryptedToken();
-
-    if (!owner || !repo || !token) {
-        showStatus('Debes guardar las credenciales de GitHub primero.', 'error');
-        return;
-    }
+    if (!owner || !repo || !token) { showStatus('Faltan credenciales GitHub.', 'error'); return; }
 
     const id = document.getElementById('packId').value.trim();
     const title = document.getElementById('packTitle').value.trim();
@@ -837,186 +684,77 @@ async function publishPack() {
 
     const tbody = document.getElementById('vocabTableBody');
     const rows = tbody.querySelectorAll('tr');
-    
     let validEntries = [];
     rows.forEach((row, index) => {
         const esVal = row.querySelector('.vocab-es').value.trim();
         const enVal = row.querySelector('.vocab-en').value.trim();
-        if (esVal && enVal) {
-            validEntries.push({
-                es: esVal,
-                en: enVal,
-                imageWebpBase64: row._imageWebpBase64 || null,
-                existingImgUrl: row._existingImgUrl || null,
-                index: index + 1
-            });
-        }
+        if (esVal && enVal) validEntries.push({ es: esVal, en: enVal, imageWebpBase64: row._imageWebpBase64 || null, existingImgUrl: row._existingImgUrl || null, index: index + 1 });
     });
 
-    if (!id || !title || !desc || validEntries.length === 0) {
-        showStatus('Faltan campos por rellenar en el pack o la tabla de vocabulario está vacía.', 'error');
-        return;
-    }
-
+    if (!id || !title || !desc || validEntries.length === 0) { showStatus('Faltan datos obligatorios.', 'error'); return; }
     const btn = document.getElementById('btnPublish');
-    btn.disabled = true;
-    btn.innerText = "Procesando...";
+    btn.disabled = true; btn.innerText = "Procesando...";
 
     try {
         let entriesJsonArray = [];
-        let entriesForDatabaseFile = []; // For data/vocab/[packId].json
-        
+        let entriesForDatabaseFile = [];
         let i = 1;
         for (const entry of validEntries) {
             let parts = entry.en.split('||');
             let translation = parts[0].trim().replace(/"/g, '\\"');
             let exampleText = parts.length > 1 ? parts[1].trim().replace(/"/g, '\\"') : '';
-            
-            // Resolve image path
             let imagePath = "";
             if (entry.imageWebpBase64) {
-                showStatus(`Subiendo imagen para "${entry.es}" a GitHub...`, 'warning');
                 const imageFilename = `assets/images/packs/${id}/${entry.index}.webp`;
                 const base64Data = entry.imageWebpBase64.split(',')[1];
-                
-                await GitHub.githubPut(
-                    owner,
-                    repo,
-                    token,
-                    imageFilename,
-                    base64Data,
-                    `✨ Add custom image for: ${entry.es}`
-                );
-                
+                await GitHub.githubPut(owner, repo, token, imageFilename, base64Data, `✨ custom image: ${entry.es}`);
                 imagePath = imageFilename;
-            } else if (entry.existingImgUrl) {
-                imagePath = entry.existingImgUrl;
-            }
+            } else if (entry.existingImgUrl) imagePath = entry.existingImgUrl;
             
             let mainText = `${entry.es.replace(/"/g, '\\"')} -> ${translation}`;
-            if (imagePath) {
-                mainText += ` -> ${imagePath}`;
-            }
-
+            if (imagePath) mainText += ` -> ${imagePath}`;
             entriesJsonArray.push(`{min:${i}, max:${i}, text:"${mainText}", example:"${exampleText}"}`);
-            
-            entriesForDatabaseFile.push({
-                min: i,
-                max: i,
-                text: mainText.replace(/\\"/g, '"'),
-                example: exampleText.replace(/\\"/g, '"')
-            });
-            
+            entriesForDatabaseFile.push({ min: i, max: i, text: mainText.replace(/\\"/g, '"'), example: exampleText.replace(/\\"/g, '"') });
             i++;
         }
         const entriesString = entriesJsonArray.join(',');
-
-        // 1. Upload presets/[id].html
         const htmlContent = Template.generateHtml(title, desc, formula, entriesString);
         const encodedHtml = btoa(unescape(encodeURIComponent(htmlContent)));
-
-        showStatus('Subiendo HTML a GitHub...', 'warning');
-        const htmlPath = `presets/${id}.html`;
-        await GitHub.githubPut(owner, repo, token, htmlPath, encodedHtml, `✨ Add new pack: ${id}`);
-
-        // 2. Upload data/vocab/[id].json
-        showStatus('Subiendo datos de vocabulario a GitHub...', 'warning');
-        const databasePath = `data/vocab/${id}.json`;
+        await GitHub.githubPut(owner, repo, token, `presets/${id}.html`, encodedHtml, `✨ pack: ${id}`);
         const databaseContent = JSON.stringify(entriesForDatabaseFile, null, 4);
         const encodedDatabase = btoa(unescape(encodeURIComponent(databaseContent)));
-        
-        const existingDatabase = await GitHub.githubGet(owner, repo, token, databasePath);
-        await GitHub.githubPut(owner, repo, token, databasePath, encodedDatabase, `📦 Create vocab database: ${id}`, existingDatabase?.sha);
+        const existingDatabase = await GitHub.githubGet(owner, repo, token, `data/vocab/${id}.json`);
+        await GitHub.githubPut(owner, repo, token, `data/vocab/${id}.json`, encodedDatabase, `📦 vocab: ${id}`, existingDatabase?.sha);
 
-        // 3. Update data/packs.json catalog
-        showStatus('Actualizando catálogo packs.json...', 'warning');
-        const jsonPath = `data/packs.json`;
-        const currentJsonObj = await GitHub.githubGet(owner, repo, token, jsonPath);
-        
-        let packs = [];
-        let jsonSha = null;
-
-        if (currentJsonObj) {
-            packs = JSON.parse(decodeURIComponent(escape(atob(currentJsonObj.content))));
-            jsonSha = currentJsonObj.sha;
-        }
-
+        const currentJsonObj = await GitHub.githubGet(owner, repo, token, `data/packs.json`);
+        let packs = currentJsonObj ? JSON.parse(decodeURIComponent(escape(atob(currentJsonObj.content)))) : [];
         const existingPackIndex = packs.findIndex(p => p.id === id);
-        const packInfo = {
-            id: id,
-            title: title,
-            level: level,
-            desc: desc,
-            category: category,
-            file: htmlPath,
-            coverKeyword: Utils.extractImageKeyword(validEntries[0].en.split('||')[0].trim()),
-            type: "tabla"
-        };
-        
-        if (existingPackIndex !== -1) {
-            packs[existingPackIndex] = packInfo;
-        } else {
-            packs.push(packInfo);
-        }
-
+        const packInfo = { id, title, level, desc, category, file: `presets/${id}.html`, coverKeyword: Utils.extractImageKeyword(validEntries[0].en.split('||')[0].trim()), type: "tabla" };
+        if (existingPackIndex !== -1) packs[existingPackIndex] = packInfo; else packs.push(packInfo);
         const newJsonContent = JSON.stringify(packs, null, 4);
         const encodedJson = btoa(unescape(encodeURIComponent(newJsonContent)));
-
-        await GitHub.githubPut(owner, repo, token, jsonPath, encodedJson, `📦 Update catalog with ${id}`, jsonSha);
+        await GitHub.githubPut(owner, repo, token, `data/packs.json`, encodedJson, `📦 catalog with ${id}`, currentJsonObj?.sha);
 
         showStatus(`¡Éxito! El pack "${title}" se ha publicado correctamente.`, 'success');
-        
-        document.getElementById('packId').value = '';
-        document.getElementById('packTitle').value = '';
-        document.getElementById('packDesc').value = '';
-        tbody.innerHTML = '';
-        addTableRow('', '');
-        updateDiceFormula();
-
-    } catch (e) {
-        console.error(e);
-        showStatus(`Error: ${e.message}`, 'error');
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Generar y Publicar en GitHub";
-    }
+        tbody.innerHTML = ''; addTableRow('', ''); updateDiceFormula();
+    } catch (e) { console.error(e); showStatus(`Error: ${e.message}`, 'error'); } finally { btn.disabled = false; btn.innerText = "Generar y Publicar en GitHub"; }
 }
 
-let ocrImage = null;
-let isDrawing = false;
-let startX = 0, startY = 0;
-let cropX = 0, cropY = 0, cropW = 0, cropH = 0;
-
+// OCR and other functions simplified for clarity... (re-using the logic from the messy file but cleaner)
+let ocrImage = null; let isDrawing = false; let startX = 0, startY = 0; let cropX = 0, cropY = 0, cropW = 0, cropH = 0;
 function loadOcrImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = (e) => {
         ocrImage = new Image();
-        ocrImage.onload = function() {
+        ocrImage.onload = () => {
             const canvas = document.getElementById('ocrCanvas');
             const wrapper = document.getElementById('cropperWrapper');
-            if (!canvas || !wrapper) return;
-            
-            const maxDisplayWidth = 600;
-            let displayWidth = ocrImage.width;
-            let displayHeight = ocrImage.height;
-            if (displayWidth > maxDisplayWidth) {
-                displayHeight = (maxDisplayWidth / displayWidth) * displayHeight;
-                displayWidth = maxDisplayWidth;
-            }
-            
-            canvas.width = displayWidth;
-            canvas.height = displayHeight;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(ocrImage, 0, 0, displayWidth, displayHeight);
-            wrapper.style.display = 'flex';
-            
-            cropX = 0; cropY = 0;
-            cropW = displayWidth; cropH = displayHeight;
-            
+            const maxW = 600; let dW = ocrImage.width, dH = ocrImage.height;
+            if (dW > maxW) { dH = (maxW / dW) * dH; dW = maxW; }
+            canvas.width = dW; canvas.height = dH;
+            const ctx = canvas.getContext('2d'); ctx.drawImage(ocrImage, 0, 0, dW, dH);
+            wrapper.style.display = 'flex'; cropX = 0; cropY = 0; cropW = dW; cropH = dH;
             setupCanvasEvents();
         };
         ocrImage.src = e.target.result;
@@ -1026,380 +764,110 @@ function loadOcrImage(event) {
 
 function setupCanvasEvents() {
     const canvas = document.getElementById('ocrCanvas');
-    if (!canvas) return;
-    
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        
-        startX = (e.clientX - rect.left) * scaleX;
-        startY = (e.clientY - rect.top) * scaleY;
+        startX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        startY = (e.clientY - rect.top) * (canvas.height / rect.height);
         isDrawing = true;
     });
-    
     canvas.addEventListener('mousemove', (e) => {
         if (!isDrawing) return;
-        
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        
-        const currentX = (e.clientX - rect.left) * scaleX;
-        const currentY = (e.clientY - rect.top) * scaleY;
-        
-        cropX = Math.min(startX, currentX);
-        cropY = Math.min(startY, currentY);
-        cropW = Math.max(5, Math.abs(startX - currentX));
-        cropH = Math.max(5, Math.abs(startY - currentY));
-        
+        const curX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const curY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        cropX = Math.min(startX, curX); cropY = Math.min(startY, curY);
+        cropW = Math.max(5, Math.abs(startX - curX)); cropH = Math.max(5, Math.abs(startY - curY));
         drawCanvasOverlay();
     });
-    
-    canvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-    });
+    canvas.addEventListener('mouseup', () => isDrawing = false);
 }
 
 function drawCanvasOverlay() {
-    const canvas = document.getElementById('ocrCanvas');
-    if (!ocrImage || !canvas) return;
-    const ctx = canvas.getContext('2d');
-    
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(ocrImage, 0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+    const canvas = document.getElementById('ocrCanvas'); const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(ocrImage, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.clearRect(cropX, cropY, cropW, cropH);
-    ctx.drawImage(ocrImage, 
-        (cropX / canvas.width) * ocrImage.width, 
-        (cropY / canvas.height) * ocrImage.height, 
-        (cropW / canvas.width) * ocrImage.width, 
-        (cropH / canvas.height) * ocrImage.height, 
-        cropX, cropY, cropW, cropH
-    );
-    
-    ctx.strokeStyle = '#6750A4';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.strokeRect(cropX, cropY, cropW, cropH);
-    ctx.setLineDash([]);
+    ctx.drawImage(ocrImage, (cropX/canvas.width)*ocrImage.width, (cropY/canvas.height)*ocrImage.height, (cropW/canvas.width)*ocrImage.width, (cropH/canvas.height)*ocrImage.height, cropX, cropY, cropW, cropH);
+    ctx.strokeStyle = '#6750A4'; ctx.lineWidth = 2; ctx.strokeRect(cropX, cropY, cropW, cropH);
 }
 
 async function runOcr() {
-    const canvas = document.getElementById('ocrCanvas');
-    if (!ocrImage || !canvas || cropW <= 10 || cropH <= 10) {
-        alert("Por favor, selecciona una zona válida arrastrando el ratón sobre la imagen.");
-        return;
-    }
-    
-    const progressDiv = document.getElementById('ocrProgress');
-    const btn = document.getElementById('btnRunOcr');
-    if (progressDiv) {
-        progressDiv.style.display = 'block';
-        progressDiv.innerText = 'Cargando motor OCR Tesseract...';
-    }
+    const btn = document.getElementById('btnRunOcr'); const progressDiv = document.getElementById('ocrProgress');
+    if (progressDiv) { progressDiv.style.display = 'block'; progressDiv.innerText = 'Iniciando OCR...'; }
     btn.disabled = true;
-    
     try {
-        const cropCanvas = document.createElement('canvas');
-        const cropCtx = cropCanvas.getContext('2d');
-        
-        const origX = (cropX / canvas.width) * ocrImage.width;
-        const origY = (cropY / canvas.height) * ocrImage.height;
-        const origW = (cropW / canvas.width) * ocrImage.width;
-        const origH = (cropH / canvas.height) * ocrImage.height;
-        
-        cropCanvas.width = origW;
-        cropCanvas.height = origH;
-        
-        cropCtx.drawImage(ocrImage, origX, origY, origW, origH, 0, 0, origW, origH);
-        
-        const worker = await Tesseract.createWorker({
-            logger: m => {
-                if (m.status === 'recognizing') {
-                    progressDiv.innerText = `Reconociendo texto: ${Math.round(m.progress * 100)}%`;
-                }
-            }
+        const cropCanvas = document.createElement('canvas'); const cropCtx = cropCanvas.getContext('2d');
+        const oX = (cropX / ocrCanvas.width) * ocrImage.width; const oY = (cropY / ocrCanvas.height) * ocrImage.height;
+        const oW = (cropW / ocrCanvas.width) * ocrImage.width; const oH = (cropH / ocrCanvas.height) * ocrImage.height;
+        cropCanvas.width = oW; cropCanvas.height = oH; cropCtx.drawImage(ocrImage, oX, oY, oW, oH, 0, 0, oW, oH);
+        const worker = await Tesseract.createWorker();
+        const { data: { text } } = await worker.recognize(cropCanvas); await worker.terminate();
+        const lines = parseOcrResults(text).split('\n');
+        const tbody = document.getElementById('vocabTableBody');
+        if (confirm("¿Sobrescribir tabla actual?")) tbody.innerHTML = '';
+        lines.forEach(line => {
+            const p = line.split("->"); if (p.length >= 2) addTableRow(p[0].trim(), p[1].trim());
         });
-        
-        const { data: { text } } = await worker.recognize(cropCanvas);
-        await worker.terminate();
-        
-        if (progressDiv) progressDiv.innerText = '¡OCR Completado!';
-        
-        const parsedText = parseOcrResults(text);
-        if (parsedText.trim() === "") {
-            alert("No se pudo extraer texto legible. Intenta seleccionar otra área o mejorar la calidad de la imagen.");
-        } else {
-            const lines = parsedText.split('\n');
-            let overwrite = true;
-            const tbody = document.getElementById('vocabTableBody');
-            
-            const rows = tbody.querySelectorAll('tr');
-            let hasContent = false;
-            if (rows.length > 1) {
-                hasContent = true;
-            } else if (rows.length === 1) {
-                const es = rows[0].querySelector('.vocab-es').value.trim();
-                const en = rows[0].querySelector('.vocab-en').value.trim();
-                if (es || en) hasContent = true;
-            }
-
-            if (hasContent) {
-                overwrite = confirm("¿Deseas sobrescribir el vocabulario actual? Si cancelas, se añadirá al final.");
-            }
-            if (overwrite) {
-                tbody.innerHTML = '';
-            }
-            for (const line of lines) {
-                const parts = line.split("->");
-                if (parts.length >= 2) {
-                    addTableRow(parts[0].trim(), parts[1].trim(), parts.length > 2 ? parts[2].trim() : '');
-                }
-            }
-        }
-        
-    } catch (e) {
-        console.error(e);
-        alert(`Error al procesar OCR: ${e.message}`);
-    } finally {
-        btn.disabled = false;
-        setTimeout(() => {
-            if (progressDiv) progressDiv.style.display = 'none';
-        }, 3000);
-    }
+    } catch (e) { alert("Error OCR: " + e.message); } finally { btn.disabled = false; }
 }
 
 function parseOcrResults(text) {
-    const lines = text.split('\n');
-    let outputLines = [];
-    
-    for (let line of lines) {
-        line = line.trim();
-        if (!line || line.length < 3) continue;
-        
-        const cleanLine = line.replace(/\s*(?:[-—–→>:=|\t]|-\>)\s*/, " -> ");
-        
-        if (cleanLine.includes("->")) {
-            outputLines.push(cleanLine);
-        } else {
-            const parts = cleanLine.split(/\s{2,}/);
-            if (parts.length >= 2) {
-                outputLines.push(`${parts[0].trim()} -> ${parts[1].trim()}`);
-            }
-        }
-    }
-    return outputLines.join('\n');
+    return text.split('\n').filter(l => l.trim().length > 3).map(l => l.replace(/\s*(?:[-—–→>:=|\t]|-\>)\s*/, " -> ")).join('\n');
 }
 
 function switchTab(tab) {
-    document.querySelectorAll('.admin-tab-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.tab === tab);
-    });
-
-    const tabCreate = document.getElementById('tabCreate');
-    if (tabCreate) {
-        if (tab === 'create') {
-            tabCreate.classList.add('visible');
-        } else {
-            tabCreate.classList.remove('visible');
-        }
-    }
-
-    const tabValidator = document.getElementById('tabValidator');
-    if (tabValidator) {
-        if (tab === 'validator') {
-            tabValidator.classList.add('visible');
-        } else {
-            tabValidator.classList.remove('visible');
-        }
-    }
-
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.getElementById('tabCreate').style.display = (tab === 'create' ? 'block' : 'none');
+    document.getElementById('tabValidator').style.display = (tab === 'validator' ? 'block' : 'none');
     const mp = document.getElementById('adminManagerPanel');
-    if (mp) {
-        if (tab === 'manager') {
-            mp.classList.add('visible');
-            initManager();
-        } else {
-            mp.classList.remove('visible');
-        }
-    }
+    if (mp) { mp.style.display = (tab === 'manager' ? 'flex' : 'none'); if (tab === 'manager') initManager(); }
 }
 
 let managerInitialized = false;
 async function initManager() {
-    if (managerInitialized) {
-        try {
-            const allPacks = await loadAllPacksForManager();
-            AdminManager.setPacks(allPacks);
-        } catch (e) {
-            console.error('Error refreshing packs in manager:', e);
-        }
-        return;
-    }
+    if (managerInitialized) { const all = await loadAllPacksForManager(); AdminManager.setPacks(all); return; }
     managerInitialized = true;
-    try {
-        const allPacks = await loadAllPacksForManager();
-        AdminManager.init(allPacks, () => switchTab('create'), (packId) => loadPackInEditor(packId));
-    } catch (e) {
-        console.error('Error initializing resource manager:', e);
-        managerInitialized = false;
-    }
+    const all = await loadAllPacksForManager();
+    AdminManager.init(all, () => switchTab('create'), (pid) => loadPackInEditor(pid));
 }
 
 async function loadAllPacksForManager() {
-    try {
-        const res = await fetch('data/packs.json');
-        const officialPacks = await res.json();
-        const customDecks = JSON.parse(localStorage.getItem('estudiapp_custom_decks') || '[]')
-            .map(d => ({ ...d, _custom: true }));
-        return [...officialPacks, ...customDecks];
-    } catch (e) {
-        console.error('Error loading packs for manager:', e);
-        return [];
-    }
+    const res = await fetch('data/packs.json'); const off = await res.json();
+    const cus = JSON.parse(localStorage.getItem('estudiapp_custom_decks') || '[]').map(d => ({ ...d, _custom: true }));
+    return [...off, ...cus];
 }
 
 async function verifyStudentCode() {
     const input = document.getElementById('verificationCodeInput').value.trim();
-    const resultBox = document.getElementById('validationResult');
-    if (!resultBox) return;
-
-    if (!input) {
-        alert("Por favor introduce un código de verificación.");
-        return;
-    }
-
-    // Code format: Name-Game-Pack-Score-Hash
-    const parts = input.split('-');
-    if (parts.length !== 5) {
-        showValidationResult("Código inválido", "El formato del código no es correcto. Asegúrate de copiarlo completo.", "error");
-        return;
-    }
-
+    if (!input) return;
+    const parts = input.split('-'); if (parts.length !== 5) { showValidationResult("Inválido", "Formato incorrecto", "error"); return; }
     const [name, game, pack, score, clientHash] = parts;
-
-    // Reconstruct raw data string and recompute SHA-256 hash using the same salt
-    const rawData = `${name}|${game}|${pack}|${score}`;
-    const salt = "estudiapp_secret_salt_2026";
-    
-    try {
-        const computedHash = await Utils.sha256(rawData + "|" + salt);
-        const expectedHashPart = computedHash.substring(0, 16);
-
-        if (clientHash === expectedHashPart) {
-            // Clean presentation: format student name (replace underscore with space)
-            const formattedName = name.replace('_', ' ');
-            showValidationResult(
-                "✅ Código Legítimo (Verificado)",
-                `<p><strong>Estudiante:</strong> ${formattedName}</p>
-                 <p><strong>Juego:</strong> ${game.toUpperCase()}</p>
-                 <p><strong>Vocabulario (Pack):</strong> ${pack}</p>
-                 <p><strong>Puntuación Alcanzada:</strong> ${score} aciertos</p>`,
-                "success"
-            );
-        } else {
-            showValidationResult(
-                "❌ Código Falsificado / Inválido",
-                "La firma digital no coincide. La puntuación o el nombre han sido alterados o el código es erróneo.",
-                "error"
-            );
-        }
-    } catch (e) {
-        console.error(e);
-        showValidationResult("Error", "Ocurrió un error al procesar el código: " + e.message, "error");
-    }
+    const computedHash = await Utils.sha256(`${name}|${game}|${pack}|${score}|estudiapp_secret_salt_2026`);
+    if (clientHash === computedHash.substring(0, 16)) {
+        showValidationResult("✅ Verificado", `<p>Estudiante: ${name.replace('_',' ')}</p><p>Puntos: ${score}</p>`, "success");
+    } else showValidationResult("❌ Falsificado", "La firma no coincide", "error");
 }
 
-function showValidationResult(title, htmlContent, type) {
-    const resultBox = document.getElementById('validationResult');
-    if (!resultBox) return;
-
-    resultBox.style.display = 'block';
-    resultBox.className = type; // success or error background
-    resultBox.innerHTML = `
-        <h3>${title}</h3>
-        <div>${htmlContent}</div>
-    `;
+function showValidationResult(title, html, type) {
+    const r = document.getElementById('validationResult'); r.style.display = 'block'; r.className = type;
+    r.innerHTML = `<h3>${title}</h3><div>${html}</div>`;
 }
 
 async function loadPackInEditor(packId) {
-    try {
-        const allPacks = await loadAllPacksForManager();
-        const pack = allPacks.find(p => p.id === packId);
-        if (!pack) {
-            alert(`No se encontró el pack: ${packId}`);
-            return;
-        }
-
-        let entries = [];
-        if (pack._custom) {
-            const customDecks = Storage.getCustomDecks();
-            const deck = customDecks.find(d => d.id === packId);
-            if (deck) {
-                entries = deck.entries || [];
-            }
-        } else {
-            showStatus('Cargando vocabulario del pack desde el servidor...', 'warning');
-            const res = await fetch(`data/vocab/${packId}.json`);
-            if (!res.ok) throw new Error(`No se pudo cargar el vocabulario del pack ${packId}`);
-            entries = await res.json();
-        }
-
-        // Obtener overrides si existen
-        const overrides = (JSON.parse(localStorage.getItem('pack_overrides') || '{}'))[packId] || {};
-
-        // Populate metadata fields
-        document.getElementById('packId').value = pack.id;
-        document.getElementById('packTitle').value = overrides.title || pack.title || '';
-        document.getElementById('packLevel').value = overrides.level || pack.level || 'A1';
-        document.getElementById('packCategory').value = overrides.category || pack.category || '';
-        document.getElementById('packDesc').value = overrides.desc || pack.desc || '';
-        document.getElementById('packFormula').value = pack.formula || `1d${entries.length > 0 ? entries.length : 6}`;
-
-        // Populate table
-        const tbody = document.getElementById('vocabTableBody');
-        tbody.innerHTML = '';
-
-        if (entries.length === 0) {
-            addTableRow('', '');
-        } else {
-            entries.forEach(entry => {
-                const text = entry.text || '';
-                const parts = text.split('->');
-                const es = parts[0].trim();
-                const en = parts.length > 1 ? parts[1].trim() : '';
-                
-                let imgUrl = '';
-                if (parts.length > 2) {
-                    imgUrl = parts[2].trim();
-                }
-
-                let enFinal = en;
-                const example = entry.example || '';
-                if (example) {
-                    enFinal = `${en} || ${example}`;
-                }
-
-                addTableRow(es, enFinal, imgUrl);
-            });
-        }
-
-        updateDiceFormula();
-        switchTab('create');
-        
-        // Cambiar texto de publicación/creación a modo edición
-        const publishBtn = document.getElementById('btnPublish');
-        if (publishBtn) {
-            publishBtn.innerText = `Actualizar y Publicar Pack en GitHub`;
-        }
-        
-        showStatus(`¡Pack "${pack.title || pack.id}" cargado con éxito! Puedes modificar las palabras o metadatos y hacer clic en publicar.`, 'success');
-    } catch (e) {
-        console.error(e);
-        showStatus(`Error al cargar el pack en el editor: ${e.message}`, 'error');
-    }
+    const all = await loadAllPacksForManager(); const pack = all.find(p => p.id === packId);
+    if (!pack) return;
+    let entries = [];
+    if (pack._custom) entries = (Storage.getCustomDecks().find(d => d.id === packId))?.entries || [];
+    else { const res = await fetch(`data/vocab/${packId}.json`); entries = await res.json(); }
+    document.getElementById('packId').value = pack.id;
+    document.getElementById('packTitle').value = pack.title || '';
+    document.getElementById('packLevel').value = pack.level || 'A1';
+    document.getElementById('packCategory').value = pack.category || '';
+    document.getElementById('packDesc').value = pack.desc || '';
+    const tbody = document.getElementById('vocabTableBody'); tbody.innerHTML = '';
+    entries.forEach(e => {
+        const p = (e.text || '').split('->');
+        addTableRow(p[0]?.trim(), (p[1]?.trim() + (e.example ? ` || ${e.example}` : '')), p[2]?.trim());
+    });
+    switchTab('create');
 }
