@@ -79,3 +79,48 @@ export function isStudyMode(modeId) {
     const studyModes = ['direct', 'flashcard', 'write', 'dictation'];
     return studyModes.includes(modeId);
 }
+
+/**
+ * Calculates a word-specific difficulty modifier based on its SRS box.
+ * Lower box (1-2) means not well learned -> gives a negative modifier (slower/easier speed).
+ * Higher box (4-5) means well learned -> gives a positive modifier (faster/harder speed).
+ * @param {string} packId 
+ * @param {string} wordKey 
+ * @returns {number} Modifier between -0.3 and 0.3
+ */
+export function getWordDifficultyModifier(packId, wordKey) {
+    if (!packId || !wordKey) return 0;
+
+    // Normalize packId (in case it is a CSV custom deck or raw ID)
+    const normalizedPackId = packId.startsWith('csv_') 
+        ? packId 
+        : "csv_" + packId.toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+    const srsData = Storage.getSrsData() || {};
+    const packSrs = srsData[normalizedPackId] || {};
+    const entry = packSrs[wordKey];
+    
+    // Default to box 1 if never reviewed
+    const box = entry ? entry.box : 1;
+    
+    // Map box [1..5] to modifier [-0.3..0.3]
+    const boxModifiers = {
+        1: -0.3,
+        2: -0.15,
+        3: 0.0,
+        4: 0.15,
+        5: 0.3
+    };
+    
+    return boxModifiers[box] || 0;
+}
+
+/**
+ * Combines the game's overall score-based difficulty factor with the specific word's SRS modifier.
+ * Clamps the resulting factor between 0.0 (easiest) and 1.0 (hardest).
+ */
+export function getCombinedDifficultyFactor(currentScore = 0, packId = '', wordKey = '') {
+    const baseFactor = getDifficultyFactor(currentScore);
+    const wordModifier = getWordDifficultyModifier(packId, wordKey);
+    return Math.max(0.0, Math.min(1.0, baseFactor + wordModifier));
+}

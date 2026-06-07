@@ -98,8 +98,9 @@ export class BubbleGame {
     _scheduleNextSpawn() {
         if (this.bubbleSpawnTimeout) clearTimeout(this.bubbleSpawnTimeout);
 
-        // Difficulty adjustment
-        const factor = Difficulty.getDifficultyFactor(this.bubbleScore);
+        // Difficulty adjustment based on session score and target word SRS box
+        const wordKey = this.bubbleTargetEntry ? this.bubbleTargetEntry.es : '';
+        const factor = Difficulty.getCombinedDifficultyFactor(this.bubbleScore, this.engine.packId, wordKey);
         const params = Difficulty.lerpParams(
             { spawnDelay: 2500 }, // Easy (0.0)
             { spawnDelay: 800 },  // Hard (1.0)
@@ -141,8 +142,9 @@ export class BubbleGame {
         bubble.style.width = `${size}px`;
         bubble.style.height = `${size}px`;
         
-        // Difficulty adjustment for floating speed
-        const factor = Difficulty.getDifficultyFactor(this.bubbleScore);
+        // Difficulty adjustment for floating speed based on word-specific SRS box
+        const wordKey = entry ? (entry.text ? entry.text.split("->")[0].trim() : entry.es) : (this.bubbleTargetEntry ? this.bubbleTargetEntry.es : '');
+        const factor = Difficulty.getCombinedDifficultyFactor(this.bubbleScore, this.engine.packId, wordKey);
         const params = Difficulty.lerpParams(
             { floatDuration: 10 }, // Easy (seconds)
             { floatDuration: 4 },  // Hard (seconds)

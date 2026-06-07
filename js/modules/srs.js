@@ -66,33 +66,58 @@ export function recordSrsAttempt(isCorrect) {
 }
 
 /**
- * Updates the SRS status for a specific word
+ * FSRS-Lite Algorithm Parameters
+ */
+const INITIAL_STABILITY = 1.0; 
+const INITIAL_DIFFICULTY = 5.0; // 1 (Easy) to 10 (Hard)
+const MULTIPLIER_EASY = 1.5;
+const MULTIPLIER_HARD = 0.5;
+
+/**
+ * Updates the SRS status for a specific word using FSRS-Lite logic.
  */
 export function updateWordSrs(packId, wordKey, isCorrect) {
     if (!packId || !wordKey) return;
     let srsData = getSrsData();
     if (!srsData[packId]) srsData[packId] = {};
     if (!srsData[packId][wordKey]) {
-        srsData[packId][wordKey] = { box: 1, nextReview: 0, lastAttempt: 0 };
+        srsData[packId][wordKey] = { 
+            box: 1, 
+            nextReview: 0, 
+            lastAttempt: 0,
+            stability: INITIAL_STABILITY,
+            difficulty: INITIAL_DIFFICULTY
+        };
     }
     
     let entry = srsData[packId][wordKey];
     entry.lastAttempt = Date.now();
     
+    // Legacy support: Initialize FSRS params if missing
+    if (entry.stability === undefined) entry.stability = Math.max(1, entry.box);
+    if (entry.difficulty === undefined) entry.difficulty = INITIAL_DIFFICULTY;
+
     if (isCorrect) {
         entry.box = Math.min(5, entry.box + 1);
+        // FSRS Logic: Easy means less difficult, more stable
+        entry.difficulty = Math.max(1, entry.difficulty - 1);
+        const stabilityFactor = 1 + (10 - entry.difficulty) * 0.1; 
+        entry.stability *= (MULTIPLIER_EASY * stabilityFactor);
     } else {
         entry.box = 1;
+        // FSRS Logic: Hard means more difficult, stability crashes
+        entry.difficulty = Math.min(10, entry.difficulty + 2);
+        entry.stability = Math.max(0.5, entry.stability * MULTIPLIER_HARD);
     }
     
-    // Set nextReview intervals
-    let interval = 60 * 1000; // 1 min
-    if (entry.box === 2) interval = 10 * 60 * 1000;
-    else if (entry.box === 3) interval = 60 * 60 * 1000;
-    else if (entry.box === 4) interval = 24 * 60 * 60 * 1000;
-    else if (entry.box === 5) interval = 4 * 24 * 60 * 60 * 1000;
-    
-    entry.nextReview = Date.now() + interval;
+    // Calculate next review in milliseconds based on stability (1 stability = 1 day)
+    const intervalDays = entry.stability;
+    // Add some initial minute/hour intervals for brand new or completely failed words
+    let intervalMs = intervalDays * 24 * 60 * 60 * 1000;
+    if (entry.box === 1 && !isCorrect) intervalMs = 10 * 60 * 1000; // 10 mins if failed
+    if (entry.box === 1 && isCorrect && entry.stability <= 1.5) intervalMs = 4 * 60 * 60 * 1000; // 4 hours if barely known
+
+    entry.nextReview = Date.now() + intervalMs;
     saveSrsData(srsData);
     
     recordSrsAttempt(isCorrect);

@@ -91,6 +91,7 @@ export function openPracticeModal(data) {
         wordleArea: document.getElementById('modalWordleArea'),
         sentenceArea: document.getElementById('modalSentenceArea'),
         diagramArea: document.getElementById('modalDiagramArea'),
+        storyArea: document.getElementById('modalStoryArea'),
         btnLaunchpad: document.getElementById('modalBtnLaunchpad'),
         launchpadArea: document.getElementById('modalLaunchpadArea'),
         btnEdit: document.getElementById('modalBtnEdit'),
@@ -114,7 +115,7 @@ export function openPracticeModal(data) {
     });
 
     // Setup mode buttons
-    const ids = ['Direct', 'Flashcard', 'Quiz', 'Write', 'Scrambled', 'Match', 'Bubble', 'Sniper', 'Drag', 'Dictation', 'Wordle'];
+    const ids = ['Direct', 'Flashcard', 'Quiz', 'Write', 'Scrambled', 'Match', 'Bubble', 'Sniper', 'Drag', 'Dictation', 'Wordle', 'Story'];
     ids.forEach(id => {
         const btn = document.getElementById('modalMode' + id);
         if (btn) btn.onclick = () => engine.setMode(id.toLowerCase());
@@ -125,7 +126,7 @@ export function openPracticeModal(data) {
         timeAttackBtn.onclick = () => engine.setMode('timeAttack');
     }
 
-    engine.setMode('direct');
+    engine.setMode('direct', false);
 }
 
 export function closeModal(onClose) {

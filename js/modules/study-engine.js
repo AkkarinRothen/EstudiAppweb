@@ -17,6 +17,7 @@ import { ScrambledGame } from './games/scrambled.js';
 import { DictationGame } from './games/dictation.js';
 import { TimeAttackGame } from './games/timeAttack.js';
 import { DiagramGame } from './games/diagram.js';
+import { StoryGame } from './games/story.js';
 
 export class StudyEngine {
     constructor({
@@ -47,6 +48,7 @@ export class StudyEngine {
         this.dictationGame = new DictationGame(this);
         this.timeAttackGame = new TimeAttackGame(this);
         this.diagramGame = new DiagramGame(this);
+        this.storyGame = new StoryGame(this.elements.storyArea, (isCorrect) => this.rateSrs(isCorrect));
 
         // Internal State
         this.currentMode = 'direct';
@@ -294,7 +296,34 @@ export class StudyEngine {
         this.dictationGame.stop();
     }
 
-    setMode(mode) {
+    getVisibleModeContainer(mode) {
+        if (mode === 'bubble') return this.elements.bubbleArea;
+        if (mode === 'sniper') return this.elements.sniperArea;
+        if (mode === 'match') return this.elements.matchArea;
+        if (mode === 'drag') return this.elements.dragArea;
+        if (mode === 'diagram') return this.elements.diagramArea;
+        if (mode === 'wordle') return this.elements.wordleArea;
+        if (mode === 'sentence') return this.elements.sentenceArea;
+        if (mode === 'write') return this.elements.writeArea;
+        if (mode === 'scrambled') return this.elements.scrambledArea;
+        if (mode === 'dictation') return this.elements.dictationArea;
+        if (mode === 'story') return this.elements.storyArea;
+        return this.elements.resultArea;
+    }
+
+    async setMode(mode, useTransition = true) {
+        if (useTransition) {
+            const isLaunchpadVisible = this.elements.launchpadArea && this.elements.launchpadArea.style.display === 'flex';
+            if (isLaunchpadVisible) {
+                await Fx.animateExit(this.elements.launchpadArea);
+            } else {
+                const currentContainer = this.getVisibleModeContainer(this.currentMode);
+                if (currentContainer && currentContainer.style.display !== 'none') {
+                    await Fx.animateExit(currentContainer);
+                }
+            }
+        }
+
         this.currentMode = mode;
         this.stop();
 
@@ -319,10 +348,11 @@ export class StudyEngine {
         if (this.elements.dictationArea) this.elements.dictationArea.style.display = 'none';
         if (this.elements.sniperArea) this.elements.sniperArea.style.display = 'none';
         if (this.elements.diagramArea) this.elements.diagramArea.style.display = 'none';
+        if (this.elements.storyArea) this.elements.storyArea.style.display = 'none';
         if (this.elements.timerContainer) this.elements.timerContainer.style.display = (mode === 'timeAttack') ? 'flex' : 'none';
         
         if (this.elements.subContainer) {
-            this.elements.subContainer.style.display = (mode === 'direct' || mode === 'write' || mode === 'dictation') ? 'flex' : 'none';
+            this.elements.subContainer.style.display = (mode === 'direct' || mode === 'write' || mode === 'dictation' || mode === 'story') ? 'flex' : 'none';
         }
         if (this.elements.diceContainer) {
             this.elements.diceContainer.style.display = 'none';
@@ -347,12 +377,13 @@ export class StudyEngine {
 
         const actionBtn = this.elements.actionBtn;
         if (actionBtn) {
-            if (mode === 'quiz' || mode === 'write' || mode === 'scrambled') {
-                actionBtn.innerText = 'Siguiente Pregunta';
+            if (mode === 'quiz' || mode === 'write' || mode === 'scrambled' || mode === 'story') {
+                actionBtn.innerText = mode === 'story' ? 'Generar Historia (IA)' : 'Siguiente Pregunta';
                 actionBtn.style.display = 'block';
                 actionBtn.onclick = () => {
                     if (mode === 'quiz') this.quizGame.start();
                     else if (mode === 'write') this.writeGame.start();
+                    else if (mode === 'story') this.startStoryMode();
                     else this.scrambledGame.start();
                 };
             } else if (mode === 'timeAttack') {
@@ -436,6 +467,14 @@ export class StudyEngine {
                 if (this.elements.rollVal) this.elements.rollVal.innerText = 'Tira el dado para empezar';
                 if (this.elements.btnReveal) this.elements.btnReveal.style.display = 'none';
                 if (this.elements.imgContainer) this.elements.imgContainer.style.display = 'none';
+            }
+        }
+
+        if (useTransition) {
+            const newContainer = this.getVisibleModeContainer(mode);
+            if (newContainer) {
+                newContainer.style.opacity = '0';
+                Fx.animateEntrance(newContainer);
             }
         }
     }
@@ -651,7 +690,7 @@ export class StudyEngine {
     rateSrs(isCorrect) {
         if (!this.lastSpanishText) return;
         const packKey = this.isModal ? "csv_" + this.packId.toLowerCase().replace(/[^a-z0-9]/g, "_") : this.packId;
-        Srs.updateWordSrs(packKey, this.lastSpanishText, isCorrect, this.onStatsUpdate);
+        Srs.updateWordSrs(packKey, this.lastSpanishText, isCorrect);
         
         if (isCorrect) {
             Fx.playSound('success');

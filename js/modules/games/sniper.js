@@ -70,8 +70,9 @@ export class SniperGame {
     _scheduleNextSpawn() {
         if (this.sniperSpawnTimeout) clearTimeout(this.sniperSpawnTimeout);
 
-        // Use DifficultyManager for dynamic delay
-        const factor = Difficulty.getDifficultyFactor(this.sniperScore);
+        // Difficulty adjustment based on session score and target word SRS box
+        const wordKey = this._sniperTarget ? this._sniperTarget.es : '';
+        const factor = Difficulty.getCombinedDifficultyFactor(this.sniperScore, this.engine.packId, wordKey);
         const params = Difficulty.lerpParams(
             { spawnDelay: 2800 }, // Easy (0.0)
             { spawnDelay: 800 },  // Hard (1.0)
@@ -137,8 +138,8 @@ export class SniperGame {
         word.setAttribute('role', 'button');
         word.setAttribute('tabindex', '0');
 
-        // Calculate fall speed using DifficultyManager
-        const factor = Difficulty.getDifficultyFactor(this.sniperScore);
+        // Calculate fall speed using DifficultyManager and word-specific SRS box
+        const factor = Difficulty.getCombinedDifficultyFactor(this.sniperScore, this.engine.packId, wordText);
         const params = Difficulty.lerpParams(
             { duration: 5.0 }, // Easy (0.0)
             { duration: 1.5 }, // Hard (1.0)

@@ -61,7 +61,7 @@ export function initPreset(entries, formula) {
     setupEventListeners();
 
     // Set initial mode and roll
-    engine.setMode('direct');
+    engine.setMode('direct', false);
     engine.roll();
 }
 

@@ -117,6 +117,24 @@ export async function animateEntrance(target) {
 }
 
 /**
+ * Standard exit animation for cards/modals/containers
+ * @param {string|HTMLElement} target 
+ * @returns {Promise}
+ */
+export async function animateExit(target) {
+    await ensureInit();
+    if (anime && target) {
+        return anime({
+            targets: target,
+            translateY: [0, 20],
+            opacity: [1, 0],
+            duration: 250,
+            easing: 'easeInQuad'
+        }).finished;
+    }
+}
+
+/**
  * Shake animation for errors
  * @param {string|HTMLElement} target 
  */
