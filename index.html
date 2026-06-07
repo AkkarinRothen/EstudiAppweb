@@ -70,37 +70,43 @@
         </div>
     </div>
 
-    <!-- Import Area -->
-    <div class="import-area" id="dropZone">
-        <svg viewBox="0 0 24 24">
-            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-        </svg>
-        <h3>Importar Tabla Didáctica</h3>
-        <p>Arrastra tu archivo CSV exportado desde la app o haz clic para subirlo</p>
-        <input type="file" id="csvInput" class="import-input" accept=".csv">
-    </div>
-
-    <div class="controls">
-        <input type="text" id="searchInput" class="search-bar" placeholder="Buscar un pack (ej: restaurante, salud...)">
-        <div class="filter-section">
-            <button class="filter-chip active">Todos</button>
-            <button class="filter-chip">Nivel A1</button>
-            <button class="filter-chip">Nivel A2</button>
-            <button class="filter-chip">Nivel B1</button>
-            <button class="filter-chip">Nivel B2</button>
-            <button class="filter-chip filter-chip--custom" data-filter="Personalizados">
-                📁 Mis Personalizados
-            </button>
+    <div class="main-content-area">
+        <!-- Import Area -->
+        <div class="import-area" id="dropZone">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+            <h3>Importar Tabla Didáctica</h3>
+            <p>Arrastra tu archivo CSV exportado desde la app o haz clic para subirlo</p>
+            <input type="file" id="csvInput" class="import-input" accept=".csv">
         </div>
-    </div>
 
-    <!-- Folder Explorer Section -->
-    <section id="explorerSection" style="position: relative; z-index: 10; width: 100%; min-height: 200px;">
-        <div id="explorerBreadcrumbs" class="breadcrumbs-trail"></div>
-        <div class="deck-grid" id="explorerGrid" style="display: grid !important;">
-            <!-- Rendered dynamically by decks-page.js -->
+        <div class="controls">
+            <input type="text" id="searchInput" class="search-bar" placeholder="Buscar un pack (ej: restaurante, salud...)">
+            <div class="filter-section">
+                <button class="filter-chip active">Todos</button>
+                <button class="filter-chip">Nivel A1</button>
+                <button class="filter-chip">Nivel A2</button>
+                <button class="filter-chip">Nivel B1</button>
+                <button class="filter-chip">Nivel B2</button>
+                <button class="filter-chip filter-chip--custom" data-filter="Personalizados">
+                    📁 Mis Personalizados
+                </button>
+            </div>
         </div>
-    </section>
+
+        <!-- Folder Explorer Section -->
+        <section id="explorerSection" style="position: relative; z-index: 10; width: 100%; min-height: 200px;">
+            <div id="explorerBreadcrumbs" class="breadcrumbs-trail"></div>
+            <div class="deck-grid" id="explorerGrid" style="display: grid !important;">
+                <!-- Skeleton Loaders -->
+                <div class="skeleton" style="height: 200px; border-radius: 20px;"></div>
+                <div class="skeleton" style="height: 200px; border-radius: 20px;"></div>
+                <div class="skeleton" style="height: 200px; border-radius: 20px;"></div>
+                <div class="skeleton" style="height: 200px; border-radius: 20px;"></div>
+            </div>
+        </section>
+    </div>
 </div>
 
 <!-- Modal para Práctica de CSV Importado -->

@@ -1,3 +1,73 @@
+/* --- Tactile & Interactive Enhancements --- */
+
+/* 3D Press Effect for Main Buttons */
+.main-btn, .btn-change-mode, .filter-chip, .stat-card, .btn-export, .speaker-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    top: 0;
+}
+
+.main-btn:active, .btn-change-mode:active, .filter-chip:active, .speaker-btn:active {
+    transform: scale(0.96) translateY(2px);
+}
+
+/* Skeleton Loading Animation */
+@keyframes skeleton-pulse {
+    0% { background-color: var(--surface-variant); opacity: 0.6; }
+    50% { background-color: var(--outline-variant); opacity: 0.3; }
+    100% { background-color: var(--surface-variant); opacity: 0.6; }
+}
+
+.skeleton {
+    animation: skeleton-pulse 1.5s infinite ease-in-out;
+    border-radius: 12px;
+}
+
+/* --- Desktop Layout Optimization --- */
+@media (min-width: 1024px) {
+    .container {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 40px;
+        align-items: start;
+        max-width: 1400px;
+        padding: 40px 0;
+    }
+
+    .stats-dashboard {
+        position: sticky;
+        top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        grid-template-columns: 1fr !important; /* Override mobile grid */
+    }
+
+    .main-content-area {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* Hover Effects (Desktop Only) */
+    .deck-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(103, 80, 164, 0.2);
+    }
+
+    .stat-card:hover {
+        background: var(--surface-variant);
+        border-color: var(--primary);
+        transform: translateX(5px);
+    }
+
+    .filter-chip:hover {
+        background: var(--primary-container);
+        color: var(--on-primary-container);
+    }
+}
+
 :root {
     --primary: #6750A4;
     --on-primary: #FFFFFF;
