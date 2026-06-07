@@ -56,3 +56,22 @@ packs.forEach(pack => {
     fs.writeFileSync(destPath, htmlContent, 'utf-8');
     console.log(`Successfully generated preset: presets/${pack.id}.html (${entries.length} words, formula: ${formula})`);
 });
+
+// --- AUTOMATIC CACHE VERSIONING ---
+const swFile = path.join(__dirname, '..', 'sw.js');
+if (fs.existsSync(swFile)) {
+    try {
+        let swContent = fs.readFileSync(swFile, 'utf-8');
+        const timestamp = new Date().toISOString().replace(/[-:T]/g, '').split('.')[0];
+        const newCacheName = `estudiapp-v${timestamp}`;
+        
+        // Replace CACHE_NAME value
+        const updatedSwContent = swContent.replace(/const CACHE_NAME = '.*';/, `const CACHE_NAME = '${newCacheName}';`);
+        
+        fs.writeFileSync(swFile, updatedSwContent, 'utf-8');
+        console.log(`🚀 Service Worker updated to new version: ${newCacheName}`);
+    } catch (e) {
+        console.error("Error updating Service Worker version:", e);
+    }
+}
+

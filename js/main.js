@@ -33,8 +33,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('🚀 Service Worker registrado con éxito:', reg.scope))
+                .then(reg => {
+                    console.log('🚀 Service Worker registrado con éxito:', reg.scope);
+                    
+                    // Detectar si hay una actualización disponible
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Nueva versión instalada y lista para activarse
+                                console.log('✨ Nueva actualización disponible. Recargando...');
+                                // En una app real podríamos mostrar un toast, aquí recargamos automáticamente
+                                // para garantizar que el usuario vea los cambios.
+                                setTimeout(() => window.location.reload(), 1000);
+                            }
+                        };
+                    };
+                })
                 .catch(err => console.warn('❌ Error al registrar Service Worker:', err));
+        });
+
+        // Evento cuando el Service Worker toma el control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+            }
         });
     }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estudiapp-v2';
+const CACHE_NAME = 'estudiapp-v20260607033417';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -22,6 +22,7 @@ const ASSETS_TO_CACHE = [
 
 // Install Event: Cache core assets
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // Force the waiting service worker to become the active service worker
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(ASSETS_TO_CACHE);
