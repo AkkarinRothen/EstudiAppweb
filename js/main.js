@@ -408,14 +408,18 @@ function initAuth() {
     // Listen to Auth State Changes
     SupabaseSync.onAuthStateChange(async (event, session) => {
         handleAuthUpdate(session);
+        if (session && window.location.hash.includes('access_token')) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
     });
 
-    // Initial session check
-    SupabaseSync.getCurrentUser().then(user => {
-        if (user) {
-            SupabaseSync.supabase.auth.getSession().then(({data}) => {
-                if (data.session) handleAuthUpdate(data.session);
-            });
+    // Initial session check (forces hash parsing if present from email links)
+    SupabaseSync.supabase.auth.getSession().then(({data}) => {
+        if (data && data.session) {
+            handleAuthUpdate(data.session);
+            if (window.location.hash.includes('access_token')) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
         }
     });
 

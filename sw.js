@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estudiapp-v20260607071458';
+const CACHE_NAME = 'estudiapp-v20260607072806';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
