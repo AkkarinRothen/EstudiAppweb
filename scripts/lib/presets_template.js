@@ -40,10 +40,7 @@ const generateHtml = (title, desc, entriesJson, formula) => `<!DOCTYPE html>
             <label for="enableImages">Mostrar Imágenes 🖼️</label>
         </div>
 
-        <button id="btnLaunchpad" class="btn-change-mode">
-            <span>🎯 Cambiar Modo de Estudio</span>
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
-        </button>
+
 
         <div id="launchpadArea" class="launchpad-container"></div>
 

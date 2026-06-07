@@ -148,6 +148,15 @@ async function checkLogin() {
         Storage.setSessionPassword(user + ":" + pass);
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainAdminContent').style.display = 'flex';
+        
+        // Mostrar indicador de Admin
+        showStatus(`👋 ¡Bienvenido, ${user}! Has iniciado sesión como Administrador.`, 'success');
+        
+        const headerTitle = document.querySelector('header h1');
+        if (headerTitle) {
+            headerTitle.innerHTML += ' <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:12px; vertical-align:middle; margin-left:10px;">🛡️ Modo Editor</span>';
+        }
+
         await loadAuth();
     } else {
         errDiv.style.display = 'block';
