@@ -410,6 +410,7 @@ function initAuth() {
         handleAuthUpdate(session);
         if (session && window.location.hash.includes('access_token')) {
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            alert("✅ ¡Autenticación completada con éxito desde el enlace de tu correo!");
         }
     });
 
@@ -419,6 +420,7 @@ function initAuth() {
             handleAuthUpdate(data.session);
             if (window.location.hash.includes('access_token')) {
                 window.history.replaceState(null, '', window.location.pathname + window.location.search);
+                alert("✅ ¡Cuenta verificada y sincronizada correctamente!");
             }
         }
     });
