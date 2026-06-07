@@ -371,6 +371,8 @@ function initAuth() {
     const openAuth = () => {
         if (authModal) {
             authModal.style.display = 'flex';
+            // Use a timeout to ensure display:flex is applied before the CSS transition
+            setTimeout(() => authModal.classList.add('active'), 10);
             console.log('☁️ Abriendo modal de autenticación');
         } else {
             console.error('❌ No se encontró el modal authModal');
@@ -384,7 +386,15 @@ function initAuth() {
 
     // Close Modal
     const closeModal = () => {
-        authModal.style.display = 'none';
+        if (authModal) {
+            authModal.classList.remove('active');
+            // Hide display after transition
+            setTimeout(() => {
+                if (!authModal.classList.contains('active')) {
+                    authModal.style.display = 'none';
+                }
+            }, 350);
+        }
         if (authErrorMessage) {
             authErrorMessage.style.display = 'none';
             authErrorMessage.innerText = '';
