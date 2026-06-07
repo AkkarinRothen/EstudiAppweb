@@ -36,10 +36,12 @@ function setupEventListeners() {
         aiTranslateBtn.addEventListener('click', () => translateWithAI());
     }
 
-    // Login
-    const loginBtn = document.querySelector('#loginOverlay button');
+    const loginBtn = document.getElementById('btnLoginAcceder');
     if (loginBtn) {
-        loginBtn.addEventListener('click', () => checkLogin());
+        loginBtn.addEventListener('click', () => {
+            console.log('🛡️ Intentando acceder al panel de editor...');
+            checkLogin();
+        });
     }
 
     const loginPass = document.getElementById('loginPass');
@@ -87,6 +89,26 @@ function setupEventListeners() {
         clearTableBtn.addEventListener('click', () => clearTable());
     }
 
+    const deleteSelectedRowsBtn = document.getElementById('deleteSelectedRowsBtn');
+    if (deleteSelectedRowsBtn) {
+        deleteSelectedRowsBtn.addEventListener('click', () => {
+            const tbody = document.getElementById('vocabTableBody');
+            const checkboxes = tbody.querySelectorAll('.row-selector:checked');
+            if (checkboxes.length === 0) {
+                alert('Por favor selecciona al menos una fila para eliminar.');
+                return;
+            }
+            if (confirm(`¿Estás seguro de que quieres eliminar las ${checkboxes.length} filas seleccionadas?`)) {
+                checkboxes.forEach(cb => {
+                    const tr = cb.closest('tr');
+                    if (tr) tr.remove();
+                });
+                updateDiceFormula();
+                document.getElementById('selectAllRows').checked = false;
+            }
+        });
+    }
+
     const aiGenerateExamplesBtn = document.getElementById('aiGenerateExamplesBtn');
     if (aiGenerateExamplesBtn) {
         aiGenerateExamplesBtn.addEventListener('click', () => generateExamplesWithAI());
@@ -98,6 +120,24 @@ function setupEventListeners() {
         btnNext.addEventListener('click', () => {
             activeLockId = Math.floor(Math.random() * 10000) + 1;
             updatePopoverImage();
+        });
+    }
+
+    const btnImageSearchQuerySubmit = document.getElementById('btnImageSearchQuerySubmit');
+    const imageSearchInput = document.getElementById('imageSearchInput');
+    if (btnImageSearchQuerySubmit && imageSearchInput) {
+        btnImageSearchQuerySubmit.addEventListener('click', () => {
+            const val = imageSearchInput.value.trim();
+            if (val) {
+                activeSearchTerm = val;
+                activeLockId = Math.floor(Math.random() * 10000) + 1;
+                updatePopoverImage();
+            }
+        });
+        imageSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                btnImageSearchQuerySubmit.click();
+            }
         });
     }
 
@@ -132,10 +172,19 @@ function setupEventListeners() {
         });
     }
 
-    // Publish
     const publishBtn = document.getElementById('btnPublish');
     if (publishBtn) {
         publishBtn.addEventListener('click', () => publishPack());
+    }
+
+    const btnAdminLogout = document.getElementById('btnAdminLogout');
+    if (btnAdminLogout) {
+        btnAdminLogout.addEventListener('click', () => {
+            if (confirm('¿Cerrar sesión del panel de administración?')) {
+                Storage.setSessionPassword("");
+                window.location.reload();
+            }
+        });
     }
 
     // Task Validator
@@ -511,6 +560,11 @@ function openImageSearchPopover(tr) {
     activeLockId = Math.floor(Math.random() * 10000) + 1;
     
     document.getElementById('imageSearchQueryText').innerText = `Buscando imágenes para: "${englishVal}"`;
+    const searchInput = document.getElementById('imageSearchInput');
+    if (searchInput) {
+        searchInput.value = englishVal;
+    }
+    
     document.getElementById('imageSearchPopover').style.display = 'flex';
     
     updatePopoverImage();
@@ -1143,7 +1197,7 @@ async function initManager() {
     managerInitialized = true;
     try {
         const allPacks = await loadAllPacksForManager();
-        AdminManager.init(allPacks, () => switchTab('create'));
+        AdminManager.init(allPacks, () => switchTab('create'), (packId) => loadPackInEditor(packId));
     } catch (e) {
         console.error('Error initializing resource manager:', e);
         managerInitialized = false;
@@ -1224,4 +1278,82 @@ function showValidationResult(title, htmlContent, type) {
         <h3>${title}</h3>
         <div>${htmlContent}</div>
     `;
+}
+
+async function loadPackInEditor(packId) {
+    try {
+        const allPacks = await loadAllPacksForManager();
+        const pack = allPacks.find(p => p.id === packId);
+        if (!pack) {
+            alert(`No se encontró el pack: ${packId}`);
+            return;
+        }
+
+        let entries = [];
+        if (pack._custom) {
+            const customDecks = Storage.getCustomDecks();
+            const deck = customDecks.find(d => d.id === packId);
+            if (deck) {
+                entries = deck.entries || [];
+            }
+        } else {
+            showStatus('Cargando vocabulario del pack desde el servidor...', 'warning');
+            const res = await fetch(`data/vocab/${packId}.json`);
+            if (!res.ok) throw new Error(`No se pudo cargar el vocabulario del pack ${packId}`);
+            entries = await res.json();
+        }
+
+        // Obtener overrides si existen
+        const overrides = (JSON.parse(localStorage.getItem('pack_overrides') || '{}'))[packId] || {};
+
+        // Populate metadata fields
+        document.getElementById('packId').value = pack.id;
+        document.getElementById('packTitle').value = overrides.title || pack.title || '';
+        document.getElementById('packLevel').value = overrides.level || pack.level || 'A1';
+        document.getElementById('packCategory').value = overrides.category || pack.category || '';
+        document.getElementById('packDesc').value = overrides.desc || pack.desc || '';
+        document.getElementById('packFormula').value = pack.formula || `1d${entries.length > 0 ? entries.length : 6}`;
+
+        // Populate table
+        const tbody = document.getElementById('vocabTableBody');
+        tbody.innerHTML = '';
+
+        if (entries.length === 0) {
+            addTableRow('', '');
+        } else {
+            entries.forEach(entry => {
+                const text = entry.text || '';
+                const parts = text.split('->');
+                const es = parts[0].trim();
+                const en = parts.length > 1 ? parts[1].trim() : '';
+                
+                let imgUrl = '';
+                if (parts.length > 2) {
+                    imgUrl = parts[2].trim();
+                }
+
+                let enFinal = en;
+                const example = entry.example || '';
+                if (example) {
+                    enFinal = `${en} || ${example}`;
+                }
+
+                addTableRow(es, enFinal, imgUrl);
+            });
+        }
+
+        updateDiceFormula();
+        switchTab('create');
+        
+        // Cambiar texto de publicación/creación a modo edición
+        const publishBtn = document.getElementById('btnPublish');
+        if (publishBtn) {
+            publishBtn.innerText = `Actualizar y Publicar Pack en GitHub`;
+        }
+        
+        showStatus(`¡Pack "${pack.title || pack.id}" cargado con éxito! Puedes modificar las palabras o metadatos y hacer clic en publicar.`, 'success');
+    } catch (e) {
+        console.error(e);
+        showStatus(`Error al cargar el pack en el editor: ${e.message}`, 'error');
+    }
 }

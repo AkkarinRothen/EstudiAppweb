@@ -49,7 +49,11 @@ export function openPracticeModal(data) {
     importedTableData = data;
     document.getElementById('modalTitle').innerText = data.title;
     document.getElementById('modalDesc').innerText = data.desc;
-    document.getElementById('practiceModal').classList.add('active');
+    
+    document.body.classList.add('focus-mode');
+    const modal = document.getElementById('practiceModal');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
 
     // Wire up elements
     const elements = {
@@ -125,7 +129,16 @@ export function openPracticeModal(data) {
 }
 
 export function closeModal(onClose) {
-    document.getElementById('practiceModal').classList.remove('active');
+    document.body.classList.remove('focus-mode');
+    const modal = document.getElementById('practiceModal');
+    modal.classList.remove('active');
+    
+    setTimeout(() => {
+        if (!modal.classList.contains('active')) {
+            modal.style.display = 'none';
+        }
+    }, 350);
+
     const badge = document.getElementById('modalSrsBadge');
     if (badge) badge.style.display = 'none';
     if (engine) {

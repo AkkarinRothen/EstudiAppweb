@@ -581,6 +581,17 @@ function setupKeyboardShortcuts() {
         
         // 1. NAVIGATION MODE (Grid Explorer)
         if (!modalActive) {
+            // Quick Search Shortcut (Ctrl+K)
+            if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+                e.preventDefault();
+                const searchInput = document.getElementById('decksSearchInput') || document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+                return;
+            }
+
             const cards = Array.from(document.querySelectorAll('.deck-card, .folder-card-wrapper'));
             if (cards.length === 0) return;
 

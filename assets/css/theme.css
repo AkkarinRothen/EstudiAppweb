@@ -75,6 +75,27 @@
     }
 }
 
+/* --- Focus Mode (Study Session) --- */
+body.focus-mode header,
+body.focus-mode footer,
+body.focus-mode .stats-dashboard,
+body.focus-mode .main-content-area > :not(#explorerSection) {
+    opacity: 0.1 !important;
+    pointer-events: none;
+    filter: blur(4px);
+    transition: opacity 0.5s, filter 0.5s;
+}
+
+body.focus-mode .modal-overlay.active {
+    backdrop-filter: blur(15px);
+    background: rgba(0,0,0,0.8);
+}
+
+body.focus-mode .modal-card {
+    border-color: var(--primary);
+    box-shadow: 0 0 50px rgba(103, 80, 164, 0.3);
+}
+
 :root {
     --primary: #6750A4;
     --on-primary: #FFFFFF;

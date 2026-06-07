@@ -39,6 +39,7 @@ let dragState      = null;     // { type:'pack'|'folder', id }
 
 // Callbacks injected from admin.js
 let _onSwitchToCreate = null;
+let _onEditVocab = null;
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -46,10 +47,12 @@ let _onSwitchToCreate = null;
  * Initialize the resource manager.
  * @param {Array}    packs            All available packs (official + custom)
  * @param {Function} onSwitchToCreate Called when user clicks "+ Recurso" (opens create tab)
+ * @param {Function} onEditVocab      Called when user clicks "📝 Vocabulario" to edit its entries
  */
-export function init(packs, onSwitchToCreate) {
+export function init(packs, onSwitchToCreate, onEditVocab) {
     allPacks = packs;
     _onSwitchToCreate = onSwitchToCreate;
+    _onEditVocab = onEditVocab;
 
     loadState();
     setupManagerUI();
@@ -319,6 +322,7 @@ function buildPackCardHTML(pack) {
             <span class="badge ${isOfficial ? 'badge-origin-official' : ''}">${isOfficial ? 'Oficial' : 'Personalizado'}</span>
         </div>
         <div class="res-pack-actions">
+            <button class="res-act-btn" data-edit-vocab="${pack.id}" title="Editar palabras/vocabulario" style="border-color: var(--primary); color: var(--primary);">📝 Vocabulario</button>
             <button class="res-act-btn" data-edit-pack="${pack.id}" title="Editar metadatos">✏️ Editar</button>
             <button class="res-act-btn" data-move-pack="${pack.id}" title="Mover a carpeta">📂 Mover</button>
             <button class="res-act-btn danger" data-del-pack="${pack.id}" title="Eliminar">🗑️</button>
@@ -421,6 +425,14 @@ function bindMainEvents(main) {
     // Pack edit
     main.querySelectorAll('[data-edit-pack]').forEach(el => {
         el.addEventListener('click', (e) => { e.stopPropagation(); openPackEditModal(el.dataset.editPack); });
+    });
+
+    // Pack vocabulary edit
+    main.querySelectorAll('[data-edit-vocab]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (_onEditVocab) _onEditVocab(el.dataset.editVocab);
+        });
     });
 
     // Pack move
