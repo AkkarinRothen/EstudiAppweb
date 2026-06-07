@@ -18,6 +18,94 @@
 .import-area-mini:hover { transform: scale(1.1); background: #4F378B; }
 .import-area-mini svg { width: 24px; height: 24px; fill: white; }
 
+/* List View Toggle Styles */
+.view-toggles {
+    display: flex;
+    gap: 5px;
+    background: var(--surface-variant);
+    padding: 4px;
+    border-radius: 12px;
+}
+.view-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    transition: all 0.2s;
+}
+.view-btn.active {
+    background: var(--container);
+    color: var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Focused State for Keyboard Nav */
+.deck-card:focus, .folder-card-wrapper:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(103, 80, 164, 0.3);
+    transform: translateY(-4px) scale(1.02);
+}
+
+/* Hover Expansion (Desktop) */
+@media (min-width: 1024px) {
+    .deck-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .deck-card:hover .deck-card-desc {
+        display: block;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--container);
+        z-index: 100;
+        padding: 15px;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        border: 1px solid var(--primary);
+        border-top: none;
+        font-size: 12px;
+        animation: slideDownFade 0.2s ease-out;
+    }
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* List View Layout */
+.deck-grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.deck-grid.list-view .deck-card {
+    flex-direction: row;
+    align-items: center;
+    height: 60px;
+}
+.deck-grid.list-view .card-cover {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+}
+.deck-grid.list-view .deck-card-body {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    flex: 1;
+}
+.deck-grid.list-view .deck-card-header { margin: 0; flex: 1; }
+.deck-grid.list-view .deck-card-meta { margin: 0; width: 150px; }
+.deck-grid.list-view .deck-progress-row { margin: 0; width: 100px; }
+.deck-grid.list-view .progress-container { width: 120px; margin: 0; }
+.deck-grid.list-view .deck-card-footer { display: none; }
+.deck-grid.list-view .deck-card-badges-row { display: none; }
+
 /* Dashboard de Estadísticas — Micro Layout */
 @media (min-width: 1024px) {
     .stats-dashboard {

@@ -160,6 +160,7 @@ function renderExplorer() {
                 const card = document.createElement('a');
                 card.href = pack.file;
                 card.className = 'deck-card';
+                card.tabIndex = 0;
                 card.style.setProperty('--i', idx);
                 card.innerHTML = buildOfficialCardHTML(pack, percent, encountered, mastered);
                 grid.appendChild(card);
@@ -183,6 +184,7 @@ function renderExplorer() {
 
         const element = folderWrapper.firstElementChild;
         if (element) {
+            element.tabIndex = 0;
             element.style.setProperty('--i', elementIndex);
             grid.appendChild(element);
 
@@ -200,6 +202,7 @@ function renderExplorer() {
         const card = document.createElement('a');
         card.href = pack.file;
         card.className = 'deck-card';
+        card.tabIndex = 0;
         card.style.setProperty('--i', elementIndex);
         card.innerHTML = buildOfficialCardHTML(pack, percent, encountered, mastered);
         grid.appendChild(card);
@@ -214,6 +217,7 @@ function renderExplorer() {
 
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
+        card.tabIndex = 0;
         card.style.setProperty('--i', elementIndex);
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);
         grid.appendChild(card);
@@ -300,6 +304,7 @@ function renderFlattened() {
         const card = document.createElement('a');
         card.href = pack.file;
         card.className = 'deck-card';
+        card.tabIndex = 0;
         card.setAttribute('data-level', pack.level);
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
@@ -315,6 +320,7 @@ function renderFlattened() {
 
         const card = document.createElement('div');
         card.className = 'deck-card deck-card--custom';
+        card.tabIndex = 0;
         card.style.setProperty('--i', elementIndex);
         card.style.animationDelay = `${elementIndex * 30}ms`;
         card.innerHTML = buildCustomCardHTML(deck, percent, encountered, wordCount, mastered);

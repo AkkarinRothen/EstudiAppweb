@@ -113,15 +113,19 @@
                     <input type="file" id="csvInput" class="import-input" accept=".csv" style="display:none">
                 </div>
             </div>
-            <div class="filter-section">
-                <button class="filter-chip active">Todos</button>
-                <button class="filter-chip">Nivel A1</button>
-                <button class="filter-chip">Nivel A2</button>
-                <button class="filter-chip">Nivel B1</button>
-                <button class="filter-chip">Nivel B2</button>
-                <button class="filter-chip filter-chip--custom" data-filter="Personalizados">
-                    📁 Mis Personalizados
-                </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 5px;">
+                <div class="filter-section" style="margin: 0; flex: 1; justify-content: flex-start;">
+                    <button class="filter-chip active">Todos</button>
+                    <button class="filter-chip">Nivel A1</button>
+                    <button class="filter-chip">Nivel A2</button>
+                    <button class="filter-chip filter-chip--custom" data-filter="Personalizados">
+                        📁 Mis Mazos
+                    </button>
+                </div>
+                <div class="view-toggles" id="viewToggles">
+                    <button class="view-btn active" data-view="grid" title="Vista Cuadrícula">🔳</button>
+                    <button class="view-btn" data-view="list" title="Vista Lista">≡</button>
+                </div>
             </div>
         </div>
 
@@ -384,7 +388,7 @@
 
 <footer style="margin-top: 60px; padding: 40px 20px; text-align: center; border-top: 1px solid var(--outline-variant); opacity: 0.6; font-size: 12px;">
     <p>© 2026 EstudiApp Portal - Por AkkarinRothen</p>
-    <p id="appVersion">Versión: estudiapp-v20260607044000</p>
+    <p id="appVersion">Versión: estudiapp-v20260607045333</p>
 </footer>
 
 </body>

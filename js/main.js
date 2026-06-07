@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDifficultySettings();
     loadLatestUpdates();
     setupKeyboardShortcuts();
+    setupViewToggles();
 
     // Suscribir la UI al almacén de estado reactivo
     AppStore.subscribe(() => {
@@ -567,9 +568,41 @@ function initAuth() {
 function setupKeyboardShortcuts() {
     window.addEventListener('keydown', (e) => {
         const modalActive = document.getElementById('practiceModal').classList.contains('active');
-        if (!modalActive) return;
+        
+        // 1. NAVIGATION MODE (Grid Explorer)
+        if (!modalActive) {
+            const cards = Array.from(document.querySelectorAll('.deck-card, .folder-card-wrapper'));
+            if (cards.length === 0) return;
 
-        // Skip if user is typing in an input
+            let currentFocus = document.activeElement;
+            let index = cards.indexOf(currentFocus);
+
+            if (['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.code)) {
+                e.preventDefault();
+                if (index === -1) {
+                    cards[0].focus();
+                    return;
+                }
+
+                const grid = document.getElementById('explorerGrid');
+                const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+
+                switch (e.code) {
+                    case 'ArrowRight': index = Math.min(index + 1, cards.length - 1); break;
+                    case 'ArrowLeft': index = Math.max(index - 1, 0); break;
+                    case 'ArrowDown': index = Math.min(index + cols, cards.length - 1); break;
+                    case 'ArrowUp': index = Math.max(index - cols, 0); break;
+                }
+                cards[index].focus();
+            }
+
+            if (e.code === 'Enter' && index !== -1) {
+                currentFocus.click();
+            }
+            return;
+        }
+
+        // 2. STUDY MODE (Modal Active)
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
         switch (e.code) {
@@ -579,7 +612,6 @@ function setupKeyboardShortcuts() {
                 if (revealBtn && revealBtn.offsetParent !== null) {
                     revealBtn.click();
                 } else {
-                    // If card is already flipped, Space can trigger 'Good'
                     const goodBtn = document.querySelector('.srs-btn-good');
                     if (goodBtn) goodBtn.click();
                 }
@@ -598,6 +630,28 @@ function setupKeyboardShortcuts() {
                 UiModal.closeModal();
                 break;
         }
+    });
+}
+
+/**
+ * Handles the Grid/List view switching.
+ */
+function setupViewToggles() {
+    const container = document.getElementById('viewToggles');
+    const grid = document.getElementById('explorerGrid');
+    if (!container || !grid) return;
+
+    container.querySelectorAll('.view-btn').forEach(btn => {
+        btn.onclick = () => {
+            container.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (btn.dataset.view === 'list') {
+                grid.classList.add('list-view');
+            } else {
+                grid.classList.remove('list-view');
+            }
+        };
     });
 }
 
