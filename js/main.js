@@ -353,6 +353,7 @@ function deleteCustomDeck(id) {
 
 function initAuth() {
     const btnAuthModal = document.getElementById('btnAuthModal');
+    const btnOpenAuthFromGuest = document.getElementById('btnOpenAuthFromGuest');
     const authModal = document.getElementById('authModal');
     const btnAuthClose = document.getElementById('btnAuthClose');
     const authForm = document.getElementById('authForm');
@@ -361,15 +362,24 @@ function initAuth() {
     const authErrorMessage = document.getElementById('authErrorMessage');
     const btnSubmitSignUp = document.getElementById('btnSubmitSignUp');
     const authLoggedInState = document.getElementById('authLoggedInState');
-    const loggedInUserEmail = document.getElementById('loggedInUserEmail');
     const btnSubmitSignOut = document.getElementById('btnSubmitSignOut');
 
     if (!btnAuthModal) return;
 
     // Open Modal
-    btnAuthModal.addEventListener('click', () => {
-        authModal.style.display = 'flex';
-    });
+    const openAuth = () => {
+        if (authModal) {
+            authModal.style.display = 'flex';
+            console.log('☁️ Abriendo modal de autenticación');
+        } else {
+            console.error('❌ No se encontró el modal authModal');
+        }
+    };
+
+    btnAuthModal.addEventListener('click', openAuth);
+    if (btnOpenAuthFromGuest) {
+        btnOpenAuthFromGuest.addEventListener('click', openAuth);
+    }
 
     // Close Modal
     const closeModal = () => {
@@ -387,6 +397,7 @@ function initAuth() {
     // Listen to Auth State Changes
     SupabaseSync.onAuthStateChange(async (event, session) => {
         const profileCard = document.getElementById('userProfileCard');
+        const guestCard = document.getElementById('guestProfileCard');
         const userAvatar = document.getElementById('userAvatar');
         const userDisplayName = document.getElementById('userDisplayName');
         const userEmailLabel = document.getElementById('userEmailLabel');
@@ -415,8 +426,10 @@ function initAuth() {
             if (authForm) authForm.style.display = 'none';
             if (authLoggedInState) authLoggedInState.style.display = 'flex';
 
-            // Update Sidebar Profile Card
+            // Update Cards Visibility
+            if (guestCard) guestCard.style.display = 'none';
             if (profileCard) profileCard.style.display = 'flex';
+            
             if (userDisplayName) userDisplayName.innerText = metadata.display_name || 'Estudiante';
             if (userAvatar) userAvatar.innerText = metadata.avatar_url || '👤';
             if (userEmailLabel) userEmailLabel.innerText = user.email;
@@ -485,7 +498,11 @@ function initAuth() {
             // Logged Out State UI
             btnAuthModal.innerText = `☁️ Conectar Nube`;
             btnAuthModal.classList.remove('logged-in');
+
+            // Update Cards Visibility
+            if (guestCard) guestCard.style.display = 'flex';
             if (profileCard) profileCard.style.display = 'none';
+
             if (authForm) {
                 authForm.style.display = 'flex';
                 authForm.reset();

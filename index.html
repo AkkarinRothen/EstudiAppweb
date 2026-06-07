@@ -33,6 +33,14 @@
 <div class="container">
     <!-- Dashboard de Estadísticas -->
     <div class="stats-dashboard">
+        <!-- Guest Profile Card (Show when logged out) -->
+        <div id="guestProfileCard" class="stat-card" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px; grid-column: 1 / -1; background: var(--primary-container); color: var(--on-primary-container); border: none;">
+            <div style="font-size: 32px; margin-bottom: 10px;">☁️</div>
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 5px;">Sincroniza tu progreso</div>
+            <p style="font-size: 11px; opacity: 0.8; margin-bottom: 15px;">Guarda tu racha, nivel y vocabulario dominado en la nube para no perderlos nunca.</p>
+            <button id="btnOpenAuthFromGuest" class="main-btn" style="width: 100%; max-width: 200px; padding: 10px; font-size: 12px; background: var(--primary); color: white; border: none;">Iniciar Sesión / Registrarse</button>
+        </div>
+
         <!-- User Profile Card -->
         <div id="userProfileCard" class="stat-card" style="display: none; align-items: flex-start; text-align: left; padding: 20px; grid-column: 1 / -1;">
             <div style="display: flex; align-items: center; gap: 15px; width: 100%;">
@@ -380,7 +388,7 @@
 
 <footer style="margin-top: 60px; padding: 40px 20px; text-align: center; border-top: 1px solid var(--outline-variant); opacity: 0.6; font-size: 12px;">
     <p>© 2026 EstudiApp Portal - Por AkkarinRothen</p>
-    <p id="appVersion">Versión: estudiapp-v20260607042529</p>
+    <p id="appVersion">Versión: estudiapp-v20260607042832</p>
 </footer>
 
 </body>
