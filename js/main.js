@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatsUI();
     initAuth();
     initDifficultySettings();
+    loadLatestUpdates();
 
     // Suscribir la UI al almacén de estado reactivo
     AppStore.subscribe(() => {
@@ -456,3 +457,30 @@ function initAuth() {
         });
     }
 }
+
+/**
+ * Loads the latest updates from data/updates.json and renders them.
+ */
+async function loadLatestUpdates() {
+    const titleEl = document.getElementById('updateTitle');
+    const listEl = document.getElementById('updateList');
+    if (!listEl) return;
+
+    try {
+        const response = await fetch('data/updates.json');
+        if (!response.ok) throw new Error('No se pudo cargar el archivo de novedades');
+        
+        const updates = await response.json();
+        if (!updates || updates.length === 0) return;
+
+        const latest = updates[0];
+        if (titleEl) titleEl.innerText = `✨ Novedades ${latest.version}`;
+
+        listEl.innerHTML = latest.items.map(item => `<li>${item}</li>`).join('');
+    } catch (error) {
+        console.warn('❌ Error al cargar novedades dinámicas:', error);
+        // Fallback or leave skeleton
+        listEl.innerHTML = '<li style="opacity:0.5;">No hay novedades recientes.</li>';
+    }
+}
+

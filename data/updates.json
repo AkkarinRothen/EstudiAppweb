@@ -1,0 +1,21 @@
+[
+    {
+        "version": "2.1.0",
+        "date": "2026-06-07",
+        "items": [
+            "<b>Feedback 2.0:</b> Botones táctiles 3D con respuesta física.",
+            "<b>Gestos Swipe:</b> Control fluido en móviles para Flashcards.",
+            "<b>Logros Visuales:</b> Nuevo sistema de medallas y progresión.",
+            "<b>Desktop UX:</b> Layout optimizado con barra lateral fija.",
+            "<b>Auto-Update:</b> Sincronización inteligente y automática."
+        ]
+    },
+    {
+        "version": "2.0.5",
+        "date": "2026-06-06",
+        "items": [
+            "<b>Optimización de Estado:</b> Corregidos bucles infinitos en el motor reactivo.",
+            "<b>Haptic Feedback:</b> Vibraciones suaves al acertar o fallar."
+        ]
+    }
+]
