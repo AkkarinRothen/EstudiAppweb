@@ -16,12 +16,58 @@ let activeLockId = 0;
 let activeSearchTerm = "";
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    loadAuth();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Intentar auto-login si ya hay sesión
+    const sessionPass = Storage.getSessionPassword();
+    if (sessionPass && sessionPass.includes(":")) {
+        const [user, pass] = sessionPass.split(":");
+        await performLogin(user, pass);
+    }
+
     setupEventListeners();
 });
 
-function setupEventListeners() {
+async function checkLogin() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    await performLogin(user, pass);
+}
+
+async function performLogin(user, pass) {
+    const errDiv = document.getElementById('loginError');
+    if (!user || !pass) {
+        if (errDiv) errDiv.style.display = 'block';
+        return;
+    }
+
+    const userHash = await Utils.sha256(user);
+    const passHash = await Utils.sha256(pass);
+
+    if (userHash === expectedUserHash && passHash === expectedPassHash) {
+        Storage.setSessionPassword(user + ":" + pass);
+        const overlay = document.getElementById('loginOverlay');
+        if (overlay) overlay.style.display = 'none';
+        
+        const mainContent = document.getElementById('mainAdminContent');
+        if (mainContent) mainContent.style.display = 'flex';
+        
+        showStatus(`👋 ¡Bienvenido, ${user}! Sesión restaurada.`, 'success');
+        
+        const headerTitle = document.querySelector('header h1');
+        if (headerTitle && !headerTitle.innerHTML.includes('🛡️')) {
+            headerTitle.innerHTML += ' <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:12px; vertical-align:middle; margin-left:10px;">🛡️ Modo Editor</span>';
+        }
+
+        await loadAuth();
+    } else {
+        if (errDiv) errDiv.style.display = 'block';
+        const passInput = document.getElementById('loginPass');
+        if (passInput) passInput.value = '';
+        // Si falló el auto-login, limpiar la sesión corrupta
+        Storage.setSessionPassword("");
+    }
+}
+
     // ... existing listeners ...
     const selectAllRows = document.getElementById('selectAllRows');
     if (selectAllRows) {

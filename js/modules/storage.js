@@ -149,11 +149,16 @@ export function saveTtsPreferences(pref) {
     triggerSave();
 }
 
-// In-Memory Session Password (not persisted)
-let sessionPassword = "";
+// Session Password management (persists through refresh, but not tab close)
+let sessionPassword = sessionStorage.getItem('estudiapp_admin_session') || "";
 
 export function setSessionPassword(pass) {
     sessionPassword = pass;
+    if (pass) {
+        sessionStorage.setItem('estudiapp_admin_session', pass);
+    } else {
+        sessionStorage.removeItem('estudiapp_admin_session');
+    }
 }
 
 export function getSessionPassword() {

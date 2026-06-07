@@ -407,6 +407,19 @@ function initAuth() {
 
     // Listen to Auth State Changes
     SupabaseSync.onAuthStateChange(async (event, session) => {
+        handleAuthUpdate(session);
+    });
+
+    // Initial session check
+    SupabaseSync.getCurrentUser().then(user => {
+        if (user) {
+            SupabaseSync.supabase.auth.getSession().then(({data}) => {
+                if (data.session) handleAuthUpdate(data.session);
+            });
+        }
+    });
+
+    async function handleAuthUpdate(session) {
         const profileCard = document.getElementById('userProfileCard');
         const guestCard = document.getElementById('guestProfileCard');
         const userAvatar = document.getElementById('userAvatar');
@@ -451,7 +464,7 @@ function initAuth() {
             if (modalProfileEmail) modalProfileEmail.innerText = user.email;
 
             // Handle Profile View Switching
-            if (btnEditProfile) btnEditProfile.onclick = () => { authModal.style.display = 'flex'; };
+            if (btnEditProfile) btnEditProfile.onclick = () => { authModal.style.display = 'flex'; setTimeout(() => authModal.classList.add('active'), 10); };
             
             if (btnShowEditProfile) {
                 btnShowEditProfile.onclick = () => {
@@ -520,7 +533,7 @@ function initAuth() {
             }
             if (authLoggedInState) authLoggedInState.style.display = 'none';
         }
-    });
+    }
 
     // Form Submissions
     if (authForm) {
