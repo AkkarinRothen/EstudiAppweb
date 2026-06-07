@@ -129,23 +129,29 @@ header {
     background: linear-gradient(135deg, var(--primary) 0%, #4F378B 100%);
     color: var(--on-primary);
     width: 100%;
-    padding: clamp(30px, 8vw, 80px) 20px;
+    padding: 15px 20px; /* Slimmer header */
     text-align: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
+@media (min-width: 1024px) {
+    header {
+        padding: 10px 40px;
+        text-align: left;
+    }
+    header .header-container {
+        justify-content: space-between;
+    }
+    header h1 { font-size: 20px !important; display: inline-block; }
+    header p { display: none; } /* Hide tagline on desktop to save space */
+}
+
 header h1 { 
     margin: 0; 
-    font-size: clamp(24px, 5vw, 48px); 
+    font-size: clamp(20px, 4vw, 32px); 
     font-weight: 700; 
     letter-spacing: -0.5px; 
-}
-header p { 
-    margin: 12px 0 0 0; 
-    opacity: 0.9; 
-    font-weight: 300; 
-    font-size: clamp(14px, 2vw, 20px); 
 }
 
 .container {
