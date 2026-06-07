@@ -292,6 +292,21 @@ function addTableRow(es = '', en = '', imgUrl = '') {
         imgInput.click();
     });
 
+    // Drag and Drop Support for Images
+    imgPreview.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imgPreview.classList.add('drag-over');
+    });
+    imgPreview.addEventListener('dragleave', () => imgPreview.classList.remove('drag-over'));
+    imgPreview.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        imgPreview.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleImageUpload(file, tr);
+        }
+    });
+
     searchBtn.addEventListener('click', () => {
         openImageSearchPopover(tr);
     });
@@ -299,27 +314,7 @@ function addTableRow(es = '', en = '', imgUrl = '') {
     imgInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        try {
-            placeholder.innerText = "⏳";
-            const webpBlob = await processImageToWebp(file);
-            const base64Reader = new FileReader();
-            base64Reader.onloadend = () => {
-                const base64data = base64Reader.result;
-                tr._imageWebpBase64 = base64data;
-                delete tr._existingImgUrl; // Custom upload overrides pre-existing image URL
-                thumbImg.src = base64data;
-                thumbImg.style.display = 'block';
-                placeholder.style.display = 'none';
-                placeholder.innerText = "📷";
-                removeBtn.style.display = 'inline-block';
-            };
-            base64Reader.readAsDataURL(webpBlob);
-        } catch (err) {
-            console.error(err);
-            alert("Error al procesar la imagen: " + err.message);
-            placeholder.innerText = "📷";
-        }
+        handleImageUpload(file, tr);
     });
 
     removeBtn.addEventListener('click', () => {
@@ -342,6 +337,33 @@ function addTableRow(es = '', en = '', imgUrl = '') {
 
     tbody.appendChild(tr);
     updateDiceFormula();
+}
+
+async function handleImageUpload(file, tr) {
+    const thumbImg = tr.querySelector('.vocab-img-thumb');
+    const placeholder = tr.querySelector('.vocab-img-placeholder');
+    const removeBtn = tr.querySelector('.btn-img-remove');
+
+    try {
+        placeholder.innerText = "⏳";
+        const webpBlob = await processImageToWebp(file);
+        const base64Reader = new FileReader();
+        base64Reader.onloadend = () => {
+            const base64data = base64Reader.result;
+            tr._imageWebpBase64 = base64data;
+            delete tr._existingImgUrl;
+            thumbImg.src = base64data;
+            thumbImg.style.display = 'block';
+            placeholder.style.display = 'none';
+            placeholder.innerText = "📷";
+            removeBtn.style.display = 'inline-block';
+        };
+        base64Reader.readAsDataURL(webpBlob);
+    } catch (err) {
+        console.error(err);
+        alert("Error al procesar la imagen: " + err.message);
+        placeholder.innerText = "📷";
+    }
 }
 
 function clearTable() {
