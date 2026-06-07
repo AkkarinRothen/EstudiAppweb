@@ -197,10 +197,102 @@ class EstudiAppAchievements extends HTMLElement {
     }
 }
 
+/**
+ * Activity Heatmap Web Component
+ * Shows study consistency for the last 30 days.
+ */
+class EstudiAppHeatmap extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+        this._unsubscribe = null;
+    }
+
+    connectedCallback() {
+        this.render();
+        this._unsubscribe = AppStore.subscribe(() => this.render());
+    }
+
+    disconnectedCallback() {
+        if (this._unsubscribe) this._unsubscribe();
+    }
+
+    render() {
+        const activity = AppStore.state.stats.activity || {};
+        const today = new Date();
+        const dates = [];
+
+        // Generate last 30 days
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(today.getDate() - i);
+            const key = d.toLocaleDateString('en-CA');
+            dates.push({ key, count: activity[key] || 0 });
+        }
+
+        this.shadowRoot.innerHTML = `
+        <style>
+            :host { display: block; width: 100%; margin-top: 15px; }
+            .heatmap-header { font-size: 11px; font-weight: 700; opacity: 0.6; text-transform: uppercase; margin-bottom: 8px; }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(15, 1fr);
+                gap: 4px;
+            }
+            .cell {
+                aspect-ratio: 1;
+                background: var(--surface-variant, #e7e0ec);
+                border-radius: 3px;
+                position: relative;
+                transition: transform 0.2s;
+            }
+            .cell:hover { transform: scale(1.2); z-index: 2; }
+            .cell[data-level="1"] { background: #d0bcff; }
+            .cell[data-level="2"] { background: #9c27b0; }
+            .cell[data-level="3"] { background: #6750A4; }
+            
+            .tooltip {
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #000;
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 10px;
+                white-space: nowrap;
+                display: none;
+                pointer-events: none;
+                margin-bottom: 5px;
+            }
+            .cell:hover .tooltip { display: block; }
+        </style>
+        <div class="heatmap-header">Consistencia (30 días)</div>
+        <div class="grid">
+            ${dates.map(d => {
+                let level = 0;
+                if (d.count > 30) level = 3;
+                else if (d.count > 10) level = 2;
+                else if (d.count > 0) level = 1;
+                return `
+                <div class="cell" data-level="${level}">
+                    <div class="tooltip">${d.key}: ${d.count} palabras</div>
+                </div>
+                `;
+            }).join('')}
+        </div>
+        `;
+    }
+}
+
 // Register the components
 if (!customElements.get('estudiapp-level-badge')) {
     customElements.define('estudiapp-level-badge', EstudiAppLevelBadge);
 }
 if (!customElements.get('estudiapp-achievements')) {
     customElements.define('estudiapp-achievements', EstudiAppAchievements);
+}
+if (!customElements.get('estudiapp-heatmap')) {
+    customElements.define('estudiapp-heatmap', EstudiAppHeatmap);
 }

@@ -30,6 +30,17 @@ export async function signOut() {
     if (error) throw error;
 }
 
+/**
+ * Updates the user's metadata (display name, avatar).
+ */
+export async function updateProfile(displayName, avatarUrl) {
+    const { data, error } = await supabase.auth.updateUser({
+        data: { display_name: displayName, avatar_url: avatarUrl }
+    });
+    if (error) throw error;
+    return data.user;
+}
+
 export async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
     return user;

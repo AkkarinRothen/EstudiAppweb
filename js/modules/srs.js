@@ -38,8 +38,13 @@ export function recordSrsAttempt(isCorrect) {
     stats.totalReviews++;
     if (isCorrect) stats.totalCorrect++;
 
-    // Calculate Streak
+    // Calculate Streak & Activity
     const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    
+    // Increment daily activity
+    if (!stats.activity) stats.activity = {};
+    stats.activity[todayStr] = (stats.activity[todayStr] || 0) + 1;
+
     if (stats.lastStudyDate !== todayStr) {
         if (stats.lastStudyDate) {
             const lastDate = new Date(stats.lastStudyDate + 'T00:00:00');

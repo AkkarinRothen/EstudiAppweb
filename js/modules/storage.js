@@ -109,11 +109,12 @@ export function getStats() {
     try {
         let stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS));
         if (!stats) {
-            stats = { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
+            stats = { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0, activity: {} };
         }
+        if (!stats.activity) stats.activity = {};
         return stats;
     } catch (e) {
-        return { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0 };
+        return { streak: 0, lastStudyDate: null, totalReviews: 0, totalCorrect: 0, activity: {} };
     }
 }
 

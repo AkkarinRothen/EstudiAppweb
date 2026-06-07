@@ -377,35 +377,111 @@ function initAuth() {
 
     // Listen to Auth State Changes
     SupabaseSync.onAuthStateChange(async (event, session) => {
+        const profileCard = document.getElementById('userProfileCard');
+        const userAvatar = document.getElementById('userAvatar');
+        const userDisplayName = document.getElementById('userDisplayName');
+        const userEmailLabel = document.getElementById('userEmailLabel');
+        const btnEditProfile = document.getElementById('btnEditProfile');
+
+        // Modal Elements
+        const modalProfileAvatar = document.getElementById('modalProfileAvatar');
+        const modalProfileName = document.getElementById('modalProfileName');
+        const modalProfileEmail = document.getElementById('modalProfileEmail');
+        const profileDefaultView = document.getElementById('profileDefaultView');
+        const profileEditForm = document.getElementById('profileEditForm');
+        const btnShowEditProfile = document.getElementById('btnShowEditProfile');
+        const btnCancelEditProfile = document.getElementById('btnCancelEditProfile');
+        const btnSaveProfile = document.getElementById('btnSaveProfile');
+        const editDisplayName = document.getElementById('editDisplayName');
+        const editAvatarUrl = document.getElementById('editAvatarUrl');
+
         if (session?.user) {
-            // Logged In State UI
+            const user = session.user;
+            const metadata = user.user_metadata || {};
+
+            // Logged In State UI (Sidebar)
             btnAuthModal.innerText = `☁️ Sincronizado`;
             btnAuthModal.classList.add('logged-in');
             
             if (authForm) authForm.style.display = 'none';
             if (authLoggedInState) authLoggedInState.style.display = 'flex';
-            if (loggedInUserEmail) loggedInUserEmail.innerText = session.user.email;
 
-            // Download progress from cloud to overwrite local storage if exists
+            // Update Sidebar Profile Card
+            if (profileCard) profileCard.style.display = 'flex';
+            if (userDisplayName) userDisplayName.innerText = metadata.display_name || 'Estudiante';
+            if (userAvatar) userAvatar.innerText = metadata.avatar_url || '👤';
+            if (userEmailLabel) userEmailLabel.innerText = user.email;
+
+            // Update Modal Profile View
+            if (modalProfileName) modalProfileName.innerText = metadata.display_name || 'Estudiante';
+            if (modalProfileAvatar) modalProfileAvatar.innerText = metadata.avatar_url || '👤';
+            if (modalProfileEmail) modalProfileEmail.innerText = user.email;
+
+            // Handle Profile View Switching
+            if (btnEditProfile) btnEditProfile.onclick = () => { authModal.style.display = 'flex'; };
+            
+            if (btnShowEditProfile) {
+                btnShowEditProfile.onclick = () => {
+                    profileDefaultView.style.display = 'none';
+                    profileEditForm.style.display = 'flex';
+                    if (editDisplayName) editDisplayName.value = modalProfileName.innerText;
+                    if (editAvatarUrl) editAvatarUrl.value = modalProfileAvatar.innerText;
+                };
+            }
+
+            if (btnCancelEditProfile) {
+                btnCancelEditProfile.onclick = () => {
+                    profileDefaultView.style.display = 'flex';
+                    profileEditForm.style.display = 'none';
+                };
+            }
+
+            if (btnSaveProfile) {
+                btnSaveProfile.onclick = async () => {
+                    const newName = editDisplayName.value.trim();
+                    const newAvatar = editAvatarUrl.value.trim();
+                    
+                    try {
+                        btnSaveProfile.disabled = true;
+                        btnSaveProfile.innerText = 'Guardando...';
+                        await SupabaseSync.updateProfile(newName, newAvatar);
+                        
+                        // Local update for immediate feedback
+                        if (userDisplayName) userDisplayName.innerText = newName || 'Estudiante';
+                        if (userAvatar) userAvatar.innerText = newAvatar || '👤';
+                        if (modalProfileName) modalProfileName.innerText = newName || 'Estudiante';
+                        if (modalProfileAvatar) modalProfileAvatar.innerText = newAvatar || '👤';
+                        
+                        profileDefaultView.style.display = 'flex';
+                        profileEditForm.style.display = 'none';
+                        alert('¡Perfil actualizado con éxito!');
+                    } catch (e) {
+                        alert('Error al actualizar: ' + e.message);
+                    } finally {
+                        btnSaveProfile.disabled = false;
+                        btnSaveProfile.innerText = 'Guardar Cambios';
+                    }
+                };
+            }
+
+            // Download progress from cloud
             const downloaded = await SupabaseSync.syncCloudToLocal();
             if (downloaded) {
                 DecksPage.refresh();
                 updateStatsUI();
             } else {
-                // If first time login, push current local data to cloud
                 await SupabaseSync.syncLocalToCloud();
             }
         } else {
             // Logged Out State UI
             btnAuthModal.innerText = `☁️ Conectar Nube`;
             btnAuthModal.classList.remove('logged-in');
-
+            if (profileCard) profileCard.style.display = 'none';
             if (authForm) {
                 authForm.style.display = 'flex';
                 authForm.reset();
             }
             if (authLoggedInState) authLoggedInState.style.display = 'none';
-            if (loggedInUserEmail) loggedInUserEmail.innerText = '';
         }
     });
 
