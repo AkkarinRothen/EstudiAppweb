@@ -324,6 +324,9 @@ export class StudyEngine {
             }
         }
 
+        // Toggle game-active class on body for responsive space optimization on mobile
+        document.body.classList.toggle('game-active', mode !== 'direct');
+
         this.currentMode = mode;
         this.stop();
 

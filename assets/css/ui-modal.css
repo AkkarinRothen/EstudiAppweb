@@ -1587,3 +1587,34 @@
     pointer-events: none;
     box-sizing: border-box;
 }
+
+/* Responsive Mobile Space Optimization (Active Game Mode) */
+body.game-active h1,
+body.game-active .desc,
+body.game-active #modalTitle,
+body.game-active #modalDesc {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    body.game-active .card,
+    body.game-active .modal-card {
+        padding-top: 16px !important;
+        padding-bottom: 24px !important;
+    }
+    body.game-active .image-toggle-container {
+        display: none !important; /* Hide image toggle to save space */
+    }
+    body.game-active .tts-controls {
+        display: none !important; /* Hide speech voices configuration inside game */
+    }
+    body.game-active .close-btn {
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+    }
+    body.game-active .back-link {
+        margin-top: 15px !important;
+    }
+}
