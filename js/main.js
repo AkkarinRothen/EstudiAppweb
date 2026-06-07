@@ -9,6 +9,7 @@ import * as UiModal from './modules/ui-modal.js';
 import * as DecksPage from './modules/decks-page.js';
 import * as SupabaseSync from './modules/supabase-sync.js';
 import * as UiGamification from './modules/ui-gamification.js';
+import * as Fx from './modules/fx.js';
 import './modules/ui-streak.js';
 import * as Difficulty from './modules/difficulty-manager.js';
 import { AppStore } from './modules/state.js';

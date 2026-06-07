@@ -110,18 +110,12 @@ export function openPracticeModal(data) {
     });
 
     // Setup mode buttons
-    document.getElementById('modalModeDirect').onclick = () => engine.setMode('direct');
-    document.getElementById('modalModeFlashcard').onclick = () => engine.setMode('flashcard');
-    document.getElementById('modalModeQuiz').onclick = () => engine.setMode('quiz');
-    document.getElementById('modalModeWrite').onclick = () => engine.setMode('write');
-    document.getElementById('modalModeScrambled').onclick = () => engine.setMode('scrambled');
-    document.getElementById('modalModeMatch').onclick = () => engine.setMode('match');
-    document.getElementById('modalModeBubble').onclick = () => engine.setMode('bubble');
-    document.getElementById('modalModeSniper').onclick = () => engine.setMode('sniper');
-    document.getElementById('modalModeDrag').onclick = () => engine.setMode('drag');
-    document.getElementById('modalModeDictation').onclick = () => engine.setMode('dictation');
-    document.getElementById('modalModeWordle').onclick = () => engine.setMode('wordle');
-    
+    const ids = ['Direct', 'Flashcard', 'Quiz', 'Write', 'Scrambled', 'Match', 'Bubble', 'Sniper', 'Drag', 'Dictation', 'Wordle'];
+    ids.forEach(id => {
+        const btn = document.getElementById('modalMode' + id);
+        if (btn) btn.onclick = () => engine.setMode(id.toLowerCase());
+    });
+
     const timeAttackBtn = document.getElementById('modalModeTimeAttack');
     if (timeAttackBtn) {
         timeAttackBtn.onclick = () => engine.setMode('timeAttack');

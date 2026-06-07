@@ -23,7 +23,7 @@ export function validateStreak() {
         const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays > 1) {
-            stats.streak = 0;
+            if (stats.streak !== 0) stats.streak = 0;
         }
     }
     return stats;

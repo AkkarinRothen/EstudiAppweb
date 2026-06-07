@@ -17,6 +17,9 @@ export function createStore(initialState = {}) {
             return value;
         },
         set(target, prop, value, receiver) {
+            const oldValue = Reflect.get(target, prop, receiver);
+            if (oldValue === value) return true;
+
             const result = Reflect.set(target, prop, value, receiver);
             listeners.forEach(callback => callback(AppStore.state));
             
