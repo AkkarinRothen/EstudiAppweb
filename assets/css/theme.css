@@ -50,21 +50,54 @@
         gap: 30px;
     }
 
-    /* Hover Effects (Desktop Only) */
+    /* Advanced Hover Effects (Desktop Only) */
+    .deck-card {
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                    box-shadow 0.4s ease, 
+                    border-color 0.3s ease;
+    }
+
     .deck-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(103, 80, 164, 0.2);
-    }
-
-    .stat-card:hover {
-        background: var(--surface-variant);
+        transform: translateY(-12px) scale(1.03) rotateZ(1deg);
+        box-shadow: 0 20px 40px rgba(103, 80, 164, 0.18), 
+                    0 10px 15px rgba(0, 0, 0, 0.05);
         border-color: var(--primary);
-        transform: translateX(5px);
+        z-index: 5;
     }
 
-    .filter-chip:hover {
-        background: var(--primary-container);
-        color: var(--on-primary-container);
+    .stats-dashboard {
+        position: sticky;
+        top: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        grid-template-columns: 1fr !important;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 20px;
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Keyboard Hint Badges */
+    .kbd-hint {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-variant);
+        color: var(--on-surface-variant);
+        border: 1px solid var(--outline);
+        border-bottom-width: 3px;
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-family: monospace;
+        font-size: 10px;
+        font-weight: 800;
+        margin-left: 8px;
+        vertical-align: middle;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.1);
     }
 }
 
@@ -122,19 +155,29 @@ header {
     background: linear-gradient(135deg, var(--primary) 0%, #4F378B 100%);
     color: var(--on-primary);
     width: 100%;
-    padding: 60px 20px;
+    padding: clamp(30px, 8vw, 80px) 20px;
     text-align: center;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     box-sizing: border-box;
 }
 
-header h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -0.5px; }
-header p { margin: 12px 0 0 0; opacity: 0.9; font-weight: 300; font-size: 18px; }
+header h1 { 
+    margin: 0; 
+    font-size: clamp(24px, 5vw, 48px); 
+    font-weight: 700; 
+    letter-spacing: -0.5px; 
+}
+header p { 
+    margin: 12px 0 0 0; 
+    opacity: 0.9; 
+    font-weight: 300; 
+    font-size: clamp(14px, 2vw, 20px); 
+}
 
 .container {
-    max-width: 1200px;
-    width: 90%;
-    padding: 40px 0;
+    max-width: 1400px;
+    width: 92%;
+    padding: clamp(20px, 4vw, 40px) 0;
 }
 
 footer {

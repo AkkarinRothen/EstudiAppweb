@@ -472,7 +472,11 @@
     .modal-overlay { align-items: flex-end; }
     .modal-card {
         max-width: 100%; width: 100%; border-radius: 28px 28px 0 0;
-        max-height: 92vh; overflow-y: auto; padding: 28px 20px 32px;
+        max-height: 94vh; overflow-y: auto; padding: 28px 16px 32px;
+        transform: translateY(100%); /* Slide up from bottom */
+    }
+    .modal-overlay.active .modal-card {
+        transform: translateY(0);
     }
     .mode-toggle { flex-wrap: wrap; }
     .chip-modal { flex: 1 1 40%; font-size: 11px; }
@@ -480,11 +484,18 @@
 }
 
 @media (max-width: 480px) {
-    .modal-card { padding: 24px 16px 40px; }
-    .modal-card h2 { font-size: 20px; }
-    .entry-text { font-size: 19px; }
-    .quiz-option { padding: 14px 12px; border-radius: 12px; }
-    .close-btn { width: 42px; height: 42px; top: 16px; right: 16px; }
+    .modal-card { padding: 24px 12px 40px; }
+    .modal-card h2 { font-size: clamp(18px, 5vw, 24px); }
+    .entry-text { font-size: clamp(17px, 4vw, 22px); }
+    .quiz-option { padding: 12px 10px; border-radius: 12px; font-size: 13px; }
+    .close-btn { width: 40px; height: 40px; top: 12px; right: 12px; }
+    
+    /* Optimize Games for Small Screens */
+    .sniper-lanes { height: 150px; }
+    .sniper-word { font-size: 12px; padding: 4px 10px; }
+    .wordle-tile { width: 32px; height: 32px; font-size: 16px; }
+    .match-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .bubble-area { height: 240px; }
 }
 
 /* 3D Flashcard Flip System */

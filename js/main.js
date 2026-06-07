@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAuth();
     initDifficultySettings();
     loadLatestUpdates();
+    setupKeyboardShortcuts();
 
     // Suscribir la UI al almacén de estado reactivo
     AppStore.subscribe(() => {
@@ -456,6 +457,46 @@ function initAuth() {
             }
         });
     }
+}
+
+/**
+ * Sets up global keyboard shortcuts for Desktop UX.
+ */
+function setupKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+        const modalActive = document.getElementById('practiceModal').classList.contains('active');
+        if (!modalActive) return;
+
+        // Skip if user is typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.code) {
+            case 'Space':
+                e.preventDefault();
+                const revealBtn = document.getElementById('modalBtnReveal');
+                if (revealBtn && revealBtn.offsetParent !== null) {
+                    revealBtn.click();
+                } else {
+                    // If card is already flipped, Space can trigger 'Good'
+                    const goodBtn = document.querySelector('.srs-btn-good');
+                    if (goodBtn) goodBtn.click();
+                }
+                break;
+            case 'Digit1':
+            case 'Numpad1':
+                const againBtn = document.querySelector('.srs-btn-again');
+                if (againBtn) againBtn.click();
+                break;
+            case 'Digit2':
+            case 'Numpad2':
+                const okBtn = document.querySelector('.srs-btn-good');
+                if (okBtn) okBtn.click();
+                break;
+            case 'Escape':
+                UiModal.closeModal();
+                break;
+        }
+    });
 }
 
 /**

@@ -190,7 +190,9 @@
                     <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                 </button>
             </div>
-            <button id="modalBtnReveal" class="btn-reveal" style="display:none">MOSTRAR TRADUCCIÓN</button>
+            <button id="modalBtnReveal" class="btn-reveal" style="display:none">
+                MOSTRAR TRADUCCIÓN <span class="kbd-hint">Espacio</span>
+            </button>
             
             <div id="modalWriteArea" class="write-container" style="display:none">
                 <input type="text" id="modalWriteInput" class="write-input" placeholder="Escribe la traducción aquí..." autocomplete="off">
@@ -210,8 +212,8 @@
             <div id="modalDiagramArea" class="diagram-container" style="display:none"></div>
 
             <div id="modalSrsFeedback" class="srs-feedback-container" style="display:none">
-                <button class="srs-btn srs-btn-again">❌ Me costó</button>
-                <button class="srs-btn srs-btn-good">✅ Fácil / Lo sé</button>
+                <button class="srs-btn srs-btn-again">❌ Me costó <span class="kbd-hint">1</span></button>
+                <button class="srs-btn srs-btn-good">✅ Fácil / Lo sé <span class="kbd-hint">2</span></button>
             </div>
         </div>
 
