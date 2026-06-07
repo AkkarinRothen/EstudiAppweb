@@ -23,8 +23,6 @@ Este documento registra las decisiones técnicas críticas tomadas por los agent
 - **Racional:** Mantener el rendimiento "Thin Client" y la independencia offline.
 - **Consecuencias:** El Agente Explorador debe priorizar micro-librerías o implementaciones Vanilla JS.
 
-- **Consecuencias:** Se creó el script `scripts/audit_codebase.js` como herramienta de supervisión estructural. Este agente ahora prioriza la eliminación de deuda técnica sobre los cambios puramente estéticos.
-
 ### 2026-06-06 | Agente de Arquitectura e Innovación (CTO)
 - **Decisión:** Implementación de Reactividad Nativa mediante JS Proxies.
 - **Racional:** Para eliminar la orquestación manual entre la lógica de negocio y la vista (evitando el "Manual Refresh Anti-pattern"), se ha creado un `AppStore` centralizado.
@@ -35,3 +33,7 @@ Este documento registra las decisiones técnicas críticas tomadas por los agent
 - **Racional:** Para mejorar la modularidad y el aislamiento de estilos sin depender de frameworks (React/Vue), se utilizarán Custom Elements y Shadow DOM para widgets complejos.
 - **Consecuencias:** Se han migrado con éxito: 1) Barra de nivel (`<estudiapp-level-badge>`), 2) Selector de juegos (`<estudiapp-launchpad>`) y 3) Racha legendaria (`<estudiapp-streak>`). Esto permite que cada elemento visual maneje su propia lógica y animaciones de forma reactiva y aislada.
 
+### 2026-06-06 | Agente de Arquitectura e Innovación (CTO)
+- **Decisión:** Implementación de Progressive Web App (PWA).
+- **Racional:** Para permitir el estudio sin conexión y mejorar la retención del usuario, se ha convertido la web en una PWA instalable.
+- **Consecuencias:** Se han añadido `manifest.json` y `sw.js`. Los activos críticos ahora se cachean localmente. El portal muestra una tarjeta de instalación dinámica en navegadores compatibles.

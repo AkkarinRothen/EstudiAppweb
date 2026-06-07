@@ -10,7 +10,8 @@ Este documento describe la arquitectura técnica del portal web de EstudiApp, ba
 4. **Fuente de Verdad:** 
    - **Configuración:** `data/packs.json` define los packs disponibles.
    - **Persistencia:** `localStorage` (gestionado por `storage.js`) guarda el progreso del usuario (SRS) y preferencias.
-5. **Sin Dependencias Externas:** Se prioriza el uso de APIs nativas del navegador (Fetch, SpeechSynthesis, Crypto, ES Modules, Web Components) para garantizar velocidad y portabilidad.
+5. **Modo Offline y PWA:** La aplicación es una *Progressive Web App* que utiliza Service Workers para cachear activos críticos. Esto permite que el usuario siga estudiando y jugando sin conexión a internet, sincronizando con la nube cuando la conectividad se restablece.
+6. **Sin Dependencias Externas:** Se prioriza el uso de APIs nativas del navegador (Fetch, SpeechSynthesis, Crypto, ES Modules, Web Components, Service Workers) para garantizar velocidad y portabilidad.
 
 ## Estructura de Capas
 

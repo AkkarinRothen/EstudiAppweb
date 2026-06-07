@@ -1,0 +1,24 @@
+{
+  "name": "EstudiApp Web",
+  "short_name": "EstudiApp",
+  "description": "Tu portal de estudio interactivo con juegos y repetición espaciada.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FEF7FF",
+  "theme_color": "#6750A4",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/color/192/learning.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.icons8.com/color/512/learning.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait"
+}

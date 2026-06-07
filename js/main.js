@@ -27,6 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
     AppStore.subscribe(() => {
         updateStatsUI();
     });
+
+    // Registro de Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('🚀 Service Worker registrado con éxito:', reg.scope))
+                .catch(err => console.warn('❌ Error al registrar Service Worker:', err));
+        });
+    }
+
+    // Lógica de Instalación PWA
+    let deferredPrompt;
+    const installCard = document.getElementById('pwaInstallCard');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevenir que Chrome 67 y anteriores muestren el prompt automáticamente
+        e.preventDefault();
+        // Guardar el evento para dispararlo más tarde
+        deferredPrompt = e;
+        // Mostrar la tarjeta de instalación
+        if (installCard) installCard.style.display = 'flex';
+    });
+
+    if (installCard) {
+        installCard.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            // Mostrar el prompt de instalación
+            deferredPrompt.prompt();
+            // Esperar a la respuesta del usuario
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`💻 Usuario eligió instalar: ${outcome}`);
+            // Resetear el prompt
+            deferredPrompt = null;
+            // Ocultar la tarjeta
+            installCard.style.display = 'none';
+        });
+    }
 });
 
 // Registrar callback de sincronización al guardar datos locales
