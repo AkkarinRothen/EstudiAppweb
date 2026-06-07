@@ -1,0 +1,17 @@
+{
+  "name": "estudiapp-web",
+  "version": "2.0.0",
+  "description": "Portal de Recursos Didácticos EstudiApp",
+  "main": "js/main.js",
+  "scripts": {
+    "build": "node scripts/build_presets.js",
+    "dev": "node scripts/watch.js",
+    "lint": "node scripts/guardian.js",
+    "validate": "node scripts/validate_games.js",
+    "audit": "node scripts/audit_codebase.js"
+  },
+  "author": "AkkarinRothen",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
