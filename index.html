@@ -33,12 +33,21 @@
 <div class="container">
     <!-- Dashboard de Estadísticas -->
     <div class="stats-dashboard">
-        <div class="stat-card">
+        <div class="stat-card" style="grid-column: span 2; padding: 0; background: transparent; border: none;">
             <estudiapp-level-badge id="mainLevelBadge"></estudiapp-level-badge>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="grid-column: span 2; padding: 0; background: transparent; border: none;">
             <estudiapp-streak id="mainStreak"></estudiapp-streak>
         </div>
+        
+        <div style="grid-column: 1 / -1; margin: 10px 0;">
+            <h3 style="font-family: 'Orbitron', sans-serif; font-size: 14px; margin-bottom: 12px; opacity: 0.8; text-align: left; display: flex; align-items: center; gap: 8px;">
+                <span>🏆 Logros de Carrera</span>
+                <div style="flex: 1; height: 1px; background: var(--outline-variant); opacity: 0.3;"></div>
+            </h3>
+            <estudiapp-achievements></estudiapp-achievements>
+        </div>
+
         <div class="stat-card">
             <span class="stat-value" id="statDominio">0%</span>
             <span class="stat-label">Vocabulario Dominado</span>

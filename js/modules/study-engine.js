@@ -104,18 +104,26 @@ export class StudyEngine {
         }, { passive: true });
     }
 
-    handleSwipe(start, end) {
+    async handleSwipe(start, end) {
         const threshold = 100;
         const diff = end - start;
 
         if (Math.abs(diff) < threshold) return;
 
-        if (diff > 0) {
-            // Swipe Right -> Good
-            this.rateSrs(true);
-        } else {
-            // Swipe Left -> Again
-            this.rateSrs(false);
+        const direction = diff > 0 ? 'right' : 'left';
+        const area = this.elements.resultArea;
+
+        // Visual animation before rating
+        if (area) {
+            await Fx.animateCardSwipe(area, direction);
+            
+            // Perform rating
+            this.rateSrs(direction === 'right');
+
+            // Reset card position and opacity for next entry
+            // This happens instantly so the next entry looks fresh
+            area.style.transform = 'none';
+            area.style.opacity = '1';
         }
     }
 

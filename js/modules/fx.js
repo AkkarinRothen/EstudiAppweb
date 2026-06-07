@@ -216,6 +216,29 @@ export async function showLevelUp(level) {
 }
 
 /**
+ * Card swipe animation for Flashcard mode
+ * @param {HTMLElement} target 
+ * @param {string} direction - 'left' or 'right'
+ * @returns {Promise}
+ */
+export async function animateCardSwipe(target, direction) {
+    await ensureInit();
+    if (!anime || !target) return;
+
+    const xMove = direction === 'right' ? 500 : -500;
+    const rotation = direction === 'right' ? 30 : -30;
+
+    return anime({
+        targets: target,
+        translateX: xMove,
+        rotate: rotation,
+        opacity: 0,
+        duration: 400,
+        easing: 'easeInCubic'
+    }).finished;
+}
+
+/**
  * Triggers a vibration pattern on mobile devices
  * @param {string|number|Array} pattern - 'success', 'error', or a custom array
  */
