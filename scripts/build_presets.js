@@ -70,8 +70,17 @@ if (fs.existsSync(swFile)) {
         
         fs.writeFileSync(swFile, updatedSwContent, 'utf-8');
         console.log(`🚀 Service Worker updated to new version: ${newCacheName}`);
+
+        // --- UPDATE VERSION IN INDEX.HTML ---
+        const indexFile = path.join(__dirname, '..', 'index.html');
+        if (fs.existsSync(indexFile)) {
+            let indexContent = fs.readFileSync(indexFile, 'utf-8');
+            const updatedIndexContent = indexContent.replace(/id="appVersion">Versión: .*<\/p>/, `id="appVersion">Versión: ${newCacheName}</p>`);
+            fs.writeFileSync(indexFile, updatedIndexContent, 'utf-8');
+            console.log(`📝 Updated version display in index.html`);
+        }
     } catch (e) {
-        console.error("Error updating Service Worker version:", e);
+        console.error("Error updating versions:", e);
     }
 }
 

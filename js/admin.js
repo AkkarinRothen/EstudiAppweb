@@ -22,6 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
+    // ... existing listeners ...
+    const selectAllRows = document.getElementById('selectAllRows');
+    if (selectAllRows) {
+        selectAllRows.addEventListener('change', (e) => {
+            const checkboxes = document.querySelectorAll('.row-selector');
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+        });
+    }
+
+    const aiTranslateBtn = document.getElementById('aiTranslateBtn');
+    if (aiTranslateBtn) {
+        aiTranslateBtn.addEventListener('click', () => translateWithAI());
+    }
+
     // Login
     const loginBtn = document.querySelector('#loginOverlay button');
     if (loginBtn) {
@@ -251,6 +265,7 @@ function addTableRow(es = '', en = '', imgUrl = '') {
     const tbody = document.getElementById('vocabTableBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
+        <td style="text-align: center;"><input type="checkbox" class="row-selector"></td>
         <td><input type="text" class="vocab-es" value="${es.replace(/"/g, '&quot;')}" placeholder="ej: El perro"></td>
         <td><input type="text" class="vocab-en" value="${en.replace(/"/g, '&quot;')}" placeholder="ej: The dog"></td>
         <td>
@@ -524,6 +539,74 @@ function closeImageSearchPopover() {
     document.getElementById('imageSearchPopover').style.display = 'none';
     document.getElementById('imageSearchPreviewImg').src = "";
     activeSearchRow = null;
+}
+
+async function translateWithAI() {
+    const geminiKey = document.getElementById('geminiApiKey').value.trim();
+    if (!geminiKey) {
+        showStatus('Por favor introduce tu Clave API de Gemini para usar esta función.', 'error');
+        return;
+    }
+
+    const tbody = document.getElementById('vocabTableBody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const selectedRows = rows.filter(row => row.querySelector('.row-selector')?.checked);
+    
+    const targets = selectedRows.length > 0 ? selectedRows : rows;
+    const wordsToTranslate = targets
+        .map((row, idx) => ({ index: idx, es: row.querySelector('.vocab-es').value.trim() }))
+        .filter(w => w.es !== "");
+
+    if (wordsToTranslate.length === 0) {
+        showStatus('No hay palabras en español para traducir.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('aiTranslateBtn');
+    btn.disabled = true;
+    btn.innerText = "🤖 Traduciendo...";
+    showStatus(`Traduciendo ${wordsToTranslate.length} términos con Gemini...`, 'warning');
+
+    try {
+        const prompt = `Traduce las siguientes palabras del español al inglés. Devuelve STRICTAMENTE un array JSON:
+[{"index": número, "en": "traducción"}]
+No incluyas nada más.
+
+Palabras:
+${JSON.stringify(wordsToTranslate)}`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+
+        if (!response.ok) throw new Error('Error en la API de Gemini');
+        
+        const data = await response.json();
+        const results = JSON.parse(data.candidates[0].content.parts[0].text.trim());
+
+        results.forEach(res => {
+            const row = targets[res.index];
+            if (row) {
+                const enInput = row.querySelector('.vocab-en');
+                const currentVal = enInput.value.split('||');
+                const example = currentVal.length > 1 ? ` || ${currentVal[1].trim()}` : '';
+                enInput.value = res.en + example;
+            }
+        });
+
+        showStatus(`¡Éxito! Se tradujeron ${results.length} términos.`, 'success');
+    } catch (e) {
+        console.error(e);
+        showStatus('Error al traducir: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🤖 Traducir (Gemini IA)";
+    }
 }
 
 async function generateExamplesWithAI() {

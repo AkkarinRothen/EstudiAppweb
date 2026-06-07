@@ -34,10 +34,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Registro de Service Worker (PWA)
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
+            // updateViaCache: 'none' asegura que el navegador siempre descargue el sw.js de la red, no de la caché HTTP
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
                 .then(reg => {
                     console.log('🚀 Service Worker registrado con éxito:', reg.scope);
-                    
+
+                    // Forzar comprobación de actualización cada vez que el usuario vuelve a la pestaña
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            reg.update();
+                        }
+                    });
+
+                    // Comprobar actualizaciones manualmente cada hora
+                    setInterval(() => reg.update(), 1000 * 60 * 60);
+
                     // Detectar si hay una actualización disponible
                     reg.onupdatefound = () => {
                         const installingWorker = reg.installing;
@@ -45,8 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // Nueva versión instalada y lista para activarse
                                 console.log('✨ Nueva actualización disponible. Recargando...');
-                                // En una app real podríamos mostrar un toast, aquí recargamos automáticamente
-                                // para garantizar que el usuario vea los cambios.
                                 setTimeout(() => window.location.reload(), 1000);
                             }
                         };
@@ -55,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(err => console.warn('❌ Error al registrar Service Worker:', err));
         });
 
-        // Evento cuando el Service Worker toma el control
+        // Evento cuando el Service Worker toma el control (post-skipWaiting)
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) {
