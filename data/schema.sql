@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS public.user_progress (
     user_id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
     srs_data JSONB DEFAULT '{}'::jsonb,
     stats JSONB DEFAULT '{"streak": 0, "lastStudyDate": null, "totalReviews": 0, "totalCorrect": 0}'::jsonb,
+    progression JSONB DEFAULT '{"level": 1, "xp": 0, "achievements": []}'::jsonb,
+    difficulty JSONB DEFAULT '{"mode": "linear", "level": "medium"}'::jsonb,
     high_scores JSONB DEFAULT '{}'::jsonb,
     custom_decks JSONB DEFAULT '[]'::jsonb,
     tts_pref JSONB DEFAULT '{}'::jsonb,
