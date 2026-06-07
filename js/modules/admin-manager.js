@@ -109,6 +109,15 @@ function setupManagerUI() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', onKeydown);
+
+    // Global click listener to close options dropdowns
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.card-options-dropdown')) {
+            document.querySelectorAll('.card-options-dropdown.open').forEach(el => {
+                el.classList.remove('open');
+            });
+        }
+    });
 }
 
 function bind(id, fn) {
@@ -309,11 +318,19 @@ function buildPackCardHTML(pack) {
     const isOfficial = !pack._custom;
 
     return `
-    <div class="res-pack-card${sel ? ' selected' : ''}" data-pcard="${pack.id}" draggable="true">
+    <div class="res-pack-card${sel ? ' selected' : ''}" data-pcard="${pack.id}" draggable="true" style="min-height: 220px; display: flex; flex-direction: column;">
         <div class="res-card-checkbox${sel ? ' checked' : ''}" data-ckpack="${pack.id}"></div>
         <div class="res-pack-card-header">
             <span class="res-pack-type-icon">${typeIcon}</span>
             ${level ? `<span class="res-pack-level-badge">${esc(level)}</span>` : ''}
+            <div class="card-options-dropdown" style="margin-left: 8px;">
+                <button type="button" class="options-btn" title="Opciones">⋮</button>
+                <div class="options-menu">
+                    <button type="button" class="options-menu-item" data-edit-pack="${pack.id}">✏️ Editar metadatos</button>
+                    <button type="button" class="options-menu-item" data-move-pack="${pack.id}">📂 Mover a carpeta</button>
+                    <button type="button" class="options-menu-item danger" data-del-pack="${pack.id}">🗑️ Eliminar recurso</button>
+                </div>
+            </div>
         </div>
         <div class="res-pack-title">${esc(title)}</div>
         <div class="res-pack-desc">${esc(desc)}</div>
@@ -321,11 +338,10 @@ function buildPackCardHTML(pack) {
             <span class="badge badge-type-${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
             <span class="badge ${isOfficial ? 'badge-origin-official' : ''}">${isOfficial ? 'Oficial' : 'Personalizado'}</span>
         </div>
-        <div class="res-pack-actions">
-            <button class="res-act-btn" data-edit-vocab="${pack.id}" title="Editar palabras/vocabulario" style="border-color: var(--primary); color: var(--primary);">📝 Vocabulario</button>
-            <button class="res-act-btn" data-edit-pack="${pack.id}" title="Editar metadatos">✏️ Editar</button>
-            <button class="res-act-btn" data-move-pack="${pack.id}" title="Mover a carpeta">📂 Mover</button>
-            <button class="res-act-btn danger" data-del-pack="${pack.id}" title="Eliminar">🗑️</button>
+        <div class="res-pack-actions" style="margin-top: auto; padding-top: 10px;">
+            <button type="button" class="res-act-btn edit-vocab-btn" data-edit-vocab="${pack.id}" title="Editar palabras/vocabulario" style="width: 100%; text-align: center; justify-content: center; background: var(--primary); color: white; border: none; font-weight: 600; gap: 6px; padding: 8px 12px; border-radius: 10px; display: flex; align-items: center;">
+                📝 Editar Vocabulario
+            </button>
         </div>
     </div>`;
 }
@@ -392,7 +408,7 @@ function bindMainEvents(main) {
     // Pack card click → just select
     main.querySelectorAll('[data-pcard]').forEach(el => {
         el.addEventListener('click', (e) => {
-            if (e.target.closest('[data-edit-pack],[data-del-pack],[data-move-pack],[data-ckpack]')) return;
+            if (e.target.closest('[data-edit-pack],[data-del-pack],[data-move-pack],[data-ckpack],.options-btn,.options-menu-item')) return;
             const id = 'pack:' + el.dataset.pcard;
             if (e.ctrlKey || e.metaKey) {
                 toggleSelect(id);
@@ -414,17 +430,51 @@ function bindMainEvents(main) {
         });
     });
 
+    // Toggle three-dots dropdown menu
+    main.querySelectorAll('.options-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = btn.closest('.card-options-dropdown');
+            const isOpen = dropdown.classList.contains('open');
+            
+            // Close all other open dropdowns first
+            document.querySelectorAll('.card-options-dropdown.open').forEach(el => {
+                el.classList.remove('open');
+            });
+            
+            if (!isOpen) {
+                dropdown.classList.add('open');
+            }
+        });
+    });
+
+    // Options menu items inside dropdown
+    main.querySelectorAll('.options-menu-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = el.closest('.card-options-dropdown');
+            if (dropdown) dropdown.classList.remove('open');
+
+            if (el.hasAttribute('data-edit-pack')) {
+                openPackEditModal(el.getAttribute('data-edit-pack'));
+            } else if (el.hasAttribute('data-move-pack')) {
+                clearSelection();
+                selectedIds.add('pack:' + el.getAttribute('data-move-pack'));
+                openMoveModal();
+            } else if (el.hasAttribute('data-del-pack')) {
+                clearSelection();
+                selectedIds.add('pack:' + el.getAttribute('data-del-pack'));
+                deleteSelected();
+            }
+        });
+    });
+
     // Pack checkboxes
     main.querySelectorAll('[data-ckpack]').forEach(el => {
         el.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleSelect('pack:' + el.dataset.ckpack);
         });
-    });
-
-    // Pack edit
-    main.querySelectorAll('[data-edit-pack]').forEach(el => {
-        el.addEventListener('click', (e) => { e.stopPropagation(); openPackEditModal(el.dataset.editPack); });
     });
 
     // Pack vocabulary edit
