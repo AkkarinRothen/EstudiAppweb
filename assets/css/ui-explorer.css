@@ -100,8 +100,15 @@
 /* Deck grid */
 .deck-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
+}
+
+@media (min-width: 1024px) {
+    .deck-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+    }
 }
 
 /* Deck grid — staggered entrance animation */
@@ -176,6 +183,22 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+    .deck-card-body {
+        padding: 16px 16px 12px;
+    }
+    .deck-card-header h3 {
+        font-size: 16px;
+    }
+    .deck-card-desc {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    .deck-card-footer {
+        padding: 10px 16px;
+    }
 }
 .deck-card-header {
     display: flex;
