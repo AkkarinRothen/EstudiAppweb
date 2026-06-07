@@ -141,8 +141,6 @@ export class DiagramGame {
 
         // Populate labels dock
         shuffledLabels.forEach(data => {
-        // Populate labels dock
-        shuffledLabels.forEach(data => {
             const labelEl = document.createElement('div');
             labelEl.className = 'diagram-label';
             labelEl.innerText = data.english;
